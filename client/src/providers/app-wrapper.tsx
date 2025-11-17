@@ -3,7 +3,7 @@ import { Loader } from "@/components/loaders";
 import { useGetLoggedInUser } from "@/features/user/api";
 import {
   useStoreAuthActions,
-  useStoreUserIsAuthenticating
+  useStoreUserIsAuthenticating,
 } from "@/store/userAuthStore";
 import { ReactNode, useEffect } from "react";
 import SocketContextProvider from "./SocketProvider";
@@ -16,11 +16,10 @@ const AppWrapper = ({ children }: IAppWrapper) => {
   const {
     data: userData,
     isLoading: isFirstTimeLoading,
-    isFetching
+    isFetching,
   } = useGetLoggedInUser();
   const { setUser } = useStoreAuthActions();
   const isAuthenticating = useStoreUserIsAuthenticating();
-
   useEffect(() => {
     if (isFirstTimeLoading) return;
     if (userData?.data) {
@@ -34,7 +33,7 @@ const AppWrapper = ({ children }: IAppWrapper) => {
         isAuthenticating: false,
         isTokensRefreshing: false,
         accessToken,
-        refreshToken
+        refreshToken,
       });
       return;
     }
@@ -46,11 +45,10 @@ const AppWrapper = ({ children }: IAppWrapper) => {
       isAuthenticating: false,
       isTokensRefreshing: false,
       accessToken: undefined,
-      refreshToken: undefined
+      refreshToken: undefined,
     });
     return () => {};
   }, [isFetching]);
-
   const isLoading = isFirstTimeLoading || isAuthenticating;
   if (isLoading) {
     return <Loader size="xlg" full />;

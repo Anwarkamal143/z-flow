@@ -84,11 +84,13 @@ export class AuthController {
     }
   };
 
-  public login = async (req: FastifyRequest, rep: FastifyReply) => {
+  public login = async (
+    req: FastifyRequest<{ Body: { email: string; password: string } }>,
+    rep: FastifyReply
+  ) => {
     try {
-      const { email, password } = req.body as any;
-      const { data: user } = await this.userService.getUserByEmail(email);
-
+      const { email, password } = req.body;
+      const { data: user } = await this.userService.getUserByEmail(email, true);
       if (!user || !user.password) {
         throw new BadRequestException("Invalid credentials", {
           errorCode: ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
@@ -148,9 +150,8 @@ export class AuthController {
 
   public refreshTokens = async (req: FastifyRequest, rep: FastifyReply) => {
     try {
-      const refreshToken =
-        (req.cookies as any)?.[APP_CONFIG.REFRESH_COOKIE_NAME] ||
-        req.headers.refreshtoken;
+      const refreshToken = (req.cookies?.[APP_CONFIG.REFRESH_COOKIE_NAME] ||
+        req.headers.refreshtoken) as string;
       if (!refreshToken)
         throw new BadRequestException("You are not logged in", {
           errorCode: ErrorCode.AUTH_UNAUTHORIZED_ACCESS,

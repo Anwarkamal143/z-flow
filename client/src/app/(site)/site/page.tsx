@@ -2,19 +2,17 @@
 
 import {
   useCursorGetAllUsers,
-  useGetAllUsers
+  useGetAllUsers,
 } from "@/features/user/api/hooks";
-import { useAuthAccessToken } from "@/store/userAuthStore";
+import { useAuthAccessToken, useStoreUser } from "@/store/userAuthStore";
 import Link from "next/link";
 
 const page = () => {
   const isAuthenticated = useAuthAccessToken();
   const { data } = useCursorGetAllUsers();
   const { data: users } = useGetAllUsers();
-  console.log(
-    users?.pagination_meta,
-    data?.pages?.[0]?.data?.[0]?.emailVerified
-  );
+  const user = useStoreUser();
+  console.log(users, data?.data.length, user, isAuthenticated, "users---");
   return (
     <div>
       {isAuthenticated}

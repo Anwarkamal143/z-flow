@@ -54,7 +54,7 @@ export const requireUnAuth = async (): Promise<null | {
 async function refreshTokens(refreshToken: string) {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/refresh-tokens`, {
-      method: "POST",
+      method: "GET",
       credentials: "include",
       headers: {
         Cookie: `${REFRESH_COOKIE_NAME}=${refreshToken}`,

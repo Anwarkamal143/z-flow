@@ -60,7 +60,7 @@ export class UserService extends BaseService<
     });
   }
 
-  public async getUserByEmail(email: string) {
+  public async getUserByEmail(email: string, selectPassword = false) {
     try {
       if (!email) {
         return {
@@ -79,7 +79,10 @@ export class UserService extends BaseService<
           error: new NotFoundException("User not found"),
         };
       }
-      return { data: { ...user, password: undefined }, status: HTTPSTATUS.OK };
+      return {
+        data: { ...user, password: selectPassword ? user.password : undefined },
+        status: HTTPSTATUS.OK,
+      };
     } catch (e: any) {
       console.error("[UserService:getUserById]", e?.message || e);
       return {

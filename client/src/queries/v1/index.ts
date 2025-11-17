@@ -198,7 +198,8 @@ export type IQueryOptions<
         UseSuspenseQueryOptions<
           ApiResp<TEntity, Entity>,
           ErrorT,
-          ReturnModel<TEntity, Entity>,
+          // ReturnModel<TEntity, Entity>,
+          ApiResp<TEntity, Entity>,
           QueryKey
         >,
         "queryKey"
@@ -207,7 +208,8 @@ export type IQueryOptions<
         UseQueryOptions<
           ApiResp<TEntity, Entity>,
           ErrorT,
-          ReturnModel<TEntity, Entity>,
+          // ReturnModel<TEntity, Entity>,
+          ApiResp<TEntity, Entity>,
           QueryKey
         >,
         "queryKey"
