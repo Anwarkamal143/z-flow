@@ -1,0 +1,24 @@
+{
+  "name": "nodebass",
+  "version": "1.0.0",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anwarkamal143/z-flow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Anwarkamal143/z-flow/issues"
+  },
+  "description": "",
+  "homepage": "https://github.com/Anwarkamal143/z-flow#readme",
+  "keywords": [],
+  "license": "ISC",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "bunx mprocs"
+  },
+  "type": "commonjs",
+  "devDependencies": {
+    "mprocs": "^0.7.3"
+  }
+}

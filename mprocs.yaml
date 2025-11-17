@@ -1,0 +1,7 @@
+procs:
+  client:
+    cmd: ["bun", "run", "dev"]
+    cwd: "./client"
+  server:
+    cmd: ["bun", "run", "dev"]
+    cwd: "./server"

@@ -1,0 +1,157 @@
+import { APP_CONFIG } from "@/config/app.config";
+import { ErrorCode } from "@/enums/error-code.enum";
+
+import { resetCookies, setCookies } from "@/utils/cookie";
+
+import { Role } from "@/db";
+import { UserService } from "@/services/user.service";
+import { UnauthorizedException } from "@/utils/catch-errors";
+import { verifyAccessToken, verifyRefreshToken } from "@/utils/jwt";
+import { FastifyReply, FastifyRequest } from "fastify";
+// Helpers
+const extractBearerToken = (request: FastifyRequest): string | undefined => {
+  const header = request.headers.authorization;
+  return typeof header === "string" && header.startsWith("Bearer ")
+    ? header.split(" ")[1]
+    : undefined;
+};
+
+export const getRequestTokens = (request: FastifyRequest) => ({
+  accessToken:
+    request.cookies?.[APP_CONFIG.COOKIE_NAME] || extractBearerToken(request),
+  refreshToken: (request.cookies?.[APP_CONFIG.REFRESH_COOKIE_NAME] ||
+    request.headers["refreshtoken"]) as string | undefined,
+});
+
+export class AuthMiddleware {
+  constructor(public userService: UserService) {}
+
+  // --------- AUTH REQUIRED ----------
+  isAuthenticated = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { accessToken, refreshToken } = getRequestTokens(request);
+
+    if (!accessToken && !refreshToken) {
+      throw new UnauthorizedException("Not authenticated");
+    }
+
+    const tokenData = await verifyAccessToken(accessToken);
+
+    if (tokenData.error) {
+      resetCookies(reply);
+      throw tokenData.error;
+    }
+
+    const isExpired = tokenData.isExpired;
+    const finalTokenData = isExpired
+      ? await verifyRefreshToken(refreshToken)
+      : tokenData;
+
+    if (!finalTokenData?.data?.user) {
+      resetCookies(reply);
+      throw new UnauthorizedException("Invalid or expired token", {
+        errorCode: ErrorCode.AUTH_INVALID_TOKEN,
+      });
+    }
+
+    request.user = finalTokenData.data.user;
+
+    if (isExpired) {
+      request.tokenData = finalTokenData.data.user;
+      await setCookies(reply, finalTokenData.data.user);
+    }
+  };
+
+  // ---------- OPTIONAL AUTH ----------
+  loggedInUser = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { accessToken, refreshToken } = getRequestTokens(request);
+
+    if (!accessToken && !refreshToken) return;
+
+    const { data: accessData, isExpired } = await verifyAccessToken(
+      accessToken
+    );
+
+    if (isExpired) {
+      const { data: refreshData } = await verifyRefreshToken(refreshToken);
+
+      if (!refreshData?.user) {
+        resetCookies(reply);
+        return;
+      }
+
+      await setCookies(reply, refreshData.user);
+      request.user = refreshData.user;
+      return;
+    }
+
+    if (accessData?.user) request.user = accessData.user;
+  };
+
+  // ---------- API KEY PROTECTION ----------
+  apiProtected = async (request: FastifyRequest) => {
+    if (!request.headers["x-api-key"]) {
+      throw new UnauthorizedException("Please provide an API key.");
+    }
+  };
+
+  // ---------- ROLE BASED PROTECTION ----------
+  restrictTo = (...roles: Role[]) => {
+    return async (request: FastifyRequest) => {
+      if (!request.user?.role || !roles.includes(request.user?.role as Role)) {
+        throw new UnauthorizedException("You do not have permission");
+      }
+    };
+  };
+
+  // ---------- REFRESH IF NEEDED ----------
+  refreshIfNeeded = async (request: FastifyRequest, reply: FastifyReply) => {
+    const accessToken = request.cookies?.[APP_CONFIG.COOKIE_NAME];
+    const refreshToken = request.cookies?.[APP_CONFIG.REFRESH_COOKIE_NAME];
+
+    if (!accessToken || !refreshToken) {
+      throw new UnauthorizedException("Not authenticated", {
+        errorCode: ErrorCode.AUTH_INVALID_TOKEN,
+      });
+    }
+
+    const accessPayload = await verifyAccessToken(accessToken);
+
+    if (accessPayload.data && !accessPayload.isExpired) {
+      request.user = accessPayload.data.user;
+      return;
+    }
+
+    if (accessPayload.isExpired) {
+      const refreshPayload = await verifyRefreshToken(refreshToken);
+
+      if (!refreshPayload.data?.user?.id) {
+        resetCookies(reply);
+        throw new UnauthorizedException("Invalid refresh token", {
+          errorCode: ErrorCode.AUTH_INVALID_TOKEN,
+        });
+      }
+
+      const user = (
+        await this.userService.getUserById(refreshPayload.data.user.id, true)
+      )?.data;
+
+      if (!user) {
+        resetCookies(reply);
+        throw new UnauthorizedException("User not found", {
+          errorCode: ErrorCode.AUTH_INVALID_TOKEN,
+        });
+      }
+
+      await setCookies(reply, { ...refreshPayload.data.user, role: user.role });
+      request.user = { ...refreshPayload.data.user, role: user.role as Role };
+      return;
+    }
+
+    resetCookies(reply);
+    throw new UnauthorizedException("Invalid token", {
+      errorCode: ErrorCode.AUTH_INVALID_TOKEN,
+    });
+  };
+}
+
+export default new AuthMiddleware(new UserService());

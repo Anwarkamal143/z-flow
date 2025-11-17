@@ -1,0 +1,87 @@
+2025-11-17 06:56:36 [INFO]: Redis connected at 
+2025-11-17 06:57:36 [INFO]: Socket Metrics
+2025-11-17 06:57:40 [INFO]: Socket connected: uauNcmW93Ce2_aQXAAAF, User: 01KA6SFMMKEFMWYQXBD4VGTKXZ
+2025-11-17 06:57:45 [INFO]: Socket disconnected: uauNcmW93Ce2_aQXAAAF, Reason: client namespace disconnect
+2025-11-17 06:57:49 [INFO]: Socket connected: cJ_kGxAh-X1Jw0wNAAAI, User: 01KA6SFMMKEFMWYQXBD4VGTKXZ
+2025-11-17 06:58:36 [INFO]: Socket Metrics
+2025-11-17 06:59:05 [INFO]: Socket disconnected: cJ_kGxAh-X1Jw0wNAAAI, Reason: transport close
+2025-11-17 06:59:36 [INFO]: Socket Metrics
+2025-11-17 07:00:27 [WARN]: Closing Socket connection: 2025-11-17T07:00:27Z
+2025-11-17 07:00:41 [INFO]: Redis connected at 
+2025-11-17 07:00:51 [INFO]: Socket connected: z4wmIk85XCOlSxvrAAAC, User: 01KA6SFMMKEFMWYQXBD4VGTKXZ
+2025-11-17 07:01:41 [INFO]: Socket Metrics
+2025-11-17 07:02:41 [INFO]: Socket Metrics
+2025-11-17 07:03:41 [INFO]: Socket Metrics
+2025-11-17 07:04:41 [INFO]: Socket Metrics
+2025-11-17 07:05:01 [INFO]: Socket disconnected: z4wmIk85XCOlSxvrAAAC, Reason: transport close
+2025-11-17 07:05:03 [INFO]: Socket connected: bOsEpnSZplxMLAVUAAAE, User: 01KA6SFMMKEFMWYQXBD4VGTKXZ
+2025-11-17 07:05:41 [INFO]: Socket Metrics
+2025-11-17 07:06:22 [INFO]: Socket disconnected: bOsEpnSZplxMLAVUAAAE, Reason: transport close
+2025-11-17 07:06:24 [INFO]: Socket connected: 0nxRKb8RPlJ755mLAAAG, User: 01KA6SFMMKEFMWYQXBD4VGTKXZ
+2025-11-17 07:06:44 [INFO]: Socket Metrics
+2025-11-17 07:07:51 [INFO]: Socket Metrics
+2025-11-17 07:08:59 [INFO]: Socket Metrics
+2025-11-17 07:09:59 [INFO]: Socket Metrics
+2025-11-17 07:10:59 [INFO]: Socket Metrics
+2025-11-17 07:11:59 [INFO]: Socket Metrics
+2025-11-17 07:12:59 [INFO]: Socket Metrics
+2025-11-17 07:13:59 [INFO]: Socket Metrics
+2025-11-17 07:14:59 [INFO]: Socket Metrics
+2025-11-17 07:15:59 [INFO]: Socket Metrics
+2025-11-17 07:16:59 [INFO]: Socket Metrics
+2025-11-17 07:17:59 [INFO]: Socket Metrics
+2025-11-17 07:18:59 [INFO]: Socket Metrics
+2025-11-17 07:19:59 [INFO]: Socket Metrics
+2025-11-17 07:20:59 [INFO]: Socket Metrics
+2025-11-17 07:21:59 [INFO]: Socket Metrics
+2025-11-17 07:22:59 [INFO]: Socket Metrics
+2025-11-17 07:23:59 [INFO]: Socket Metrics
+2025-11-17 07:24:59 [INFO]: Socket Metrics
+2025-11-17 07:25:59 [INFO]: Socket Metrics
+2025-11-17 07:26:59 [INFO]: Socket Metrics
+2025-11-17 07:27:59 [INFO]: Socket Metrics
+2025-11-17 07:28:59 [INFO]: Socket Metrics
+2025-11-17 07:29:59 [INFO]: Socket Metrics
+2025-11-17 07:30:59 [INFO]: Socket Metrics
+2025-11-17 07:31:59 [INFO]: Socket Metrics
+2025-11-17 07:32:59 [INFO]: Socket Metrics
+2025-11-17 07:33:59 [INFO]: Socket Metrics
+2025-11-17 07:34:59 [INFO]: Socket Metrics
+2025-11-17 07:35:26 [WARN]: Closing Socket connection: 2025-11-17T07:35:26Z
+2025-11-17 07:35:26 [INFO]: Socket disconnected: 0nxRKb8RPlJ755mLAAAG, Reason: forced close
+2025-11-17 07:35:28 [INFO]: Redis connected at 
+2025-11-17 07:36:17 [INFO]: [object Object]
+2025-11-17 07:36:29 [INFO]: Socket Metrics
+2025-11-17 07:37:30 [INFO]: Socket Metrics
+2025-11-17 07:38:32 [INFO]: Socket Metrics
+2025-11-17 07:39:33 [INFO]: Socket Metrics
+2025-11-17 07:40:34 [INFO]: Socket Metrics
+2025-11-17 07:41:34 [INFO]: Socket Metrics
+2025-11-17 07:42:34 [INFO]: Socket Metrics
+2025-11-17 07:43:34 [INFO]: Socket Metrics
+2025-11-17 07:44:01 [WARN]: Closing Socket connection: 2025-11-17T07:44:01Z
+2025-11-17 07:44:03 [INFO]: Redis connected at 
+2025-11-17 07:44:28 [WARN]: Closing Socket connection: 2025-11-17T07:44:28Z
+2025-11-17 07:46:45 [INFO]: Redis connected at 
+2025-11-17 07:47:45 [INFO]: Socket Metrics
+2025-11-17 07:48:45 [INFO]: Socket Metrics
+2025-11-17 07:48:51 [WARN]: Closing Socket connection: 2025-11-17T07:48:51Z
+2025-11-17 15:12:43 [INFO]: Redis connected at 
+2025-11-17 15:13:16 [WARN]: Closing Socket connection: 2025-11-17T15:13:16Z
+2025-11-17 15:13:26 [INFO]: Redis connected at 
+2025-11-17 15:14:26 [INFO]: Socket Metrics
+2025-11-17 15:15:03 [WARN]: Closing Socket connection: 2025-11-17T15:15:03Z
+2025-11-17 15:15:38 [INFO]: Redis connected at 
+2025-11-17 15:15:51 [INFO]: Socket connected: Luv-2lVq2yQwR_V_AAAF, User: 01KA6SFMMKEFMWYQXBD4VGTKXZ
+2025-11-17 15:15:54 [INFO]: Socket disconnected: Luv-2lVq2yQwR_V_AAAF, Reason: transport close
+2025-11-17 15:15:55 [INFO]: Socket connected: edCND9Xu2-gckj3RAAAI, User: 01KA6SFMMKEFMWYQXBD4VGTKXZ
+2025-11-17 15:16:38 [INFO]: Socket Metrics
+2025-11-17 15:17:38 [INFO]: Socket Metrics
+2025-11-17 15:18:14 [INFO]: Redis connected at 
+2025-11-17 15:18:17 [INFO]: Socket connected: h5V4qmXRZDrXwjIdAAAB, User: 01KA6SFMMKEFMWYQXBD4VGTKXZ
+2025-11-17 15:19:14 [INFO]: Socket Metrics
+2025-11-17 15:20:14 [INFO]: Socket Metrics
+2025-11-17 15:21:14 [INFO]: Socket Metrics
+2025-11-17 15:22:14 [INFO]: Socket Metrics
+2025-11-17 15:23:14 [INFO]: Socket Metrics
+2025-11-17 15:24:14 [INFO]: Socket Metrics
