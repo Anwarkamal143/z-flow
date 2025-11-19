@@ -1,0 +1,217 @@
+2025-11-19 06:30:14 [INFO]: Redis connected at 
+2025-11-19 06:31:14 [INFO]: Socket Metrics
+2025-11-19 06:32:14 [INFO]: Socket Metrics
+2025-11-19 06:33:14 [INFO]: Socket Metrics
+2025-11-19 06:34:14 [INFO]: Socket Metrics
+2025-11-19 06:35:14 [INFO]: Socket Metrics
+2025-11-19 06:36:14 [INFO]: Socket Metrics
+2025-11-19 06:37:14 [INFO]: Socket Metrics
+2025-11-19 06:38:14 [INFO]: Socket Metrics
+2025-11-19 06:39:14 [INFO]: Socket Metrics
+2025-11-19 06:40:14 [INFO]: Socket Metrics
+2025-11-19 06:40:38 [INFO]: [object Object]
+2025-11-19 06:41:14 [INFO]: Socket Metrics
+2025-11-19 06:42:14 [INFO]: Socket Metrics
+2025-11-19 06:43:14 [INFO]: Socket Metrics
+2025-11-19 06:43:23 [INFO]: Socket connected: d7DgCaJeyA2RKCoNAAAE, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 06:43:27 [INFO]: Socket disconnected: d7DgCaJeyA2RKCoNAAAE, Reason: transport close
+2025-11-19 06:43:27 [INFO]: Socket connected: IoZa0rwms6LTtTsFAAAH, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 06:43:46 [INFO]: Socket disconnected: IoZa0rwms6LTtTsFAAAH, Reason: transport close
+2025-11-19 06:43:47 [INFO]: Socket connected: OENPoVi056srDEyFAAAK, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 06:44:14 [INFO]: Socket Metrics
+2025-11-19 06:44:31 [INFO]: Socket disconnected: OENPoVi056srDEyFAAAK, Reason: transport close
+2025-11-19 06:44:32 [INFO]: Socket connected: jtacwhJCG5JCeVj6AAAN, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 06:45:01 [INFO]: Socket disconnected: jtacwhJCG5JCeVj6AAAN, Reason: transport close
+2025-11-19 06:45:09 [INFO]: Socket connected: WH0bEx-3akpBRU0cAAAQ, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 06:45:14 [INFO]: Socket Metrics
+2025-11-19 06:46:14 [INFO]: Socket Metrics
+2025-11-19 06:47:14 [INFO]: Socket Metrics
+2025-11-19 06:48:14 [INFO]: Socket Metrics
+2025-11-19 06:48:51 [INFO]: Socket disconnected: WH0bEx-3akpBRU0cAAAQ, Reason: transport close
+2025-11-19 06:48:52 [INFO]: Socket connected: e-kIP9YFss1KxXcQAAAS, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 06:49:14 [INFO]: Socket Metrics
+2025-11-19 06:50:14 [INFO]: Socket Metrics
+2025-11-19 06:51:23 [INFO]: Socket Metrics
+2025-11-19 06:52:34 [INFO]: Socket Metrics
+2025-11-19 06:53:42 [INFO]: Socket Metrics
+2025-11-19 06:54:52 [INFO]: Socket Metrics
+2025-11-19 06:56:01 [INFO]: Socket Metrics
+2025-11-19 06:57:09 [INFO]: Socket Metrics
+2025-11-19 06:58:18 [INFO]: Socket Metrics
+2025-11-19 06:58:51 [INFO]: [object Object]
+2025-11-19 06:59:28 [INFO]: Socket Metrics
+2025-11-19 07:00:36 [INFO]: Socket Metrics
+2025-11-19 07:01:46 [INFO]: Socket Metrics
+2025-11-19 07:02:55 [INFO]: Socket Metrics
+2025-11-19 07:04:03 [INFO]: Socket Metrics
+2025-11-19 07:05:13 [INFO]: Socket Metrics
+2025-11-19 07:06:23 [INFO]: Socket Metrics
+2025-11-19 07:07:32 [INFO]: Socket Metrics
+2025-11-19 07:08:40 [INFO]: Socket Metrics
+2025-11-19 07:09:50 [INFO]: Socket Metrics
+2025-11-19 07:10:59 [INFO]: Socket Metrics
+2025-11-19 07:12:09 [INFO]: Socket Metrics
+2025-11-19 07:13:17 [INFO]: Socket Metrics
+2025-11-19 07:14:26 [INFO]: Socket Metrics
+2025-11-19 07:14:52 [INFO]: [object Object]
+2025-11-19 07:15:31 [INFO]: Socket Metrics
+2025-11-19 07:16:31 [INFO]: Socket Metrics
+2025-11-19 07:17:31 [INFO]: Socket Metrics
+2025-11-19 07:18:27 [INFO]: Socket disconnected: e-kIP9YFss1KxXcQAAAS, Reason: transport close
+2025-11-19 07:18:28 [INFO]: Socket connected: -YpRIr7F9TUUHqxLAAAV, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:18:31 [INFO]: Socket Metrics
+2025-11-19 07:19:11 [INFO]: Socket disconnected: -YpRIr7F9TUUHqxLAAAV, Reason: transport close
+2025-11-19 07:19:12 [INFO]: Socket connected: F8GdugCgpJMlkGtqAAAY, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:19:21 [INFO]: Socket disconnected: F8GdugCgpJMlkGtqAAAY, Reason: transport close
+2025-11-19 07:19:22 [INFO]: Socket connected: cgsaN6QqoyIJaFH8AAAb, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:19:25 [INFO]: Socket disconnected: cgsaN6QqoyIJaFH8AAAb, Reason: client namespace disconnect
+2025-11-19 07:19:31 [INFO]: Socket Metrics
+2025-11-19 07:20:29 [INFO]: Socket connected: seBjmF12WlKCFimQAAAe, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:20:31 [INFO]: Socket Metrics
+2025-11-19 07:20:33 [INFO]: Socket disconnected: seBjmF12WlKCFimQAAAe, Reason: transport close
+2025-11-19 07:20:33 [INFO]: Socket connected: g_DSHjn4lJmGeNDtAAAh, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:21:31 [INFO]: Socket Metrics
+2025-11-19 07:22:31 [INFO]: Socket Metrics
+2025-11-19 07:23:31 [INFO]: Socket Metrics
+2025-11-19 07:23:52 [INFO]: Socket disconnected: g_DSHjn4lJmGeNDtAAAh, Reason: transport close
+2025-11-19 07:23:53 [INFO]: Socket connected: almUGM4e01JqKblfAAAk, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:24:31 [INFO]: Socket Metrics
+2025-11-19 07:24:37 [INFO]: Socket disconnected: almUGM4e01JqKblfAAAk, Reason: transport close
+2025-11-19 07:24:38 [INFO]: Socket connected: TedbbNLvL9gczpDwAAAn, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:25:09 [INFO]: Socket disconnected: TedbbNLvL9gczpDwAAAn, Reason: transport close
+2025-11-19 07:25:10 [INFO]: Socket connected: 7l5mgBJZjhkDqh_vAAAq, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:25:31 [INFO]: Socket Metrics
+2025-11-19 07:26:31 [INFO]: Socket Metrics
+2025-11-19 07:27:31 [INFO]: Socket Metrics
+2025-11-19 07:28:31 [INFO]: Socket Metrics
+2025-11-19 07:29:12 [INFO]: Socket disconnected: 7l5mgBJZjhkDqh_vAAAq, Reason: transport close
+2025-11-19 07:29:13 [INFO]: Socket connected: sUm6YcFwn6m_nNF6AAAt, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:29:31 [INFO]: Socket Metrics
+2025-11-19 07:30:31 [INFO]: Socket Metrics
+2025-11-19 07:30:44 [INFO]: Socket disconnected: sUm6YcFwn6m_nNF6AAAt, Reason: transport close
+2025-11-19 07:30:45 [INFO]: Socket connected: AzPM07tsjxjJXMchAAAw, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:30:49 [INFO]: Socket disconnected: AzPM07tsjxjJXMchAAAw, Reason: transport close
+2025-11-19 07:30:49 [INFO]: Socket connected: UTAeaE745UUQbRjdAAAz, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:31:31 [INFO]: Socket Metrics
+2025-11-19 07:31:52 [INFO]: Socket disconnected: UTAeaE745UUQbRjdAAAz, Reason: client namespace disconnect
+2025-11-19 07:32:09 [INFO]: Socket connected: CrKcfDRxNvRk2BFSAAA1, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:32:09 [INFO]: Socket disconnected: CrKcfDRxNvRk2BFSAAA1, Reason: transport close
+2025-11-19 07:32:10 [INFO]: Socket connected: _qk4TSX5fm8VhzQNAAA4, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:32:24 [INFO]: Socket disconnected: _qk4TSX5fm8VhzQNAAA4, Reason: client namespace disconnect
+2025-11-19 07:32:24 [INFO]: Socket connected: 4NBqL0_0Yx4oj917AAA6, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:32:31 [INFO]: Socket Metrics
+2025-11-19 07:33:31 [INFO]: Socket Metrics
+2025-11-19 07:34:31 [INFO]: Socket Metrics
+2025-11-19 07:35:31 [INFO]: Socket Metrics
+2025-11-19 07:35:40 [INFO]: [object Object]
+2025-11-19 07:36:31 [INFO]: Socket Metrics
+2025-11-19 07:37:31 [INFO]: Socket Metrics
+2025-11-19 07:38:31 [INFO]: Socket Metrics
+2025-11-19 07:39:31 [INFO]: Socket Metrics
+2025-11-19 07:40:31 [INFO]: Socket Metrics
+2025-11-19 07:41:31 [INFO]: Socket Metrics
+2025-11-19 07:42:31 [INFO]: Socket Metrics
+2025-11-19 07:43:31 [INFO]: Socket Metrics
+2025-11-19 07:44:31 [INFO]: Socket Metrics
+2025-11-19 07:45:31 [INFO]: Socket Metrics
+2025-11-19 07:46:31 [INFO]: Socket Metrics
+2025-11-19 07:47:31 [INFO]: Socket Metrics
+2025-11-19 07:48:31 [INFO]: Socket Metrics
+2025-11-19 07:49:31 [INFO]: Socket Metrics
+2025-11-19 07:50:31 [INFO]: Socket Metrics
+2025-11-19 07:50:57 [INFO]: [object Object]
+2025-11-19 07:51:31 [INFO]: Socket Metrics
+2025-11-19 07:52:14 [INFO]: Socket disconnected: 4NBqL0_0Yx4oj917AAA6, Reason: transport close
+2025-11-19 07:52:15 [INFO]: Socket connected: 3CU874Ca1dWTAnVqAAA9, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:52:31 [INFO]: Socket Metrics
+2025-11-19 07:53:12 [INFO]: Socket disconnected: 3CU874Ca1dWTAnVqAAA9, Reason: transport close
+2025-11-19 07:53:13 [INFO]: Socket connected: 396XnU-AOhtGKuKKAABA, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:53:20 [INFO]: Socket disconnected: 396XnU-AOhtGKuKKAABA, Reason: transport close
+2025-11-19 07:53:20 [INFO]: Socket connected: gRnnhY-CW9vkRWr1AABD, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:53:31 [INFO]: Socket Metrics
+2025-11-19 07:54:31 [INFO]: Socket Metrics
+2025-11-19 07:54:34 [INFO]: Socket disconnected: gRnnhY-CW9vkRWr1AABD, Reason: transport close
+2025-11-19 07:54:35 [INFO]: Socket connected: ajxvQYwqOMK3RUTsAABG, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:54:37 [INFO]: Socket disconnected: ajxvQYwqOMK3RUTsAABG, Reason: transport close
+2025-11-19 07:54:38 [INFO]: Socket connected: QBo7tOhyxagXfLfvAABJ, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:54:57 [INFO]: Socket disconnected: QBo7tOhyxagXfLfvAABJ, Reason: transport close
+2025-11-19 07:54:58 [INFO]: Socket connected: tlovW7ypFppDLZKvAABM, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:54:58 [INFO]: Socket disconnected: tlovW7ypFppDLZKvAABM, Reason: transport close
+2025-11-19 07:54:59 [INFO]: Socket connected: Ry2LdYIkHPhINQoaAABP, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 07:55:31 [INFO]: Socket Metrics
+2025-11-19 07:56:31 [INFO]: Socket Metrics
+2025-11-19 07:57:31 [INFO]: Socket Metrics
+2025-11-19 07:58:31 [INFO]: Socket Metrics
+2025-11-19 07:59:24 [INFO]: Socket disconnected: Ry2LdYIkHPhINQoaAABP, Reason: client namespace disconnect
+2025-11-19 07:59:31 [INFO]: Socket Metrics
+2025-11-19 08:00:31 [INFO]: Socket Metrics
+2025-11-19 08:01:31 [INFO]: Socket Metrics
+2025-11-19 08:02:31 [INFO]: Socket Metrics
+2025-11-19 08:03:31 [INFO]: Socket Metrics
+2025-11-19 08:04:31 [INFO]: Socket Metrics
+2025-11-19 08:05:31 [INFO]: Socket Metrics
+2025-11-19 08:06:31 [INFO]: Socket Metrics
+2025-11-19 08:07:31 [INFO]: Socket Metrics
+2025-11-19 08:08:31 [INFO]: Socket Metrics
+2025-11-19 08:09:31 [INFO]: Socket Metrics
+2025-11-19 08:10:31 [INFO]: Socket Metrics
+2025-11-19 08:11:31 [INFO]: Socket Metrics
+2025-11-19 08:12:31 [INFO]: Socket Metrics
+2025-11-19 08:13:21 [INFO]: Socket connected: SXdhp2p5nBsWAvTnAABS, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 08:13:22 [INFO]: Socket disconnected: SXdhp2p5nBsWAvTnAABS, Reason: client namespace disconnect
+2025-11-19 08:13:31 [INFO]: Socket Metrics
+2025-11-19 08:13:52 [INFO]: Socket connected: a4naorrBFrfO99I8AABV, User: 01KABD3R0RMRWRATTPSEARMRT5
+2025-11-19 08:13:53 [INFO]: Socket disconnected: a4naorrBFrfO99I8AABV, Reason: client namespace disconnect
+2025-11-19 08:14:31 [INFO]: Socket Metrics
+2025-11-19 08:15:31 [INFO]: Socket Metrics
+2025-11-19 08:16:31 [INFO]: Socket Metrics
+2025-11-19 08:17:31 [INFO]: Socket Metrics
+2025-11-19 08:18:31 [INFO]: Socket Metrics
+2025-11-19 08:19:31 [INFO]: Socket Metrics
+2025-11-19 08:20:31 [INFO]: Socket Metrics
+2025-11-19 08:21:31 [INFO]: Socket Metrics
+2025-11-19 08:22:31 [INFO]: Socket Metrics
+2025-11-19 08:23:31 [INFO]: Socket Metrics
+2025-11-19 08:24:31 [INFO]: Socket Metrics
+2025-11-19 08:25:31 [INFO]: Socket Metrics
+2025-11-19 08:26:31 [INFO]: Socket Metrics
+2025-11-19 08:27:31 [INFO]: Socket Metrics
+2025-11-19 08:28:31 [INFO]: Socket Metrics
+2025-11-19 08:29:31 [INFO]: Socket Metrics
+2025-11-19 08:30:31 [INFO]: Socket Metrics
+2025-11-19 08:31:31 [INFO]: Socket Metrics
+2025-11-19 08:32:31 [INFO]: Socket Metrics
+2025-11-19 08:33:31 [INFO]: Socket Metrics
+2025-11-19 08:34:31 [INFO]: Socket Metrics
+2025-11-19 08:35:31 [INFO]: Socket Metrics
+2025-11-19 08:36:31 [INFO]: Socket Metrics
+2025-11-19 08:37:31 [INFO]: Socket Metrics
+2025-11-19 08:38:31 [INFO]: Socket Metrics
+2025-11-19 08:39:31 [INFO]: Socket Metrics
+2025-11-19 08:40:31 [INFO]: Socket Metrics
+2025-11-19 08:41:31 [INFO]: Socket Metrics
+2025-11-19 08:42:31 [INFO]: Socket Metrics
+2025-11-19 08:43:31 [INFO]: Socket Metrics
+2025-11-19 08:44:31 [INFO]: Socket Metrics
+2025-11-19 08:45:31 [INFO]: Socket Metrics
+2025-11-19 08:46:31 [INFO]: Socket Metrics
+2025-11-19 08:47:32 [INFO]: Socket Metrics
+2025-11-19 08:48:32 [INFO]: Socket Metrics
+2025-11-19 08:49:32 [INFO]: Socket Metrics
+2025-11-19 08:50:32 [INFO]: Socket Metrics
+2025-11-19 08:51:32 [INFO]: Socket Metrics
+2025-11-19 08:52:32 [INFO]: Socket Metrics
+2025-11-19 08:53:32 [INFO]: Socket Metrics
+2025-11-19 08:54:32 [INFO]: Socket Metrics
+2025-11-19 08:55:32 [INFO]: Socket Metrics
+2025-11-19 08:56:32 [INFO]: Socket Metrics
+2025-11-19 08:57:32 [INFO]: Socket Metrics
+2025-11-19 08:58:32 [INFO]: Socket Metrics
+2025-11-19 08:59:32 [INFO]: Socket Metrics
+2025-11-19 09:00:32 [INFO]: Socket Metrics
+2025-11-19 09:01:32 [INFO]: Socket Metrics
+2025-11-19 09:02:32 [INFO]: Socket Metrics
+2025-11-19 09:03:32 [INFO]: Socket Metrics
+2025-11-19 09:04:32 [INFO]: Socket Metrics
+2025-11-19 09:05:32 [INFO]: Socket Metrics
+2025-11-19 09:06:32 [INFO]: Socket Metrics

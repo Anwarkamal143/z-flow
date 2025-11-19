@@ -9,6 +9,7 @@ const port = Number(process.env.PORT || 4000);
 const start = async () => {
   try {
     await fastify.listen({ port, host: "0.0.0.0" });
+    await fastify.db.select("1");
     fastify.log.info(`Server listening on ${port}`);
     // handle graceful shutdown
     gracefulShutdown(fastify);

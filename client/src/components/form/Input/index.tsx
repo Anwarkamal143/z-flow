@@ -8,13 +8,13 @@ import {
   isValidElement,
   MouseEvent,
   ReactElement,
-  ReactNode
+  ReactNode,
 } from "react";
 import {
   Controller,
   FieldValues,
   UseControllerProps,
-  useFormContext
+  useFormContext,
 } from "react-hook-form";
 
 import {
@@ -22,7 +22,7 @@ import {
   FieldContent,
   FieldDescription,
   FieldError,
-  FieldLabel
+  FieldLabel,
 } from "@/components/ui/field";
 
 import { Input, InputProps } from "@/components/ui/input";
@@ -32,18 +32,25 @@ import FieldHelperText from "./FieldHelperText";
 
 // ✅ Border variants (top, bottom, left, right)
 const inputVariants = cva(
-  "border-transparent rounded-none outline-none focus-visible:border-transparent px-0",
+  "border-transparent rounded-none outline-none focus-visible:border-transparent px-0 ",
   {
     variants: {
+      rounded: {
+        sm: "rounded-sm px-2 ",
+        md: "rounded-md px-2",
+        lg: "rounded-lg px-2",
+        full: "rounded-full px-2",
+        xs: "rounded-xs px-2 ",
+      },
       border: {
         bottom:
           "border-b border-b-input hover:border-b-inputActive focus-visible:border-b-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-b-ring",
         top: "border-t border-t-input hover:border-t-inputActive focus-visible:border-t-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-t-ring",
         left: "border-l border-l-input hover:border-l-inputActive focus-visible:border-l-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-l-ring",
         right:
-          "border-r border-r-input hover:border-r-inputActive focus-visible:border-r-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-r-ring"
-      }
-    }
+          "border-r border-r-input hover:border-r-inputActive focus-visible:border-r-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-r-ring",
+      },
+    },
   }
 );
 
@@ -65,6 +72,7 @@ type InputFormProps = InputProps & {
   leftIcon?: IconProps;
   rightIcon?: IconProps;
   border?: VariantProps<typeof inputVariants>["border"];
+  rounded?: VariantProps<typeof inputVariants>["rounded"];
   isSwitch?: boolean;
   isTextArea?: boolean;
 };
@@ -86,6 +94,7 @@ export function FormInput<T extends FieldValues>({
   placeholder,
   type = "text",
   border,
+  rounded,
   isSwitch = false,
   isTextArea = false,
   disabled = false,
@@ -104,7 +113,7 @@ export function FormInput<T extends FieldValues>({
     if (render) {
       return render({
         className: cn(ICON_COMMON_CLASSES(position || ""), pointer, className),
-        onClick: handleClick
+        onClick: handleClick,
       });
     }
 
@@ -117,7 +126,7 @@ export function FormInput<T extends FieldValues>({
             className
           ),
           onClick: handleClick,
-          ...meta
+          ...meta,
         } as any);
       }
       const Comp = Icon as ElementType;
@@ -149,7 +158,7 @@ export function FormInput<T extends FieldValues>({
           )}
 
           <FieldContent>
-            <div className="relative">
+            <div className="relative flex items-center h-full">
               {renderIcon(leftIcon, "left-2")}
               {renderIcon(rightIcon, "right-2")}
 
@@ -160,9 +169,10 @@ export function FormInput<T extends FieldValues>({
                   placeholder={placeholder}
                   className={cn(
                     border && inputVariants({ border }),
+                    rounded && inputVariants({ rounded }),
                     {
                       "pl-8": !!leftIcon,
-                      "pr-8": !!rightIcon
+                      "pr-8": !!rightIcon,
                     },
                     rest.className
                   )}
@@ -181,9 +191,11 @@ export function FormInput<T extends FieldValues>({
                   disabled={disabled}
                   className={cn(
                     border && inputVariants({ border }),
+                    !border && rounded && inputVariants({ rounded }),
+
                     {
                       "pl-8": !!leftIcon,
-                      "pr-8": !!rightIcon
+                      "pr-8": !!rightIcon,
                     },
                     rest.className
                   )}

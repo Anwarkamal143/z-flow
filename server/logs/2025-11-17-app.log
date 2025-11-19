@@ -356,3 +356,7 @@
 2025-11-17 18:14:44 [INFO]: Socket Metrics
 2025-11-17 18:15:44 [INFO]: Socket Metrics
 2025-11-17 18:16:44 [INFO]: Socket Metrics
+2025-11-17 18:17:23 [WARN]: Closing Socket connection: 2025-11-17T18:17:23Z
+2025-11-17 18:17:23 [INFO]: Socket disconnected: iOoSTScytqCm_1NxAAAC, Reason: forced close
+2025-11-17 18:17:25 [INFO]: Redis connected at 
+2025-11-17 18:17:33 [WARN]: Closing Socket connection: 2025-11-17T18:17:33Z

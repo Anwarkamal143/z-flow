@@ -24,7 +24,6 @@ const AppWrapper = ({ children }: IAppWrapper) => {
     if (isFirstTimeLoading) return;
     if (userData?.data) {
       const { accounts, accessToken, refreshToken, ...rest } = userData.data;
-      console.log({ userData });
       setUser({
         user: rest,
         accounts,

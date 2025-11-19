@@ -40,7 +40,9 @@ export function useTokenRefresher() {
       if (resp) {
         authStoreActions.setTokens({
           ...resp,
+          isRefreshing: false,
         });
+        counter.current = 0;
       }
     } catch (err) {
       console.log("Token refresh failed:", err);

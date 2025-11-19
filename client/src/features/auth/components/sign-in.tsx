@@ -2,27 +2,18 @@
 
 import { z } from "zod";
 
-import { GoogleIcon } from "@/assets/icons";
+import { EmailIcon, Eye, EyeOff } from "@/assets/icons";
 import ButtonLoader from "@/components/ButtonLoader";
 import Form from "@/components/form/Form";
 import FormInput from "@/components/form/Input";
-import SeparatorText from "@/components/SeparatorText";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import useZodForm from "@/hooks/useZodForm";
 import { useStoreAuthActions } from "@/store/userAuthStore";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSignIn } from "../api/hooks";
 import { SIGN_IN_SCHEMA, SignInSchemaType } from "../schema";
+import AuthForm from "./AuthForm";
 
 /* -------------------------- Zod Validation -------------------------- */
 const authSchema = z.object({
@@ -92,75 +83,47 @@ const SignInScreen = ({}) => {
     }
   };
 
-  const SignInWithG = async () => {
-    try {
-      setIsSocialLogginIn(true);
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/google`;
-    } catch {
-    } finally {
-      setIsSocialLogginIn(false);
-    }
-  };
   const { formState } = form;
   const isFormSubmitting = formState.isSubmitting || isSocialLogginIn;
   // bg-[url(/img/auth-bg.jpg)] bg-cover
   return (
-    <div className="flex items-center justify-center h-screen">
-      <Card className="w-full my-auto max-w-md mx-auto shadow-lg border border-gray-200 dark:border-gray-700">
-        <CardHeader className="text-center space-y-1">
-          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            Sign in to your account using your email or continue with social
-            login.
-          </CardDescription>
-        </CardHeader>
+    <AuthForm
+      mode="signin"
+      title="Welcome back!"
+      description="Sign in to your account using your email or continue with social login."
+      isSubmitting={isFormSubmitting}
+    >
+      <Form form={form} onSubmit={onSubmit} className="grid gap-4">
+        <FormInput
+          label="Email"
+          name="email"
+          type="email"
+          placeholder="you@example.com"
+          leftIcon={{
+            Icon: EmailIcon,
+          }}
+        />
 
-        <CardContent>
-          {/* ---------- OAuth Buttons ---------- */}
-          <div className="grid gap-3">
-            <Button
-              variant="outline"
-              className="flex justify-center gap-2 cursor-pointer"
-              onClick={() => SignInWithG()}
-            >
-              <GoogleIcon />
-              Sign in with Google
-            </Button>
-          </div>
+        <FormInput
+          label="Password"
+          name="password"
+          type={showPassword ? "text" : "password"}
+          placeholder="********"
+          rightIcon={{
+            Icon: !showPassword ? Eye : EyeOff,
+            onClick: () => setShowPassword(!showPassword),
+          }}
+        />
 
-          <SeparatorText className="my-4  text-center w-full" text="OR" />
-
-          {/* ---------- Email / Password Form ---------- */}
-          <Form form={form} onSubmit={onSubmit} className="grid gap-4">
-            <FormInput
-              label="Email"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-            />
-
-            <FormInput
-              label="Password"
-              name="password"
-              type="password"
-              placeholder="********"
-            />
-
-            <ButtonLoader type="submit" className="mt-2">
-              Sign In
-            </ButtonLoader>
-          </Form>
-
-          {/* ---------- Switch Mode Link ---------- */}
-          <div className="  gap-1 pt-1 text-sm flex justify-center my-2">
-            <span className="text-gray-400">Don&apos;t have an account?</span>
-            <Link href={"/sign-up"} className="text-blue-400 hover:underline">
-              Sign Up
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        <ButtonLoader
+          type="submit"
+          className="mt-2"
+          disabled={isFormSubmitting}
+        >
+          Sign In
+        </ButtonLoader>
+      </Form>
+    </AuthForm>
   );
 };
 

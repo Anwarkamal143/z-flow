@@ -8,7 +8,6 @@ export default async function Home() {
   return (
     <div>
       {res?.user.id}
-
       <Activity mode={res != null ? "visible" : "hidden"}>
         <SignOutBtn />
       </Activity>

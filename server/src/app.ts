@@ -60,16 +60,9 @@ export function buildApp() {
 
   // healthcheck
 
-  fastify.get("/redis-test", async function () {
-    await fastify.redis.del("foo");
-    await fastify.redis.set("foo", "bar");
-    return await fastify.redis.get("foo");
-  });
-
-  // simple ready check - ensure DB connection by running a trivial query
+  // simple ready check
   fastify.get("/ready", async (_request, reply) => {
     try {
-      await fastify.db.select("1");
       return reply.status(200).send({ ready: true });
     } catch (err) {
       reply.status(503).send({ ready: false });

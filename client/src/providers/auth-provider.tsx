@@ -3,7 +3,7 @@ import { PageLoader } from "@/components/loaders";
 import { useSignOut } from "@/features/auth/api";
 import {
   useStoreUserIsAuthenticated,
-  useStoreUserIsAuthenticating
+  useStoreUserIsAuthenticating,
 } from "@/store/userAuthStore";
 import { ReactNode, useEffect } from "react";
 

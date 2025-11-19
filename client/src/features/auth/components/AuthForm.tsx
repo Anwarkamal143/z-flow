@@ -1,13 +1,8 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { GithubIcon, GoogleIcon } from "@/assets/icons";
-import Form from "@/components/form/Form";
-import FormInput from "@/components/form/Input";
+import { GoogleIcon } from "@/assets/icons";
 import SeparatorText from "@/components/SeparatorText";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,15 +10,19 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
+import { API_BASE_URL } from "@/config";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 /* -------------------------- Zod Validation -------------------------- */
 const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z
     .string()
-    .min(6, { message: "Password must be at least 6 characters" })
+    .min(6, { message: "Password must be at least 6 characters" }),
 });
 
 type AuthFormValues = z.infer<typeof authSchema>;
@@ -31,92 +30,81 @@ type AuthFormValues = z.infer<typeof authSchema>;
 /* ------------------------- Component Props ------------------------- */
 interface AuthFormProps {
   mode?: "signin" | "signup";
-  onSubmit: (data: AuthFormValues) => void;
-  onOAuthClick?: (provider: "google" | "github") => void;
-  switchMode?: () => void;
+  children?: React.ReactNode;
+  title?: string;
+  description?: string;
+  isSubmitting?: boolean;
 }
 
 /* ---------------------------- Component ---------------------------- */
-export const AuthForm: React.FC<AuthFormProps> = ({
+const SignInScreen = ({
   mode = "signin",
-  onSubmit,
-  onOAuthClick,
-  switchMode
-}) => {
-  const form = useForm<AuthFormValues>({
-    resolver: zodResolver(authSchema),
-    defaultValues: { email: "", password: "" }
-  });
-  const handleSubmit = (values: AuthFormValues) => {};
+  title,
+  description,
+  children,
+  isSubmitting,
+}: AuthFormProps) => {
+  const router = useRouter();
+  const [isSocialLogginIn, setIsSocialLogginIn] = useState(false);
+
+  const SignInWithG = async () => {
+    try {
+      setIsSocialLogginIn(true);
+      window.location.href = `${API_BASE_URL}/google`;
+    } catch {
+    } finally {
+      setIsSocialLogginIn(false);
+    }
+  };
+  // bg-[url(/img/auth-bg.jpg)] bg-cover
   return (
-    <Card className="w-full max-w-md mx-auto shadow-lg border border-gray-200 dark:border-gray-700">
-      <CardHeader className="text-center space-y-1">
-        <CardTitle className="text-2xl font-bold">
-          {mode === "signin" ? "Sign In" : "Create Account"}
-        </CardTitle>
-        <CardDescription className="text-sm text-muted-foreground">
-          {mode === "signin"
-            ? "Sign in to your account using your email or continue with social login."
-            : "Enter your details to create a new account or continue with social login."}
-        </CardDescription>
-      </CardHeader>
+    <div className="flex items-center justify-center h-screen">
+      <Card className="w-full my-auto max-w-md mx-auto shadow-lg border border-gray-200 dark:border-gray-700">
+        <CardHeader className="text-center space-y-1">
+          <CardTitle className="text-2xl font-bold">{title}</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            {description}
+          </CardDescription>
+        </CardHeader>
 
-      <CardContent>
-        {/* ---------- OAuth Buttons ---------- */}
-        <div className="grid gap-3">
-          <Button
-            variant="outline"
-            className="flex justify-center gap-2 cursor-pointer"
-            onClick={() => onOAuthClick?.("google")}
-          >
-            <GoogleIcon />
-            {mode === "signin" ? "Sign in with Google" : "Sign up with Google"}
-          </Button>
+        <CardContent>
+          {/* ---------- OAuth Buttons ---------- */}
+          <div className="grid gap-3">
+            <Button
+              variant="outline"
+              className="flex justify-center gap-2 cursor-pointer"
+              onClick={() => SignInWithG()}
+              disabled={isSubmitting || isSocialLogginIn}
+            >
+              <GoogleIcon />
+              Continue with Google
+            </Button>
+          </div>
 
-          <Button
-            variant="outline"
-            className="flex justify-center gap-2 cursor-pointer"
-            onClick={() => onOAuthClick?.("github")}
-          >
-            <GithubIcon />
-            {mode === "signin" ? "Sign in with GitHub" : "Sign up with GitHub"}
-          </Button>
-        </div>
+          <SeparatorText className="my-4  text-center w-full" text="OR" />
 
-        <SeparatorText className="my-4  text-center w-full" text="OR" />
+          {/* ---------- Email / Password Form ---------- */}
 
-        {/* ---------- Email / Password Form ---------- */}
-        <Form form={form} onSubmit={handleSubmit} className="grid gap-4">
-          <FormInput
-            label="Email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-          />
-
-          <FormInput
-            label="Password"
-            name="password"
-            type="password"
-            placeholder="********"
-          />
-
-          <Button type="submit" className="mt-2">
-            {mode === "signin" ? "Sign In" : "Create Account"}
-          </Button>
-        </Form>
-
-        {/* ---------- Switch Mode Link ---------- */}
-        <p className="px-1 text-sm text-center text-muted-foreground mt-4">
-          {mode === "signin" ? "New here? " : "Already have an account? "}
-          <span
-            className="underline cursor-pointer underline-offset-4 hover:text-primary"
-            onClick={switchMode}
-          >
-            {mode === "signin" ? "Create an account" : "Sign in"}
-          </span>
-        </p>
-      </CardContent>
-    </Card>
+          {children}
+          {/* ---------- Switch Mode Link ---------- */}
+          <div className="  gap-1 pt-1 text-sm flex justify-center my-2">
+            <span className="text-gray-400">
+              {mode === "signin"
+                ? "Don't have an account?"
+                : "Already have an account?"}{" "}
+            </span>
+            <Link
+              href={mode === "signin" ? "/sign-up" : "login"}
+              className="text-blue-400 hover:underline"
+              aria-disabled={isSubmitting || isSocialLogginIn}
+            >
+              {mode === "signin" ? "Sign Up" : "Sign In"}
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
+
+export default SignInScreen;

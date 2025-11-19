@@ -13,7 +13,6 @@ export const getRefreshTokenByJTI = async (jti?: string) => {
     return null;
   }
   const jtires = await fastify.redis.get(REDIS_KEYS.REFRESH_TOKEN_JTI(jti));
-  console.log(jtires, "jtires");
   if (!jtires) {
     return null;
   }
