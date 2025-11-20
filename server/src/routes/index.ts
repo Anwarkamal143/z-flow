@@ -7,6 +7,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 // import uploaderRoutes from "./uploader.routes";
 // import userRoutes from "./user.routes";
 import authRoutes from "./v1/auth.route";
+import inngestRoutes from "./v1/inngest.route";
 import socialRoutes from "./v1/social.route";
 import userRoutes from "./v1/user.route";
 
@@ -22,6 +23,7 @@ async function v1RoutesV1(fastify: FastifyInstance) {
       instance.register(authRoutes, { prefix: "/auth" });
       instance.register(userRoutes, { prefix: "/user" });
       instance.register(socialRoutes, { prefix: "/google" });
+      instance.register(inngestRoutes, { prefix: "/inngest" });
       //   instance.register(uploaderRoutes, { prefix: "/media" });
       //   instance.register(stripeRoutes, { prefix: "/stripe" });
       //   instance.register(assetsRoutes, { prefix: "/assets" });

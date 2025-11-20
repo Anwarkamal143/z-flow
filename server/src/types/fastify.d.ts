@@ -1,5 +1,6 @@
 // src/types/fastify.d.ts
 
+import { inngest } from "@/app_inngest";
 import RedisSocket from "@/config/socket"; // your current implementation
 import * as schema from "@/db/schema";
 import "fastify";
@@ -12,6 +13,7 @@ declare module "fastify" {
     db: import("drizzle-orm/postgres-js").Drizzle<typeof schema>;
     logger: import("pino").Logger;
     redis_socket: typeof RedisSocket;
+    inngest: typeof inngest;
   }
 
   export interface FastifyRequest extends FType {

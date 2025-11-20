@@ -64,6 +64,7 @@ redisCircuitBreaker.fallback(() => {
 class RedisSocket {
   private _io!: Server;
   private _redis!: Redis;
+  private _timeInterval!: NodeJS.Timeout;
   // private socket!: ISocket;
   private metrics = {
     connections: 0,
@@ -151,7 +152,8 @@ class RedisSocket {
    * Setup monitoring and metrics collection
    */
   private setupMonitoring() {
-    setInterval(() => {
+    clearInterval(this._timeInterval);
+    this._timeInterval = setInterval(() => {
       logger.info("Socket Metrics", {
         metrics: this.metrics,
         connectionsCount: this.io?.engine?.clientsCount || 0,
@@ -431,6 +433,7 @@ class RedisSocket {
       logger.warn("Closing Socket connection: " + toUTC(new Date()));
       await this.io.close();
       this.io.disconnectSockets(true);
+      clearInterval(this._timeInterval);
     } catch (error) {
       logger.error("Error on closing Socket connection: " + toUTC(new Date()));
     }
