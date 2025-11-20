@@ -2,16 +2,20 @@ import type { FastifyInstance } from "fastify";
 
 export function gracefulShutdown(fastify: FastifyInstance) {
   const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGQUIT"];
-  signals.forEach((sig) =>
-    process.on(sig, async () => {
+
+  for (const signal of signals) {
+    process.on(signal, async () => {
+      fastify.log.info(`🛑 Received ${signal} - shutting down gracefully...`);
+
       try {
-        fastify.log.info(`Received ${sig} - closing server`);
-        await fastify.close();
+        await fastify.close(); // closes routes, plugins, http server
+
+        fastify.log.info("✅ Fastify closed. Exiting now.");
         process.exit(0);
-      } catch (err) {
-        fastify.log.error(err);
+      } catch (err: any) {
+        fastify.log.error("❌ Error during shutdown:", err);
         process.exit(1);
       }
-    })
-  );
+    });
+  }
 }

@@ -215,3 +215,333 @@
 2025-11-19 09:04:32 [INFO]: Socket Metrics
 2025-11-19 09:05:32 [INFO]: Socket Metrics
 2025-11-19 09:06:32 [INFO]: Socket Metrics
+2025-11-19 09:07:32 [INFO]: Socket Metrics
+2025-11-19 09:08:32 [INFO]: Socket Metrics
+2025-11-19 09:09:32 [INFO]: Socket Metrics
+2025-11-19 09:10:32 [INFO]: Socket Metrics
+2025-11-19 09:11:32 [INFO]: Socket Metrics
+2025-11-19 09:12:32 [INFO]: Socket Metrics
+2025-11-19 09:13:32 [INFO]: Socket Metrics
+2025-11-19 09:14:32 [INFO]: Socket Metrics
+2025-11-19 09:15:32 [INFO]: Socket Metrics
+2025-11-19 09:15:45 [WARN]: Closing Socket connection: 2025-11-19T09:15:45Z
+2025-11-19 09:16:00 [INFO]: Redis connected at 
+2025-11-19 09:17:00 [INFO]: Socket Metrics
+2025-11-19 09:18:00 [INFO]: Socket Metrics
+2025-11-19 09:19:00 [INFO]: Socket Metrics
+2025-11-19 09:20:00 [INFO]: Socket Metrics
+2025-11-19 09:21:00 [INFO]: Socket Metrics
+2025-11-19 09:22:00 [INFO]: Socket Metrics
+2025-11-19 09:23:00 [INFO]: Socket Metrics
+2025-11-19 09:24:00 [INFO]: Socket Metrics
+2025-11-19 09:25:00 [INFO]: Socket Metrics
+2025-11-19 09:26:00 [INFO]: Socket Metrics
+2025-11-19 09:27:00 [INFO]: Socket Metrics
+2025-11-19 09:28:00 [INFO]: Socket Metrics
+2025-11-19 09:29:00 [INFO]: Socket Metrics
+2025-11-19 09:30:00 [INFO]: Socket Metrics
+2025-11-19 09:31:00 [INFO]: Socket Metrics
+2025-11-19 09:32:00 [INFO]: Socket Metrics
+2025-11-19 09:33:00 [INFO]: Socket Metrics
+2025-11-19 09:34:00 [INFO]: Socket Metrics
+2025-11-19 09:35:00 [INFO]: Socket Metrics
+2025-11-19 09:35:03 [WARN]: Closing Socket connection: 2025-11-19T09:35:03Z
+2025-11-19 09:35:22 [INFO]: Redis connected at 
+2025-11-19 09:36:22 [INFO]: Socket Metrics
+2025-11-19 09:37:13 [INFO]: Redis connected at 
+2025-11-19 09:38:13 [INFO]: Socket Metrics
+2025-11-19 09:39:13 [INFO]: Socket Metrics
+2025-11-19 09:39:41 [INFO]: Redis connected at 
+2025-11-19 09:40:41 [INFO]: Socket Metrics
+2025-11-19 09:41:41 [INFO]: Socket Metrics
+2025-11-19 09:42:41 [INFO]: Socket Metrics
+2025-11-19 09:43:41 [INFO]: Socket Metrics
+2025-11-19 09:44:41 [INFO]: Socket Metrics
+2025-11-19 09:45:41 [INFO]: Socket Metrics
+2025-11-19 09:46:41 [INFO]: Socket Metrics
+2025-11-19 09:47:41 [INFO]: Socket Metrics
+2025-11-19 09:48:41 [INFO]: Socket Metrics
+2025-11-19 09:49:41 [INFO]: Socket Metrics
+2025-11-19 09:50:41 [INFO]: Socket Metrics
+2025-11-19 09:51:41 [INFO]: Socket Metrics
+2025-11-19 09:52:41 [INFO]: Socket Metrics
+2025-11-19 09:53:41 [INFO]: Socket Metrics
+2025-11-19 09:54:41 [INFO]: Socket Metrics
+2025-11-19 09:55:29 [WARN]: Closing Socket connection: 2025-11-19T09:55:29Z
+2025-11-19 10:11:48 [INFO]: Redis connected at 
+2025-11-19 10:11:53 [WARN]: Closing Socket connection: 2025-11-19T10:11:53Z
+2025-11-19 10:13:12 [INFO]: Redis connected at 
+2025-11-19 10:14:12 [INFO]: Socket Metrics
+2025-11-19 10:14:29 [WARN]: Closing Socket connection: 2025-11-19T10:14:29Z
+2025-11-19 11:29:41 [INFO]: Redis connected at 
+2025-11-19 11:30:41 [INFO]: Socket Metrics
+2025-11-19 11:31:41 [INFO]: Socket Metrics
+2025-11-19 11:32:41 [INFO]: Socket Metrics
+2025-11-19 11:33:41 [INFO]: Socket Metrics
+2025-11-19 11:34:41 [INFO]: Socket Metrics
+2025-11-19 11:35:41 [INFO]: Socket Metrics
+2025-11-19 11:36:34 [WARN]: Closing Socket connection: 2025-11-19T11:36:34Z
+2025-11-19 11:36:36 [INFO]: Redis connected at 
+2025-11-19 11:37:36 [INFO]: Socket Metrics
+2025-11-19 11:38:36 [INFO]: Socket Metrics
+2025-11-19 11:39:36 [INFO]: Socket Metrics
+2025-11-19 11:40:36 [INFO]: Socket Metrics
+2025-11-19 11:41:36 [INFO]: Socket Metrics
+2025-11-19 11:42:36 [INFO]: Socket Metrics
+2025-11-19 11:43:36 [INFO]: Socket Metrics
+2025-11-19 11:44:36 [INFO]: Socket Metrics
+2025-11-19 11:45:36 [INFO]: Socket Metrics
+2025-11-19 11:46:36 [INFO]: Socket Metrics
+2025-11-19 11:47:36 [INFO]: Socket Metrics
+2025-11-19 11:48:36 [INFO]: Socket Metrics
+2025-11-19 11:49:36 [INFO]: Socket Metrics
+2025-11-19 11:50:36 [INFO]: Socket Metrics
+2025-11-19 11:51:36 [INFO]: Socket Metrics
+2025-11-19 11:52:36 [INFO]: Socket Metrics
+2025-11-19 11:52:55 [WARN]: Closing Socket connection: 2025-11-19T11:52:55Z
+2025-11-19 11:52:57 [INFO]: Redis connected at 
+2025-11-19 11:53:42 [WARN]: Closing Socket connection: 2025-11-19T11:53:42Z
+2025-11-19 11:53:43 [INFO]: Redis connected at 
+2025-11-19 11:54:43 [INFO]: Socket Metrics
+2025-11-19 11:55:43 [INFO]: Socket Metrics
+2025-11-19 11:56:43 [INFO]: Socket Metrics
+2025-11-19 11:57:43 [INFO]: Socket Metrics
+2025-11-19 11:58:43 [INFO]: Socket Metrics
+2025-11-19 11:59:43 [INFO]: Socket Metrics
+2025-11-19 12:00:43 [INFO]: Socket Metrics
+2025-11-19 12:01:43 [INFO]: Socket Metrics
+2025-11-19 12:02:06 [WARN]: Closing Socket connection: 2025-11-19T12:02:06Z
+2025-11-19 12:02:08 [INFO]: Redis connected at 
+2025-11-19 12:03:08 [INFO]: Socket Metrics
+2025-11-19 12:04:08 [INFO]: Socket Metrics
+2025-11-19 12:04:23 [WARN]: Closing Socket connection: 2025-11-19T12:04:23Z
+2025-11-19 12:04:25 [INFO]: Redis connected at 
+2025-11-19 12:05:25 [INFO]: Socket Metrics
+2025-11-19 12:06:25 [INFO]: Socket Metrics
+2025-11-19 12:07:25 [INFO]: Socket Metrics
+2025-11-19 12:08:25 [INFO]: Socket Metrics
+2025-11-19 12:09:25 [INFO]: Socket Metrics
+2025-11-19 12:10:25 [INFO]: Socket Metrics
+2025-11-19 12:10:52 [WARN]: Closing Socket connection: 2025-11-19T12:10:52Z
+2025-11-19 12:10:53 [INFO]: Redis connected at 
+2025-11-19 12:10:59 [WARN]: Closing Socket connection: 2025-11-19T12:10:59Z
+2025-11-19 12:11:00 [INFO]: Redis connected at 
+2025-11-19 12:12:00 [INFO]: Socket Metrics
+2025-11-19 12:13:00 [INFO]: Socket Metrics
+2025-11-19 12:13:48 [WARN]: Closing Socket connection: 2025-11-19T12:13:48Z
+2025-11-19 12:13:50 [INFO]: Redis connected at 
+2025-11-19 12:14:50 [INFO]: Socket Metrics
+2025-11-19 12:15:14 [WARN]: Closing Socket connection: 2025-11-19T12:15:14Z
+2025-11-19 12:15:47 [INFO]: Redis connected at 
+2025-11-19 12:16:47 [INFO]: Socket Metrics
+2025-11-19 12:16:53 [WARN]: Closing Socket connection: 2025-11-19T12:16:53Z
+2025-11-19 12:16:55 [INFO]: Redis connected at 
+2025-11-19 12:17:29 [WARN]: Closing Socket connection: 2025-11-19T12:17:29Z
+2025-11-19 12:17:42 [INFO]: Redis connected at 
+2025-11-19 12:17:59 [WARN]: Closing Socket connection: 2025-11-19T12:17:59Z
+2025-11-19 12:18:00 [INFO]: Redis connected at 
+2025-11-19 12:19:00 [INFO]: Socket Metrics
+2025-11-19 12:20:00 [INFO]: Socket Metrics
+2025-11-19 12:21:00 [INFO]: Socket Metrics
+2025-11-19 12:22:00 [INFO]: Socket Metrics
+2025-11-19 12:23:00 [INFO]: Socket Metrics
+2025-11-19 12:24:00 [INFO]: Socket Metrics
+2025-11-19 12:25:00 [INFO]: Socket Metrics
+2025-11-19 12:26:00 [INFO]: Socket Metrics
+2025-11-19 12:27:00 [INFO]: Socket Metrics
+2025-11-19 12:28:00 [INFO]: Socket Metrics
+2025-11-19 12:29:00 [INFO]: Socket Metrics
+2025-11-19 12:30:00 [INFO]: Socket Metrics
+2025-11-19 12:31:00 [INFO]: Socket Metrics
+2025-11-19 12:32:00 [INFO]: Socket Metrics
+2025-11-19 12:32:23 [WARN]: Closing Socket connection: 2025-11-19T12:32:23Z
+2025-11-19 12:32:24 [INFO]: Redis connected at 
+2025-11-19 12:33:24 [INFO]: Socket Metrics
+2025-11-19 12:33:42 [WARN]: Closing Socket connection: 2025-11-19T12:33:42Z
+2025-11-19 12:33:44 [INFO]: Redis connected at 
+2025-11-19 12:34:23 [WARN]: Closing Socket connection: 2025-11-19T12:34:23Z
+2025-11-19 12:34:24 [INFO]: Redis connected at 
+2025-11-19 12:35:24 [INFO]: Socket Metrics
+2025-11-19 12:36:24 [INFO]: Socket Metrics
+2025-11-19 12:37:24 [INFO]: Socket Metrics
+2025-11-19 12:38:24 [INFO]: Socket Metrics
+2025-11-19 12:38:45 [WARN]: Closing Socket connection: 2025-11-19T12:38:45Z
+2025-11-19 12:38:46 [INFO]: Redis connected at 
+2025-11-19 12:38:51 [WARN]: Closing Socket connection: 2025-11-19T12:38:51Z
+2025-11-19 12:38:53 [INFO]: Redis connected at 
+2025-11-19 12:39:53 [INFO]: Socket Metrics
+2025-11-19 12:40:16 [WARN]: Closing Socket connection: 2025-11-19T12:40:16Z
+2025-11-19 12:40:18 [INFO]: Redis connected at 
+2025-11-19 12:41:18 [INFO]: Socket Metrics
+2025-11-19 12:41:22 [WARN]: Closing Socket connection: 2025-11-19T12:41:22Z
+2025-11-19 12:41:24 [INFO]: Redis connected at 
+2025-11-19 12:41:59 [WARN]: Closing Socket connection: 2025-11-19T12:41:59Z
+2025-11-19 12:42:01 [INFO]: Redis connected at 
+2025-11-19 12:43:01 [INFO]: Socket Metrics
+2025-11-19 12:43:47 [WARN]: Closing Socket connection: 2025-11-19T12:43:47Z
+2025-11-19 12:43:49 [INFO]: Redis connected at 
+2025-11-19 12:44:14 [WARN]: Closing Socket connection: 2025-11-19T12:44:14Z
+2025-11-19 12:44:16 [INFO]: Redis connected at 
+2025-11-19 12:44:27 [WARN]: Closing Socket connection: 2025-11-19T12:44:27Z
+2025-11-19 12:44:29 [INFO]: Redis connected at 
+2025-11-19 12:45:29 [INFO]: Socket Metrics
+2025-11-19 12:46:29 [INFO]: Socket Metrics
+2025-11-19 12:47:00 [WARN]: Closing Socket connection: 2025-11-19T12:47:00Z
+2025-11-19 12:47:01 [INFO]: Redis connected at 
+2025-11-19 12:47:54 [WARN]: Closing Socket connection: 2025-11-19T12:47:54Z
+2025-11-19 12:47:56 [INFO]: Redis connected at 
+2025-11-19 12:48:56 [INFO]: Socket Metrics
+2025-11-19 12:49:56 [INFO]: Socket Metrics
+2025-11-19 12:50:11 [WARN]: Closing Socket connection: 2025-11-19T12:50:11Z
+2025-11-19 12:50:23 [INFO]: Redis connected at 
+2025-11-19 12:51:23 [INFO]: Socket Metrics
+2025-11-19 12:52:05 [WARN]: Closing Socket connection: 2025-11-19T12:52:05Z
+2025-11-19 12:52:07 [INFO]: Redis connected at 
+2025-11-19 12:52:13 [WARN]: Closing Socket connection: 2025-11-19T12:52:13Z
+2025-11-19 12:52:15 [INFO]: Redis connected at 
+2025-11-19 12:53:09 [WARN]: Closing Socket connection: 2025-11-19T12:53:09Z
+2025-11-19 12:53:11 [INFO]: Redis connected at 
+2025-11-19 12:54:11 [INFO]: Socket Metrics
+2025-11-19 12:54:22 [WARN]: Closing Socket connection: 2025-11-19T12:54:22Z
+2025-11-19 12:54:24 [INFO]: Redis connected at 
+2025-11-19 12:54:50 [WARN]: Closing Socket connection: 2025-11-19T12:54:50Z
+2025-11-19 12:54:52 [INFO]: Redis connected at 
+2025-11-19 12:55:52 [INFO]: Socket Metrics
+2025-11-19 12:56:52 [INFO]: Socket Metrics
+2025-11-19 12:57:45 [WARN]: Closing Socket connection: 2025-11-19T12:57:45Z
+2025-11-19 12:57:47 [INFO]: Redis connected at 
+2025-11-19 12:58:47 [INFO]: Socket Metrics
+2025-11-19 12:58:58 [WARN]: Closing Socket connection: 2025-11-19T12:58:58Z
+2025-11-19 13:01:54 [INFO]: Redis connected at 
+2025-11-19 13:02:54 [INFO]: Socket Metrics
+2025-11-19 13:03:54 [INFO]: Socket Metrics
+2025-11-19 13:04:54 [INFO]: Socket Metrics
+2025-11-19 13:05:54 [INFO]: Socket Metrics
+2025-11-19 15:20:56 [INFO]: Redis connected at 
+2025-11-19 15:21:56 [INFO]: Socket Metrics
+2025-11-19 15:22:56 [INFO]: Socket Metrics
+2025-11-19 15:23:56 [INFO]: Socket Metrics
+2025-11-19 15:24:56 [INFO]: Socket Metrics
+2025-11-19 15:25:56 [INFO]: Socket Metrics
+2025-11-19 15:26:56 [INFO]: Socket Metrics
+2025-11-19 15:27:07 [WARN]: Closing Socket connection: 2025-11-19T15:27:07Z
+2025-11-19 15:27:08 [INFO]: Redis connected at 
+2025-11-19 15:28:08 [INFO]: Socket Metrics
+2025-11-19 15:28:31 [WARN]: Closing Socket connection: 2025-11-19T15:28:31Z
+2025-11-19 15:31:07 [INFO]: Redis connected at 
+2025-11-19 15:32:07 [INFO]: Socket Metrics
+2025-11-19 15:32:15 [WARN]: Closing Socket connection: 2025-11-19T15:32:15Z
+2025-11-19 15:35:15 [INFO]: Redis connected at 
+2025-11-19 15:36:15 [INFO]: Redis connected at 
+2025-11-19 15:37:15 [INFO]: Socket Metrics
+2025-11-19 15:38:15 [INFO]: Socket Metrics
+2025-11-19 15:39:15 [INFO]: Socket Metrics
+2025-11-19 15:40:15 [INFO]: Socket Metrics
+2025-11-19 15:41:15 [INFO]: Socket Metrics
+2025-11-19 15:41:43 [WARN]: Closing Socket connection: 2025-11-19T15:41:43Z
+2025-11-19 15:41:45 [INFO]: Redis connected at 
+2025-11-19 15:42:13 [WARN]: Closing Socket connection: 2025-11-19T15:42:13Z
+2025-11-19 15:42:14 [INFO]: Redis connected at 
+2025-11-19 15:42:30 [WARN]: Closing Socket connection: 2025-11-19T15:42:30Z
+2025-11-19 15:42:31 [INFO]: Redis connected at 
+2025-11-19 15:43:31 [INFO]: Socket Metrics
+2025-11-19 15:43:55 [WARN]: Closing Socket connection: 2025-11-19T15:43:55Z
+2025-11-19 15:43:57 [INFO]: Redis connected at 
+2025-11-19 15:44:18 [WARN]: Closing Socket connection: 2025-11-19T15:44:18Z
+2025-11-19 15:44:19 [INFO]: Redis connected at 
+2025-11-19 15:44:29 [WARN]: Closing Socket connection: 2025-11-19T15:44:29Z
+2025-11-19 15:44:30 [INFO]: Redis connected at 
+2025-11-19 15:44:39 [WARN]: Closing Socket connection: 2025-11-19T15:44:39Z
+2025-11-19 15:44:40 [INFO]: Redis connected at 
+2025-11-19 15:45:40 [INFO]: Socket Metrics
+2025-11-19 15:45:48 [WARN]: Closing Socket connection: 2025-11-19T15:45:48Z
+2025-11-19 15:48:04 [INFO]: Redis connected at 
+2025-11-19 15:48:52 [WARN]: Closing Socket connection: 2025-11-19T15:48:52Z
+2025-11-19 15:48:53 [INFO]: Redis connected at 
+2025-11-19 15:49:53 [INFO]: Socket Metrics
+2025-11-19 15:50:53 [INFO]: Socket Metrics
+2025-11-19 15:51:22 [WARN]: Closing Socket connection: 2025-11-19T15:51:22Z
+2025-11-19 15:51:23 [INFO]: Redis connected at 
+2025-11-19 15:52:23 [INFO]: Socket Metrics
+2025-11-19 15:53:23 [INFO]: Socket Metrics
+2025-11-19 15:54:23 [INFO]: Socket Metrics
+2025-11-19 15:55:23 [INFO]: Socket Metrics
+2025-11-19 15:56:23 [INFO]: Socket Metrics
+2025-11-19 15:57:23 [INFO]: Socket Metrics
+2025-11-19 15:58:23 [INFO]: Socket Metrics
+2025-11-19 15:59:23 [INFO]: Socket Metrics
+2025-11-19 16:00:23 [INFO]: Socket Metrics
+2025-11-19 16:00:30 [WARN]: Closing Socket connection: 2025-11-19T16:00:30Z
+2025-11-19 16:00:32 [INFO]: Redis connected at 
+2025-11-19 16:01:32 [INFO]: Socket Metrics
+2025-11-19 16:02:32 [INFO]: Socket Metrics
+2025-11-19 16:03:00 [WARN]: Retrying Redis in 100ms
+2025-11-19 16:03:00 [WARN]: Redis reconnecting...
+2025-11-19 16:03:00 [ERROR]: Redis error: connect ECONNREFUSED 172.18.0.4:6379
+2025-11-19 16:03:00 [WARN]: Retrying Redis in 200ms
+2025-11-19 16:03:00 [WARN]: Redis reconnecting...
+2025-11-19 16:03:00 [ERROR]: Redis error: getaddrinfo ENOTFOUND dev_fastify_valkey
+2025-11-19 16:03:00 [WARN]: Retrying Redis in 300ms
+2025-11-19 16:03:00 [WARN]: Redis reconnecting...
+2025-11-19 16:03:00 [WARN]: Closing Socket connection: 2025-11-19T16:03:00Z
+2025-11-19 16:03:12 [INFO]: Redis connected at 
+2025-11-19 16:04:12 [INFO]: Socket Metrics
+2025-11-19 16:05:12 [INFO]: Socket Metrics
+2025-11-19 16:05:38 [WARN]: Closing Socket connection: 2025-11-19T16:05:38Z
+2025-11-19 16:05:40 [INFO]: Redis connected at 
+2025-11-19 16:06:22 [WARN]: Closing Socket connection: 2025-11-19T16:06:22Z
+2025-11-19 16:06:24 [INFO]: Redis connected at 
+2025-11-19 16:07:19 [WARN]: Closing Socket connection: 2025-11-19T16:07:19Z
+2025-11-19 16:07:21 [INFO]: Redis connected at 
+2025-11-19 16:08:21 [INFO]: Socket Metrics
+2025-11-19 16:09:21 [INFO]: Socket Metrics
+2025-11-19 16:10:21 [INFO]: Socket Metrics
+2025-11-19 16:11:21 [INFO]: Socket Metrics
+2025-11-19 16:12:21 [INFO]: Socket Metrics
+2025-11-19 16:13:21 [INFO]: Socket Metrics
+2025-11-19 16:14:21 [INFO]: Socket Metrics
+2025-11-19 16:15:09 [WARN]: Closing Socket connection: 2025-11-19T16:15:09Z
+2025-11-19 16:15:11 [INFO]: Redis connected at 
+2025-11-19 16:16:10 [INFO]: Socket Metrics
+2025-11-19 16:17:10 [INFO]: Socket Metrics
+2025-11-19 16:18:10 [INFO]: Socket Metrics
+2025-11-19 16:19:10 [INFO]: Socket Metrics
+2025-11-19 16:20:10 [INFO]: Socket Metrics
+2025-11-19 16:20:22 [WARN]: Closing Socket connection: 2025-11-19T16:20:22Z
+2025-11-19 16:20:35 [INFO]: Redis connected at 
+2025-11-19 16:21:35 [INFO]: Socket Metrics
+2025-11-19 16:22:35 [INFO]: Socket Metrics
+2025-11-19 16:23:35 [INFO]: Socket Metrics
+2025-11-19 16:24:13 [WARN]: Closing Socket connection: 2025-11-19T16:24:13Z
+2025-11-19 16:24:15 [INFO]: Redis connected at 
+2025-11-19 16:25:15 [INFO]: Socket Metrics
+2025-11-19 16:26:15 [INFO]: Socket Metrics
+2025-11-19 16:27:15 [INFO]: Socket Metrics
+2025-11-19 16:27:37 [WARN]: Closing Socket connection: 2025-11-19T16:27:37Z
+2025-11-19 16:27:39 [INFO]: Redis connected at 
+2025-11-19 16:27:46 [WARN]: Closing Socket connection: 2025-11-19T16:27:46Z
+2025-11-19 16:27:48 [INFO]: Redis connected at 
+2025-11-19 16:28:24 [WARN]: Closing Socket connection: 2025-11-19T16:28:24Z
+2025-11-19 16:28:26 [INFO]: Redis connected at 
+2025-11-19 16:28:39 [WARN]: Closing Socket connection: 2025-11-19T16:28:39Z
+2025-11-19 16:28:40 [INFO]: Redis connected at 
+2025-11-19 16:28:45 [WARN]: Closing Socket connection: 2025-11-19T16:28:45Z
+2025-11-19 16:28:47 [INFO]: Redis connected at 
+2025-11-19 16:28:51 [WARN]: Closing Socket connection: 2025-11-19T16:28:51Z
+2025-11-19 16:28:53 [INFO]: Redis connected at 
+2025-11-19 16:29:05 [WARN]: Closing Socket connection: 2025-11-19T16:29:05Z
+2025-11-19 16:29:07 [INFO]: Redis connected at 
+2025-11-19 16:29:12 [WARN]: Closing Socket connection: 2025-11-19T16:29:12Z
+2025-11-19 16:29:13 [INFO]: Redis connected at 
+2025-11-19 16:30:13 [INFO]: Socket Metrics
+2025-11-19 16:30:40 [WARN]: Closing Socket connection: 2025-11-19T16:30:40Z
+2025-11-19 16:30:41 [INFO]: Redis connected at 
+2025-11-19 16:31:39 [WARN]: Closing Socket connection: 2025-11-19T16:31:39Z
+2025-11-19 16:31:40 [INFO]: Redis connected at 
+2025-11-19 16:32:40 [INFO]: Socket Metrics
+2025-11-19 16:32:44 [WARN]: Closing Socket connection: 2025-11-19T16:32:44Z
+2025-11-19 16:32:45 [INFO]: Redis connected at 
+2025-11-19 16:33:13 [WARN]: Closing Socket connection: 2025-11-19T16:33:13Z
+2025-11-19 16:33:15 [INFO]: Redis connected at 
+2025-11-19 16:33:54 [WARN]: Closing Socket connection: 2025-11-19T16:33:54Z
+2025-11-19 16:33:55 [INFO]: Redis connected at 

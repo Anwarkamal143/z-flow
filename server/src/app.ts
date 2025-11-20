@@ -9,6 +9,7 @@ import socketPlugin from "./plugins/socket";
 import { HTTPSTATUS } from "./config/http.config";
 import { logger } from "./config/logger";
 import { ErrorCode } from "./enums/error-code.enum";
+import inngest from "./plugins/inngest";
 import registerLogger from "./plugins/logger";
 import redisPlugin from "./plugins/redis";
 import v1Routes from "./routes";
@@ -38,6 +39,18 @@ export function buildApp() {
   const fastify = Fastify({
     logger: {
       level: process.env.NODE_ENV === "production" ? "info" : "debug",
+      ...(!ENVIRONMENTS.isProduction
+        ? {
+            transport: {
+              target: "pino-pretty",
+              options: {
+                colorize: true,
+                translateTime: "SYS:standard",
+                ignore: "pid,hostname",
+              },
+            },
+          }
+        : {}),
     },
     trustProxy: true,
   });
@@ -54,6 +67,7 @@ export function buildApp() {
   fastify.register(drizzlePlugin);
   fastify.register(redisPlugin);
   fastify.register(socketPlugin);
+  fastify.register(inngest);
 
   // routes
   fastify.register(v1Routes);

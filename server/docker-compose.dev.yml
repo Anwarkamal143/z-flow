@@ -5,6 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     container_name: dev-fastify-container
+    init: true
     ports:
       - "4000:4000"
       - "9229:9229" # For debugger
@@ -38,6 +39,10 @@ services:
       - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
       - JWT_COOKIE_EXPIRES_IN=${JWT_COOKIE_EXPIRES_IN}
+      - INNGEST_DEV=${INNGEST_DEV}
+      - INNGEST_BASE_URL=http://inngest:8288
+      - INNGEST_EVENT_KEY=${INNGEST_EVENT_KEY}
+      - INNGEST_SIGNING_KEY=${INNGEST_SIGNING_KEY}
 
       # OAuth keys
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -53,6 +58,12 @@ services:
       - CLOUDINARY_URL=${CLOUDINARY_URL}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+
+  inngest:
+    image: inngest/inngest:v0.27.0
+    command: "inngest dev -u http://app:4000/api/inngest"
+    ports:
+      - "8288:8288"
 
   dev_fastify_pg_db:
     image: postgres:18
