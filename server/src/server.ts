@@ -1,10 +1,10 @@
-import "dotenv/config";
+import { APP_CONFIG } from "@/config/app.config";
 import { buildApp } from "./app";
 import { gracefulShutdown } from "./utils/shutdown";
 
 const fastify = buildApp();
 
-const port = Number(process.env.PORT || 4000);
+const port = Number(APP_CONFIG.PORT || 4000);
 
 const start = async () => {
   try {
