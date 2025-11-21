@@ -7,6 +7,7 @@ import { EventSchemas } from "inngest";
 export enum EVENT_NAMES {
   DEMO_SENT = "demo/event.test",
   USER_REGISTERED = "user/registered",
+  AI_GENERATE = "ai/generate",
 }
 export type DemoEventSent = {
   name: EVENT_NAMES.DEMO_SENT;
@@ -22,12 +23,18 @@ export type UserRegistered = {
     email: string;
   };
 };
+export type AiGenerate = {
+  name: EVENT_NAMES.AI_GENERATE;
+  data: {
+    prompt: string;
+  };
+};
 
 /**
  * ---- Combined Event Union ----
  * Add new events to this union
  */
-export type AppEvents = DemoEventSent | UserRegistered;
+export type AppEvents = DemoEventSent | UserRegistered | AiGenerate;
 
 /**
  * ---- Inngest Event Schemas ----

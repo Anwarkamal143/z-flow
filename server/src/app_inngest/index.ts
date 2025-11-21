@@ -1,4 +1,4 @@
-import helloWorld from "./functions/helloWorld";
+import { functions as funcs } from "./functions";
 
 export { inngest } from "./client";
-export const functions = [helloWorld];
+export const functions = funcs;
