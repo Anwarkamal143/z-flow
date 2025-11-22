@@ -1,9 +1,11 @@
 import { APP_CONFIG } from "@/config/app.config";
+import setUpSentry from "./instrument";
+
 import { buildApp } from "./app";
 import { gracefulShutdown } from "./utils/shutdown";
 
 const fastify = buildApp();
-
+setUpSentry(fastify);
 const port = Number(APP_CONFIG.PORT || 4000);
 
 const start = async () => {

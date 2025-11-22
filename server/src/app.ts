@@ -9,6 +9,7 @@ import socketPlugin from "./plugins/socket";
 import { HTTPSTATUS } from "./config/http.config";
 import { logger } from "./config/logger";
 import { ErrorCode } from "./enums/error-code.enum";
+import errorPlugin from "./plugins/catch-error";
 import inngest from "./plugins/inngest";
 import registerLogger from "./plugins/logger";
 import redisPlugin from "./plugins/redis";
@@ -54,7 +55,6 @@ export function buildApp() {
     },
     trustProxy: true,
   });
-
   // register plugins
   fastify.register(cors, CORS_OPTIONS);
   fastify.register(rateLimit, {
@@ -62,6 +62,7 @@ export function buildApp() {
     timeWindow: "1 minute",
   });
 
+  fastify.register(errorPlugin);
   fastify.register(cookieParser);
   fastify.register(registerLogger);
   fastify.register(drizzlePlugin);

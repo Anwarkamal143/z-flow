@@ -1,14 +1,23 @@
 import { APP_CONFIG } from "@/config/app.config";
+import Sentry from "@sentry/node";
 import { createLogger, format, transports } from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
+import Transport from "winston-transport";
 
 const { colorize, timestamp, printf, combine, align, errors, json } = format;
 const IS_PRODUCTION = APP_CONFIG.NODE_ENV === "production";
-
+const SentryWinstonTransport = Sentry.createSentryWinstonTransport(Transport, {
+  // Only capture error and warn logs
+  levels: ["error", "warn"],
+});
 // -----------------------------
 // Transports
 // -----------------------------
-const transportsArray: (typeof transports.Console | DailyRotateFile)[] = [];
+const transportsArray: (
+  | typeof transports.Console
+  | DailyRotateFile
+  | Transport
+)[] = [];
 
 if (!IS_PRODUCTION) {
   transportsArray.push(
@@ -35,7 +44,8 @@ transportsArray.push(
     datePattern: "YYYY-MM-DD",
     maxSize: "20m",
     maxFiles: "14d",
-  })
+  }),
+  new SentryWinstonTransport()
 );
 
 // -----------------------------
