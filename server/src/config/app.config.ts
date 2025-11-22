@@ -63,4 +63,5 @@ export const APP_CONFIG = {
   // REDIS_MODE: process.env.REDIS_MODE,
   // REDIS_CLUSTER: process.env.REDIS_CLUSTER,
   // REDIS_CLUSTER_NODES: process.env.REDIS_CLUSTER_NODES,
+  SENTRY_DNS: process.env.SENTRY_DNS,
 };

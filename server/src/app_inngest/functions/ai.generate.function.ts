@@ -20,6 +20,11 @@ export default inngest.createFunction(
         model: google("gemini-2.5-flash"),
         system: "You are a helpful assistant.",
         prompt: event.data.prompt,
+        experimental_telemetry: {
+          isEnabled: true,
+          recordInputs: true,
+          recordOutputs: true,
+        },
       }
     );
     // const { steps: openaiSteps } = await step.ai.wrap(
