@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-import { EmailIcon, Eye, EyeOff } from "@/assets/icons";
+import { EmailIcon, EyeIcon, EyeOffIcon } from "@/assets/icons";
 import ButtonLoader from "@/components/ButtonLoader";
 import Form from "@/components/form/Form";
 import FormInput from "@/components/form/Input";
@@ -110,7 +110,7 @@ const SignInScreen = ({}) => {
           type={showPassword ? "text" : "password"}
           placeholder="********"
           rightIcon={{
-            Icon: !showPassword ? Eye : EyeOff,
+            Icon: !showPassword ? EyeIcon : EyeOffIcon,
             onClick: () => setShowPassword(!showPassword),
           }}
         />

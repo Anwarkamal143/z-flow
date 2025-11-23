@@ -72,7 +72,7 @@ const SignInScreen = ({
           <div className="grid gap-3">
             <Button
               variant="outline"
-              className="flex justify-center gap-2 cursor-pointer"
+              className="flex justify-center gap-2 cursor-pointer hover:bg-primary hover:text-primary-foreground"
               onClick={() => SignInWithG()}
               disabled={isSubmitting || isSocialLogginIn}
             >
@@ -95,7 +95,7 @@ const SignInScreen = ({
             </span>
             <Link
               href={mode === "signin" ? "/sign-up" : "login"}
-              className="text-blue-400 hover:underline"
+              className="text-primary hover:underline"
               aria-disabled={isSubmitting || isSocialLogginIn}
             >
               {mode === "signin" ? "Sign Up" : "Sign In"}

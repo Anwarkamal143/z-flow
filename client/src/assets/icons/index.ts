@@ -1,12 +1,19 @@
 import {
-  ChevronDown,
-  Eye,
-  EyeOff,
+  ChevronDownIcon,
+  CreditCardIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FolderIcon,
+  FolderOpenIcon,
+  HistoryIcon,
   ImageIcon,
-  Loader2,
-  Moon,
-  Smile,
-  Sun
+  KeyIcon,
+  Loader2Icon,
+  LogOutIcon,
+  MoonIcon,
+  SmileIcon,
+  StarIcon,
+  SunIcon,
 } from "lucide-react";
 import EmailIcon from "./EmailIcon";
 import GithubIcon from "./GithubIcon";
@@ -14,16 +21,23 @@ import GoogleIcon from "./GoogleIcon";
 import InfoIcon from "./info-icon";
 
 export {
-  ChevronDown,
+  ChevronDownIcon,
+  CreditCardIcon,
   EmailIcon,
-  Eye,
-  EyeOff,
+  EyeIcon,
+  EyeOffIcon,
+  FolderIcon,
+  FolderOpenIcon,
   GithubIcon,
   GoogleIcon,
+  HistoryIcon,
   ImageIcon,
   InfoIcon,
-  Loader2,
-  Moon,
-  Smile,
-  Sun
+  KeyIcon,
+  Loader2Icon,
+  LogOutIcon,
+  MoonIcon,
+  SmileIcon,
+  StarIcon,
+  SunIcon,
 };
