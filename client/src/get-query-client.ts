@@ -2,14 +2,15 @@
 import {
   defaultShouldDehydrateQuery,
   isServer,
-  QueryClient
+  QueryClient,
 } from "@tanstack/react-query";
 
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000
+        staleTime: 60 * 1000,
+        retry: false,
       },
       dehydrate: {
         // include pending queries in dehydration
@@ -23,9 +24,9 @@ function makeQueryClient() {
           // Next.js also automatically redacts errors for us
           // with better digests.
           return false;
-        }
-      }
-    }
+        },
+      },
+    },
   });
 }
 

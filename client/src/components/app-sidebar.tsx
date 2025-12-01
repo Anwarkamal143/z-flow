@@ -6,11 +6,12 @@ import {
   HistoryIcon,
   KeyIcon,
   LogOutIcon,
-  StarIcon,
 } from "@/assets/icons";
 import LogoIcon from "@/assets/icons/LogoIcon";
 import { signOut } from "@/features/auth/api";
+import { openWindow } from "@/lib";
 import { cn } from "@/lib/utils";
+import { portalClient } from "@/models/v1/payments/Portal.model";
 import { LucideProps } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -81,6 +82,8 @@ const AppSidebar = (props: IPageProps) => {
   const newTheme = theme === "dark" ? "light" : "dark";
   const pathName = usePathname();
   const { open, isMobile } = useSidebar();
+  // const { hasActiveSubscription, isSubscriptionLoading, hasExist } =
+  //   useHasActiveSubscription();
   const isSidebarClosed = !open && !isMobile;
   return (
     <Sidebar collapsible="icon">
@@ -118,19 +121,19 @@ const AppSidebar = (props: IPageProps) => {
               <SidebarContent>
                 <SidebarMenu>
                   {m.items.map((item) => {
+                    const isActive =
+                      item.url === "/"
+                        ? item.url === pathName
+                        : pathName.startsWith(item.url);
                     return (
                       <SidebarMenuItem key={item.id || item.title}>
                         <SidebarMenuButton
                           tooltip={item.title}
                           id={item.id?.toString()}
                           asChild
-                          isActive={
-                            item.url === "/"
-                              ? item.url === pathName
-                              : pathName.startsWith(item.url)
-                          }
+                          isActive={isActive}
                           className={cn(
-                            `gap-x-4 h-10 px-4 dark:hover:bg-primary/30 dark:hover:text-white data-[active=true]:bg-primary data-[active=true]:text-primary-foreground `,
+                            `gap-x-4 h-10 px-4 relative`,
 
                             isSidebarClosed && "rounded-xs p-0 gap-0"
                           )}
@@ -140,6 +143,9 @@ const AppSidebar = (props: IPageProps) => {
                           }}
                         >
                           <Link href={item.url} prefetch={true}>
+                            {isActive && (
+                              <span className="absolute left-0 h-full w-0.5 bg-primary " />
+                            )}
                             <item.icon className="" />
                             <RenderIfNotClosed>
                               <span>{item.title}</span>
@@ -157,25 +163,30 @@ const AppSidebar = (props: IPageProps) => {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip={"Upgrade to Pro"}
-              className="gap-x-4 h-10 px-4"
-              onClick={async () => {
-                await signOut();
-              }}
-            >
-              <StarIcon className="h-4 w-4" />
-              <RenderIfNotClosed>
-                <span> Upgrade to Pro</span>
-              </RenderIfNotClosed>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {/* {!isSubscriptionLoading && !hasActiveSubscription && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={"Upgrade to Pro"}
+                className="gap-x-4 h-10 px-4"
+                onClick={async () => {
+                  openWindow(checkoutClient.getUrl("pro"), "_self");
+                }}
+              >
+                <StarIcon className="h-4 w-4" />
+                <RenderIfNotClosed>
+                  <span> Upgrade to Pro</span>
+                </RenderIfNotClosed>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )} */}
+
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip={"Billing Portal"}
               className="gap-x-4 h-10 px-4"
-              onClick={() => {}}
+              onClick={() => {
+                openWindow(portalClient.getUrl(""), "_self");
+              }}
             >
               <CreditCardIcon className="h-4 w-4" />
               <RenderIfNotClosed>
@@ -183,6 +194,7 @@ const AppSidebar = (props: IPageProps) => {
               </RenderIfNotClosed>
             </SidebarMenuButton>
           </SidebarMenuItem>
+
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip={"Sign out"}

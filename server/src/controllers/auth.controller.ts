@@ -3,7 +3,6 @@ import { HTTPSTATUS } from "@/config/http.config";
 import { logger } from "@/config/logger";
 import { AccountType, Provider, UserStatus } from "@/db";
 import { ErrorCode } from "@/enums/error-code.enum";
-import { getRequestTokens } from "@/middlewares/auth.middleware";
 import { IRegisterUser, RegisterUserSchema } from "@/schema/auth";
 import { AccountService } from "@/services/accounts.service";
 import { UserService } from "@/services/user.service";
@@ -11,14 +10,10 @@ import { compareValue, hashValue } from "@/utils/bcrypt";
 import {
   BadRequestException,
   InternalServerException,
-  UnauthorizedException,
+  UnauthenticatedException,
 } from "@/utils/catch-errors";
 import { resetCookies, setAccessTokenCookie, setCookies } from "@/utils/cookie";
-import {
-  decodeRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-} from "@/utils/jwt";
+import { decodeRefreshToken, verifyRefreshToken } from "@/utils/jwt";
 import { deleteRefreshTokenWithJTI, getRefreshTokenByJTI } from "@/utils/redis";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
@@ -92,22 +87,18 @@ export class AuthController {
       const { email, password } = req.body;
       const { data: user } = await this.userService.getUserByEmail(email, true);
       if (!user || !user.password) {
-        throw new BadRequestException("Invalid credentials", {
-          errorCode: ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
-        });
+        throw new BadRequestException("Invalid credentials");
       }
 
       if (user.status === UserStatus.INACTIVE) {
         throw new BadRequestException("Your account is inactive", {
-          errorCode: ErrorCode.ACCESS_FORBIDDEN,
+          errorCode: ErrorCode.ACCESS_UNAUTHORIZED,
         });
       }
 
       const isPasswordMatched = await compareValue(password, user.password);
       if (!isPasswordMatched) {
-        throw new BadRequestException("Invalid credentials", {
-          errorCode: ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
-        });
+        throw new BadRequestException("Invalid credentials");
       }
 
       const { accessToken, refreshToken } = await setCookies(rep, {
@@ -153,9 +144,7 @@ export class AuthController {
       const refreshToken = (req.cookies?.[APP_CONFIG.REFRESH_COOKIE_NAME] ||
         req.headers.refreshtoken) as string;
       if (!refreshToken)
-        throw new BadRequestException("You are not logged in", {
-          errorCode: ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
-        });
+        throw new UnauthenticatedException("You are not logged in");
 
       const tokenData = await verifyRefreshToken(refreshToken);
       if (!tokenData?.data?.token_data?.jti)
@@ -170,13 +159,7 @@ export class AuthController {
       if (!storedRefreshToken || storedRefreshToken.token !== refreshToken) {
         resetCookies(rep);
         await deleteRefreshTokenWithJTI(jti);
-        logger.error({
-          userId: userData.id,
-          type: "REUSE_DETECTED",
-          status: "REJECTED",
-          ip: req.ip,
-          userAgent: req.headers["user-agent"],
-        });
+
         throw new BadRequestException("Refresh token reuse detected", {
           errorCode: ErrorCode.AUTH_TOKEN_REUSED,
         });
@@ -207,82 +190,9 @@ export class AuthController {
         data: { accessToken, refreshToken },
       });
     } catch (error) {
+      logger.error("Error refreshing token:", error);
       if (error instanceof BadRequestException) throw error;
-      throw new InternalServerException();
-    }
-  };
-
-  public verifyAndCreateTokens = async (
-    req: FastifyRequest,
-    rep: FastifyReply
-  ) => {
-    try {
-      let { accessToken, refreshToken } = getRequestTokens(req);
-
-      if (!accessToken && !refreshToken)
-        throw new UnauthorizedException("Not authenticated");
-
-      let tokenPayload = await verifyAccessToken(accessToken);
-
-      if (tokenPayload.data) {
-        return SuccessResponse(rep, {
-          message: "Tokens Verified",
-          data: {
-            accessToken,
-            refreshToken,
-            user: tokenPayload.data.user,
-            isAccessTokenExpired: false,
-          },
-        });
-      }
-
-      if (!tokenPayload.data && refreshToken)
-        tokenPayload = await verifyRefreshToken(refreshToken);
-      if (!tokenPayload.data)
-        throw new UnauthorizedException("Invalid or expired token", {
-          errorCode: ErrorCode.AUTH_INVALID_TOKEN,
-        });
-
-      const refreshTokenByJTI = await getRefreshTokenByJTI(
-        tokenPayload.data.token_data.jti
-      );
-      if (!refreshTokenByJTI || refreshTokenByJTI.token !== refreshToken) {
-        resetCookies(rep);
-        throw new UnauthorizedException("Invalid or expired token", {
-          errorCode: ErrorCode.AUTH_INVALID_TOKEN,
-        });
-      }
-
-      const userData = await this.userService.getUserById(
-        tokenPayload.data.user.id
-      );
-      const respUser = userData?.data;
-      if (!respUser?.id) {
-        resetCookies(rep);
-        throw new UnauthorizedException("Invalid or expired token", {
-          errorCode: ErrorCode.AUTH_INVALID_TOKEN,
-        });
-      }
-
-      const { password, ...user } = respUser;
-      const { refreshToken: rToken, accessToken: accToken } = await setCookies(
-        rep,
-        { ...user }
-      );
-
-      return SuccessResponse(rep, {
-        message: "Tokens refreshed",
-        data: {
-          accessToken: accToken,
-          refreshToken: rToken,
-          user,
-          isAccessTokenExpired: true,
-        },
-      });
-    } catch (error) {
-      throw new UnauthorizedException("Invalid or expired token", {
-        errorCode: ErrorCode.AUTH_INVALID_TOKEN,
-      });
+      throw new InternalServerException("Error refreshing token");
     }
   };
 }

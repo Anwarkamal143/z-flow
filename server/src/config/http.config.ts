@@ -1,4 +1,4 @@
-import { ErrorCode } from '@/enums/error-code.enum';
+import { ErrorCode } from "@/enums/error-code.enum";
 
 const httpConfig = () =>
   ({
@@ -33,7 +33,7 @@ const httpConfig = () =>
     SERVICE_UNAVAILABLE: 503,
     GATEWAY_TIMEOUT: 504,
     INSUFFICIENT_STORAGE: 507,
-  }) as const;
+  } as const);
 
 export const HTTPSTATUS = httpConfig();
 export type HttpStatusCode = (typeof HTTPSTATUS)[keyof typeof HTTPSTATUS];
@@ -49,7 +49,7 @@ export const ErrorCodeToHttpStatusMap: Record<ErrorCode, HttpStatusCode> = {
   [ErrorCode.AUTH_USER_NOT_FOUND]: HTTPSTATUS.NOT_FOUND,
   [ErrorCode.AUTH_ACCOUNT_NOT_FOUND]: HTTPSTATUS.NOT_FOUND,
   [ErrorCode.AUTH_TOO_MANY_ATTEMPTS]: HTTPSTATUS.TOO_MANY_REQUESTS,
-  [ErrorCode.AUTH_UNAUTHORIZED_ACCESS]: HTTPSTATUS.UNAUTHORIZED,
+  [ErrorCode.AUTH_UNAUTHORIZED]: HTTPSTATUS.UNAUTHORIZED,
   [ErrorCode.AUTH_TOKEN_NOT_FOUND]: HTTPSTATUS.UNAUTHORIZED,
   [ErrorCode.AUTH_TOKEN_REUSED]: HTTPSTATUS.UNAUTHORIZED,
   [ErrorCode.AUTH_2FA_REQUIRED]: HTTPSTATUS.UNAUTHORIZED,
@@ -58,8 +58,7 @@ export const ErrorCodeToHttpStatusMap: Record<ErrorCode, HttpStatusCode> = {
   // ======================
   // Access Control Errors
   // ======================
-  [ErrorCode.ACCESS_FORBIDDEN]: HTTPSTATUS.FORBIDDEN,
-  [ErrorCode.ACCESS_UNAUTHORIZED]: HTTPSTATUS.UNAUTHORIZED,
+  [ErrorCode.ACCESS_UNAUTHORIZED]: HTTPSTATUS.FORBIDDEN,
   [ErrorCode.ACCESS_ROLE_REQUIRED]: HTTPSTATUS.FORBIDDEN,
   [ErrorCode.ACCESS_PERMISSION_DENIED]: HTTPSTATUS.FORBIDDEN,
   [ErrorCode.ACCESS_IP_RESTRICTED]: HTTPSTATUS.FORBIDDEN,
@@ -130,24 +129,28 @@ export const ErrorCodeToHttpStatusMap: Record<ErrorCode, HttpStatusCode> = {
   [ErrorCode.TRIAL_EXPIRED]: HTTPSTATUS.PAYMENT_REQUIRED,
   [ErrorCode.PAYMENT_REQUIRED]: HTTPSTATUS.PAYMENT_REQUIRED,
   [ErrorCode.STRIPE_WEBHOOK_ERROR]: HTTPSTATUS.BAD_REQUEST,
+  [ErrorCode.POLAR_CUSTOMER_CREATION_FAILED]: HTTPSTATUS.INTERNAL_SERVER_ERROR,
 };
 
 // Reverse mapping
-export const HttpStatusToErrorCodeMap: Partial<Record<HttpStatusCode, ErrorCode[]>> =
-  Object.entries(ErrorCodeToHttpStatusMap).reduce(
-    (acc, [errorCode, statusCode]) => {
-      if (!acc[statusCode]) acc[statusCode] = [];
-      acc[statusCode]!.push(errorCode as ErrorCode);
-      return acc;
-    },
-    {} as Partial<Record<HttpStatusCode, ErrorCode[]>>
-  );
+export const HttpStatusToErrorCodeMap: Partial<
+  Record<HttpStatusCode, ErrorCode[]>
+> = Object.entries(ErrorCodeToHttpStatusMap).reduce(
+  (acc, [errorCode, statusCode]) => {
+    if (!acc[statusCode]) acc[statusCode] = [];
+    acc[statusCode]!.push(errorCode as ErrorCode);
+    return acc;
+  },
+  {} as Partial<Record<HttpStatusCode, ErrorCode[]>>
+);
 
 export const getHttpStatusFromErrorCode = (code: ErrorCode): HttpStatusCode => {
   return ErrorCodeToHttpStatusMap[code];
 };
 
-export const getErrorCodesFromHttpStatus = (status: HttpStatusCode): ErrorCode[] | undefined => {
+export const getErrorCodesFromHttpStatus = (
+  status: HttpStatusCode
+): ErrorCode[] | undefined => {
   return HttpStatusToErrorCodeMap[status];
 };
 
@@ -155,14 +158,16 @@ export const getErrorCodesFromHttpStatus = (status: HttpStatusCode): ErrorCode[]
  * Gets the most appropriate error code for an HTTP status
  * Useful when you need to select a single error code from multiple possibilities
  */
-export const getPrimaryErrorCodeForStatus = (status: HttpStatusCode): ErrorCode | undefined => {
+export const getPrimaryErrorCodeForStatus = (
+  status: HttpStatusCode
+): ErrorCode | undefined => {
   const codes = HttpStatusToErrorCodeMap[status];
   if (!codes || codes.length === 0) return undefined;
 
   // Priority mapping for common statuses
   const priorityMap: Partial<Record<HttpStatusCode, ErrorCode>> = {
-    [HTTPSTATUS.UNAUTHORIZED]: ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
-    [HTTPSTATUS.FORBIDDEN]: ErrorCode.ACCESS_FORBIDDEN,
+    [HTTPSTATUS.FORBIDDEN]: ErrorCode.ACCESS_UNAUTHORIZED,
+    [HTTPSTATUS.UNAUTHORIZED]: ErrorCode.AUTH_UNAUTHORIZED,
     [HTTPSTATUS.NOT_FOUND]: ErrorCode.RESOURCE_NOT_FOUND,
     [HTTPSTATUS.CONFLICT]: ErrorCode.DATA_CONFLICT,
     [HTTPSTATUS.PAYMENT_REQUIRED]: ErrorCode.STRIPE_CARD_ERROR,

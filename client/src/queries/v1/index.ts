@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* =============================
-   Query / CRUD Types - refactor
+   Enhanced CRUD Client Factory
    ============================= */
 
 import { getQueryClient } from "@/get-query-client";
@@ -32,53 +32,45 @@ import {
 } from "@tanstack/react-query";
 
 /* -----------------------
-   Small building blocks
+   Core Types
    ----------------------- */
 
 export type Id = string | number;
-export type ISortOrder = "asc" | "desc";
-/** Default error type - callers may override with a different ErrorT */
+export type SortOrder = "asc" | "desc";
 export type DefaultError = IResponseError<null>;
-
-/** ReturnModelType alias for clarity */
 export type ReturnModel<TEntity, Entity> = ReturnModelType<TEntity, Entity>;
-
-/** API response wrappers */
-export type ApiResp<TEntity, Entity> = IApiResponse<
-  ReturnModel<TEntity, Entity>
->;
 export type ApiHooksResp<T> = IApiResponseHooks<T>;
 
 /* -----------------------
-   Query param shapes
+   Parameter Types
    ----------------------- */
 
-export type BaseParams = { entity?: string };
+export type BaseParams = {
+  entity?: string;
+  [key: string]: any; // This allows additional properties in all param types
+};
 
-export type OffsetParams = BaseParams & {
+export type OffsetPaginationParams = BaseParams & {
   page?: number;
   limit?: number;
   isEnabled?: boolean;
-  sort?: ISortOrder;
+  sort?: SortOrder;
 };
 
-export type CursorParams = BaseParams & {
+export type CursorPaginationParams = BaseParams & {
   cursor?: string;
   limit: number;
   isEnabled?: boolean;
-  sort?: ISortOrder;
+  sort?: SortOrder;
 };
 
-/** Either offset or cursor, plus any extras */
-export type QueryParams = (OffsetParams | CursorParams) & {
-  [key: string]: any;
-};
+export type QueryParams = OffsetPaginationParams | CursorPaginationParams;
 
 /* -----------------------
-   Request / Call options
+   Request Options
    ----------------------- */
 
-export type IOptions = {
+export type RequestOptions = {
   query?: QueryParams;
   path?: string;
   requestOptions?: Partial<IRequestOptions>;
@@ -86,27 +78,34 @@ export type IOptions = {
 
 export type CallOptions = {
   params?: QueryParams;
-  options?: IOptions;
+  options?: RequestOptions;
   queryKey?: QueryKey;
 };
 
 /* -----------------------
-   List / Pagination helpers
+   Response Types
    ----------------------- */
 
 export type ListData<T> = { data: T; pagination_meta: IPaginationMeta };
-export type ListInfinite<T> = InfiniteData<ListData<T>, unknown>;
+export type InfiniteListData<T> = InfiniteData<ListData<T>, unknown>;
 
-/** Query options depending on suspense mode */
-export type QueryOpts<
-  T,
-  S extends boolean,
-  ErrorT = DefaultError
-> = S extends true
+export type ListReturnType<T> = {
+  pagination_meta: IPaginationMeta | undefined;
+  data: T;
+  pageParams: unknown[];
+  pages: { data: T; pagination_meta: IPaginationMeta }[];
+};
+
+/* -----------------------
+   Query Option Types
+   ----------------------- */
+
+// Generic query options based on suspense mode
+type QueryOptions<T, S extends boolean, ErrorT = DefaultError> = S extends true
   ? UseSuspenseQueryOptions<ApiHooksResp<T>, ErrorT, ListData<T>, QueryKey>
   : UseQueryOptions<ApiHooksResp<T>, ErrorT, ListData<T>, QueryKey>;
 
-export type InfiniteOpts<
+type InfiniteQueryOptions<
   T,
   S extends boolean,
   ErrorT = DefaultError
@@ -114,237 +113,217 @@ export type InfiniteOpts<
   ? UseSuspenseInfiniteQueryOptions<
       ApiHooksResp<T>,
       ErrorT,
-      ListInfinite<T>,
+      InfiniteListData<T>,
       QueryKey
     >
-  : UseInfiniteQueryOptions<ApiHooksResp<T>, ErrorT, ListInfinite<T>, QueryKey>;
+  : UseInfiniteQueryOptions<
+      ApiHooksResp<T>,
+      ErrorT,
+      InfiniteListData<T>,
+      QueryKey
+    >;
 
 /* -----------------------
-   ListCallOptions
+   Operation Options
    ----------------------- */
+
+type CommonListOptions<T, S extends boolean = false, ErrorT = DefaultError> = {
+  options?: RequestOptions;
+  queryOptions?: Omit<QueryOptions<T, S, ErrorT>, "queryKey">;
+  queryKey?: QueryKey;
+};
 
 export type ListCallOptions<
   T,
-  IS_SUSPENSE extends boolean = false,
+  S extends boolean = false,
   ErrorT = DefaultError
-> = {
-  options?: IOptions;
-  /** single-page query options (suspense vs non-suspense) */
-  queryOptions?: Omit<QueryOpts<T, IS_SUSPENSE, ErrorT>, "queryKey">;
-  /** infinite query options (suspense vs non-suspense) */
+> = CommonListOptions<T, S, ErrorT> & {
   infiniteOptions?: Partial<
-    Omit<InfiniteOpts<T, IS_SUSPENSE, ErrorT>, "queryKey">
+    Omit<InfiniteQueryOptions<T, S, ErrorT>, "queryKey">
   >;
-  queryKey?: QueryKey;
-  /**
-   * getNextPageParam derived from the chosen infinite options type.
-   * This guarantees `getNextPageParam` always matches the option's expected signature.
-   */
-  getNextPageParam?: InfiniteOpts<T, IS_SUSPENSE, ErrorT>["getNextPageParam"];
+  getNextPageParam?: InfiniteQueryOptions<T, S, ErrorT>["getNextPageParam"];
+  onSuccess?: (data: ListReturnType<T>) => void;
 };
-
-/* -----------------------
-   Cursor / Offset wrappers
-   ----------------------- */
 
 export type CursorCallOptions<
   T,
-  IS_SUSPENSE extends boolean = false,
+  S extends boolean = false,
   ErrorT = DefaultError
 > = {
-  params?: CursorParams;
-} & ListCallOptions<T, IS_SUSPENSE, ErrorT>;
+  params?: CursorPaginationParams;
+  onSuccess?: (data: ListReturnType<T>) => void;
+} & ListCallOptions<T, S, ErrorT>;
 
 export type OffsetCallOptions<
   T,
-  IS_SUSPENSE extends boolean = false,
+  S extends boolean = false,
   ErrorT = DefaultError
-> = {
-  params?: OffsetParams;
-} & ListCallOptions<T, IS_SUSPENSE, ErrorT>; // offset usually doesn't need suspense, but keep flexible
+> = CommonListOptions<T, S, ErrorT> & {
+  params?: OffsetPaginationParams;
+  onSuccess?: (data: IPaginatedReturnType<T>) => void;
+};
 
-/* -----------------------
-   Mutation options
-   ----------------------- */
-
-export type MutateCallOptions<
+export type MutationCallOptions<
   TData = any,
   TVars = any,
   ErrorT = DefaultError
 > = {
   params?: Record<string, any>;
-  options?: IOptions;
+  options?: RequestOptions;
   mutationOptions?: UseMutationOptions<IApiResponse<TData>, ErrorT, TVars>;
+  onSuccess?: (data: TData) => void;
 };
 
-/* -----------------------
-   Single entity query
-   ----------------------- */
-
-/**
- * IQueryOptions - single entity query options.
- *
- * TEntity/Entity mirror your ReturnModelType signature.
- * IS_SUSPENSE toggles between suspense and non-suspense react-query types.
- */
-export type IQueryOptions<
+type CommonQueryOptions<
   TEntity,
   Entity,
-  IS_SUSPENSE extends boolean = false,
+  S extends boolean = false,
   ErrorT = DefaultError
-> = CallOptions & {
-  queryOptions?: IS_SUSPENSE extends true
+> = {
+  queryOptions?: S extends true
     ? Omit<
         UseSuspenseQueryOptions<
-          ApiResp<TEntity, Entity>,
+          ApiHooksResp<ReturnModel<TEntity, Entity>>,
           ErrorT,
-          // ReturnModel<TEntity, Entity>,
-          ApiResp<TEntity, Entity>,
+          ApiHooksResp<ReturnModel<TEntity, Entity>>,
           QueryKey
         >,
         "queryKey"
       >
     : Omit<
         UseQueryOptions<
-          ApiResp<TEntity, Entity>,
+          ApiHooksResp<ReturnModel<TEntity, Entity>>,
           ErrorT,
-          // ReturnModel<TEntity, Entity>,
-          ApiResp<TEntity, Entity>,
+          ApiHooksResp<ReturnModel<TEntity, Entity>>,
           QueryKey
         >,
         "queryKey"
       >;
 };
 
+export type SingleQueryOptions<
+  TEntity,
+  Entity,
+  S extends boolean = false,
+  ErrorT = DefaultError
+> = CallOptions & {
+  id?: Id;
+  onSuccess?: (data: ApiHooksResp<ReturnModel<TEntity, Entity>>) => void;
+} & CommonQueryOptions<TEntity, Entity, S, ErrorT>;
+
+export type MultiQueryOptions<
+  TEntity,
+  Entity,
+  S extends boolean = false,
+  ErrorT = DefaultError
+> = CallOptions & {
+  ids?: Id[];
+  onSuccess?: (
+    data: (ApiHooksResp<ReturnModel<TEntity, Entity>> | undefined)[]
+  ) => void;
+} & CommonQueryOptions<TEntity, Entity, S, ErrorT>;
+
 /* -----------------------
-   Utility / helpers
+   Factory Options
    ----------------------- */
 
-/** Merge alias kept for BC */
-export type IMergeTypes<T, R> = ReturnModelType<T, R>;
+export type CrudFactoryOptions<
+  TParams = Record<string, any>,
+  Prefix = string
+> = {
+  defaultParams?: TParams & { entity: Prefix };
+};
 
-// ---------------- HELPERS ---------------------- //
-// function deepMerge<T extends QueryParams>(target: T, source: T): T {
-//   const output = { ...target };
+/* -----------------------
+   Utility Functions
+   ----------------------- */
 
-//   for (const key in source) {
-//     const sourceVal = source[key];
-//     const targetVal = target[key];
+const buildQueryKey = (
+  ...parts: (string | number | undefined | null | unknown)[]
+) => parts.filter(Boolean);
 
-//     if (
-//       sourceVal &&
-//       typeof sourceVal === "object" &&
-//       !Array.isArray(sourceVal)
-//     ) {
-//       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//       //   @ts-ignore
-//       output[key] = deepMerge(
-//         (targetVal as QueryParams) || {},
-//         sourceVal as QueryParams
-//       );
-//     } else {
-//       // Replace arrays or primitive values directly
-//       output[key] = sourceVal;
-//     }
-//   }
+const getEmptyPaginationMeta = (
+  meta: Partial<IPaginationMeta> = {}
+): IPaginationMeta => ({
+  next: undefined,
+  totalRecords: 0,
+  totalPages: 0,
+  hasMore: false,
+  limit: 10,
+  ...meta,
+});
 
-//   return output;
-// }
-function deepMerge<T extends Record<string, any>>(
+const deepMerge = <T extends Record<string, any>>(
   base: T,
   overrides: Partial<T> = {}
-): T {
+): T => {
   const result = { ...base };
 
   for (const key in overrides) {
     const val = overrides[key];
-
     if (val === undefined) continue;
 
-    // simple override for primitives, arrays, functions
     if (typeof val !== "object" || val === null || Array.isArray(val)) {
       (result as any)[key] = val;
-      continue;
-    }
-
-    // recursively merge objects
-    const baseVal = base[key];
-    if (typeof baseVal === "object" && baseVal !== null) {
-      (result as any)[key] = deepMerge(baseVal as any, val);
     } else {
-      (result as any)[key] = val;
+      const baseVal = base[key];
+      (result as any)[key] =
+        typeof baseVal === "object" && baseVal !== null
+          ? deepMerge(baseVal as any, val)
+          : val;
     }
   }
 
   return result;
-}
-function filterQueryOptions(
-  opts: Record<string, any> | undefined,
+};
+
+const filterSuspenseOptions = <T extends Record<string, any> | undefined>(
+  opts: T | undefined,
   isSuspense: boolean
-) {
-  if (!opts) return {};
+): Partial<Omit<T, "enabled" | "placeholderData">> => {
+  if (!opts || !isSuspense) return opts || {};
 
-  if (!isSuspense) return opts;
-
-  // ❗ Remove keys NOT allowed in suspense queries
   const { enabled, placeholderData, ...rest } = opts;
-
   return rest;
-}
+};
 
-const getEmptyPaginationMeta = (meta: any = {}) =>
-  ({
-    next: null,
-    totalRecords: 0,
-    totalPages: 0,
-    hasNextPage: false,
-    limit: 2,
+/* -----------------------
+   CRUD Client Factory
+   ----------------------- */
 
-    ...meta,
-  } as IPaginationMeta);
-export type CrudFactoryOptions<
-  TParams = Record<string, any>,
-  Prefix = string
-> = { defaultParams?: TParams & { entity: Prefix } };
-
-const buildKey = (...parts: (string | number | undefined | null | unknown)[]) =>
-  parts.filter(Boolean);
-
-// ---------------- CRUD Factory -----------------
 export function createCrudClient<TEntity, TParams = Record<string, any>>(
   model: Model<TEntity>,
   opts?: CrudFactoryOptions<TParams>
 ) {
-  const qs = getQueryClient();
-  // const mergeParams = (callParams = {}) =>
-  //   ({
-  //     ...(opts?.defaultParams || {}),
-  //     ...(callParams || {}),
-  //   } as QueryParams);
+  const queryClient = getQueryClient();
+
   const mergeParams = (
-    source: Record<string, any> = {},
-    target: Record<string, any> = {},
-    ...rest: QueryParams[]
+    ...paramSets: (QueryParams | undefined)[]
   ): QueryParams => {
-    let result = deepMerge(opts?.defaultParams || ({} as any), source);
-    result = deepMerge(result, target);
-
-    for (const obj of rest) {
-      result = deepMerge(result, obj);
-    }
-
-    return result;
+    const validParams = paramSets.filter(
+      (p): p is QueryParams => p !== undefined
+    );
+    return validParams.reduce(
+      (result, params) => deepMerge(result, params),
+      opts?.defaultParams || ({} as QueryParams)
+    );
   };
-  // ---------- Raw methods ----------
-  async function listRaw<Entity = never>({
+
+  // ---------- Raw API Methods ----------
+
+  const listRaw = async <Entity = TEntity>({
     params,
     options,
+    onSuccess,
   }: {
     params?: Record<string, any>;
-    options?: IOptions;
-  }): Promise<IPaginatedReturnType<IMergeTypes<TEntity, Entity>[]>> {
-    const res = await model.list<
-      IPaginatedReturnType<IMergeTypes<TEntity, Entity>[]>
+    options?: RequestOptions;
+    onSuccess?: (
+      data: IPaginatedReturnType<ReturnModel<TEntity, Entity>[]>
+    ) => void;
+  }): Promise<IPaginatedReturnType<ReturnModel<TEntity, Entity>[]>> => {
+    const response = await model.list<
+      IPaginatedReturnType<ReturnModel<TEntity, Entity>[]>
     >({
       path: options?.path,
       query: options?.query,
@@ -354,19 +333,27 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       },
     });
 
-    return res?.data as IPaginatedReturnType<IMergeTypes<TEntity, Entity>[]>;
-  }
+    if (response.data) {
+      onSuccess?.(response.data);
+    }
 
-  async function getRaw<T = TEntity>({
-    slug,
+    return response.data as IPaginatedReturnType<
+      ReturnModel<TEntity, Entity>[]
+    >;
+  };
+
+  const getRaw = async <T = TEntity>({
+    id,
     params,
     options,
+    onSuccess,
   }: {
-    slug: Id;
+    id: Id;
     params?: Record<string, any>;
-    options?: IOptions;
-  }) {
-    return model.get<T>(`${slug}`, {
+    options?: RequestOptions;
+    onSuccess?: (data: T) => void;
+  }) => {
+    const response = await model.get<T>(`${id}`, {
       path: options?.path,
       query: options?.query,
       requestOptions: {
@@ -374,24 +361,26 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         params: mergeParams(params, options?.requestOptions?.params),
       },
     });
-  }
 
-  // async function createRaw<T = Partial<TEntity>, TVars = Partial<TEntity>>(
-  //   payload: TVars,
-  //   params?: Record<string, any>,
-  //   options?: IOptions
-  // ) {
-  async function createRaw<T = Partial<TEntity>, TVars = Partial<TEntity>>({
+    if (response.data) {
+      onSuccess?.(response.data);
+    }
+
+    return response;
+  };
+
+  const createRaw = async <T = Partial<TEntity>, TVars = Partial<TEntity>>({
     payload,
     params,
     options,
+    onSuccess,
   }: {
     payload?: TVars;
     params?: Record<string, any>;
-    options?: IOptions;
-  }) {
-    // return http<TEntity>(axiosInst, {
-    return model.create<T>(payload as Partial<TEntity>, {
+    options?: RequestOptions;
+    onSuccess?: (data: T) => void;
+  }) => {
+    const response = await model.create<T>(payload as Partial<TEntity>, {
       query: options?.query,
       path: options?.path,
       requestOptions: {
@@ -399,41 +388,59 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         params: mergeParams(params, options?.requestOptions?.params),
       },
     });
-  }
 
-  async function updateRaw<T = Partial<TEntity>, TVars = Partial<TEntity>>({
-    slug,
+    if (response.data) {
+      onSuccess?.(response.data);
+    }
+
+    return response;
+  };
+
+  const updateRaw = async <T = Partial<TEntity>, TVars = Partial<TEntity>>({
+    id,
     payload,
     params,
     options,
+    onSuccess,
   }: {
-    slug: Id;
+    id: Id;
     payload: TVars;
     params?: Record<string, any>;
-    options?: IOptions;
-  }) {
-    // return http<TEntity>(axiosInst, {
-    return model.update<T>(`/${slug}`, payload as Partial<TEntity>, {
-      path: options?.path,
-      query: options?.query,
-      requestOptions: {
-        ...(options?.requestOptions || {}),
-        params: mergeParams(params, options?.requestOptions?.params),
-      },
-    });
-  }
+    options?: RequestOptions;
+    onSuccess?: (data: T) => void;
+  }) => {
+    const response = await model.update<T>(
+      `/${id}`,
+      payload as Partial<TEntity>,
+      {
+        path: options?.path,
+        query: options?.query,
+        requestOptions: {
+          ...(options?.requestOptions || {}),
+          params: mergeParams(params, options?.requestOptions?.params),
+        },
+      }
+    );
 
-  async function deleteRaw<T = Partial<TEntity>>({
-    slug,
+    if (response.data) {
+      onSuccess?.(response.data);
+    }
+
+    return response;
+  };
+
+  const deleteRaw = async <T = Partial<TEntity>>({
+    id,
     params,
     options,
+    onSuccess,
   }: {
-    slug: Id;
+    id: Id;
     params?: Record<string, any>;
-    options?: IOptions;
-  }) {
-    // return http<void>(axiosInst, {
-    return model.delete<T>(`/${slug}`, {
+    options?: RequestOptions;
+    onSuccess?: (data: T) => void;
+  }) => {
+    const response = await model.delete<T>(`/${id}`, {
       path: options?.path,
       query: options?.query,
       requestOptions: {
@@ -441,110 +448,177 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         params: mergeParams(params, options?.requestOptions?.params),
       },
     });
-  }
 
-  // ---------- React Query hooks ----------
+    if (response.data) {
+      onSuccess?.(response.data);
+    }
 
-  function createQueryHook<S extends boolean>(suspense: S) {
-    return suspense ? useSuspenseQuery : useQuery;
-  }
-  function createQueriesHook<S extends boolean>(suspense: S) {
-    return suspense ? useSuspenseQueries : useQueries;
-  }
+    return response;
+  };
 
-  function createQueryListHook<S extends boolean>(suspense: S) {
-    return suspense ? useSuspenseInfiniteQuery : useInfiniteQuery;
-  }
+  // ---------- Query Hook Factories ----------
 
-  function useEntitQuery<Entity = never, IS_SUSPENSE extends boolean = false>(
-    callOpts?: OffsetCallOptions<IMergeTypes<TEntity, Entity>[], IS_SUSPENSE>,
-    isSuspense = false
-  ) {
-    const params = mergeParams(callOpts?.params) as OffsetParams;
-    const { isEnabled = true } = params || { isEnabled: false };
-    const { queryKey = [] } = callOpts || { queryKey: [] };
-    const { ...rest } = callOpts?.queryOptions || {};
+  const createQueryHook = <S extends boolean>(suspense: S) =>
+    suspense ? useSuspenseQuery : useQuery;
+
+  const createQueriesHook = <S extends boolean>(suspense: S) =>
+    suspense ? useSuspenseQueries : useQueries;
+
+  const createInfiniteQueryHook = <S extends boolean>(suspense: S) =>
+    suspense ? useSuspenseInfiniteQuery : useInfiniteQuery;
+
+  // ---------- List Hooks ----------
+
+  const useListEntities = <Entity = TEntity, S extends boolean = false>(
+    callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>[], S>,
+    isSuspense: S = false as S
+  ) => {
+    const params = mergeParams(callOptions?.params) as OffsetPaginationParams;
+    const { isEnabled = true } = params;
     const useHook = createQueryHook(isSuspense);
-    return useHook({
-      queryKey: buildKey(params.entity, params.limit, params.page, ...queryKey),
-      queryFn: async () => {
-        return await listRaw<Entity>({
-          params,
-          options: {
-            ...callOpts?.options,
-            requestOptions: {
-              ...(callOpts?.options?.requestOptions || {}),
-              // signal,
-            },
-          },
-        });
-      },
 
-      ...(rest || {}),
-      ...(isSuspense ? {} : { enabled: isEnabled }),
-    });
-  }
-  function useEntitGetQuery<
-    Entity = never,
-    IS_SUSPENSE extends boolean = false
-  >(
-    slug?: Id,
-    callOpts?: IQueryOptions<TEntity, Entity, IS_SUSPENSE>,
-    isSuspense = false
-  ) {
-    const params = mergeParams(callOpts?.params);
-    const { queryKey = [] } = callOpts || { queryKey: [] };
-    const { queryFn, ...rest } = callOpts?.queryOptions || {};
-    const useHook = createQueryHook(isSuspense);
     return useHook({
-      queryKey: buildKey(params.entity, slug, ...(queryKey || [])),
+      queryKey: buildQueryKey(
+        params.entity,
+        "list",
+        params.limit,
+        params.page,
+        ...(callOptions?.queryKey || [])
+      ),
       queryFn: async ({ signal }) => {
-        const res = await getRaw<ReturnModelType<TEntity, Entity>>({
-          slug: slug as Id,
+        const response = await listRaw<Entity>({
           params,
           options: {
-            ...callOpts?.options,
+            ...callOptions?.options,
             requestOptions: {
-              ...(callOpts?.options?.requestOptions || {}),
-              // signal,
+              ...(callOptions?.options?.requestOptions || {}),
+              signal,
             },
           },
         });
-        // Cast the response to the expected type
-        // return res.data as IApiResponse<UnionIfBPresent<TEntity, Entity>>;
-        return res;
+        callOptions?.onSuccess?.(response);
+        return response;
       },
-      ...(rest ?? {}),
-      ...(isSuspense ? {} : { enabled: !!slug }),
+      ...(isSuspense ? {} : { enabled: isEnabled }),
+      ...filterSuspenseOptions(callOptions?.queryOptions, isSuspense),
     });
-  }
+  };
 
-  function useEntitGetQueries<
-    Entity = never,
-    IS_SUSPENSE extends boolean = false
-  >(
-    slugs?: Id[],
-    callOpts?: IQueryOptions<TEntity, Entity, IS_SUSPENSE>,
-    isSuspense = false
-  ) {
-    const params = mergeParams(callOpts?.params);
-    const { queryKey = [] } = callOpts || { queryKey: [] };
-    const { ...rest } = callOpts?.queryOptions || {};
-    const safeQueryOptions = filterQueryOptions(rest, isSuspense);
-    const useHook = createQueriesHook(isSuspense);
+  const useInfiniteListEntities = <Entity = TEntity, S extends boolean = false>(
+    callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>[], S>,
+    isSuspense: S = false as S
+  ) => {
+    const params = mergeParams(callOptions?.params) as CursorPaginationParams;
+    const { isEnabled = true } = params;
+    const useHook = createInfiniteQueryHook(isSuspense);
+
+    const select = (data: InfiniteListData<ReturnModel<TEntity, Entity>[]>) => {
+      const items = data.pages.flatMap((page) => page.data || []);
+      const paginationMeta =
+        data.pages.length > 0
+          ? data.pages[data.pages.length - 1].pagination_meta
+          : getEmptyPaginationMeta({ limit: params.limit });
+
+      const result: ListReturnType<ReturnModel<TEntity, Entity>[]> = {
+        pagination_meta: paginationMeta,
+        data: items,
+        pageParams: data.pageParams,
+        pages: data.pages as any,
+      };
+
+      callOptions?.onSuccess?.(result);
+      return result;
+    };
+
     return useHook({
-      queries: (slugs || [])?.map((slug) => {
+      queryKey: buildQueryKey(
+        params.entity,
+        "infinite-list",
+        params.limit,
+        ...(callOptions?.queryKey || [])
+      ),
+      queryFn: async ({ pageParam }) => {
+        const cursorParams = pageParam ? { cursor: pageParam as string } : {};
+        return await listRaw<Entity>({
+          params: { ...params, ...cursorParams },
+          options: callOptions?.options,
+        });
+      },
+      getNextPageParam: (lastPage) =>
+        lastPage.pagination_meta?.next || undefined,
+      initialPageParam: params.cursor,
+      select,
+      ...(isSuspense ? {} : { enabled: isEnabled }),
+      ...filterSuspenseOptions(callOptions?.infiniteOptions, isSuspense),
+    });
+  };
+
+  // ---------- Single Entity Hooks ----------
+
+  const useGetEntity = <Entity = TEntity, S extends boolean = false>(
+    callOptions?: SingleQueryOptions<TEntity, Entity, S>,
+    isSuspense: S = false as S
+  ) => {
+    const { isEnabled = true, ...params } = mergeParams(callOptions?.params);
+    const { id } = { ...params, ...callOptions };
+    const useHook = createQueryHook(isSuspense);
+    const queryoptions = filterSuspenseOptions<
+      SingleQueryOptions<TEntity, Entity, S>["queryOptions"]
+    >(callOptions?.queryOptions, isSuspense);
+    return useHook({
+      queryKey: buildQueryKey(
+        params.entity,
+        "get",
+        id,
+        ...(callOptions?.queryKey || [])
+      ),
+      queryFn: async ({ signal }) => {
+        if (!id) throw new Error("ID is required for useGet");
+
+        const response = await getRaw<ReturnModel<TEntity, Entity>>({
+          id: id as Id,
+          params,
+          options: {
+            ...callOptions?.options,
+            requestOptions: {
+              ...(callOptions?.options?.requestOptions || {}),
+              signal,
+            },
+          },
+        });
+        callOptions?.onSuccess?.(response);
+        return response;
+      },
+      ...(isSuspense ? {} : { enabled: isEnabled && !!id }),
+      ...queryoptions,
+    });
+  };
+
+  const useGetEntities = <Entity = TEntity, S extends boolean = false>(
+    callOptions?: MultiQueryOptions<TEntity, Entity, S>,
+    isSuspense: S = false as S
+  ) => {
+    const params = mergeParams(callOptions?.params);
+    const { ids = [], queryKey = [], queryOptions = {} } = callOptions || {};
+    const queryoptions = filterSuspenseOptions<
+      MultiQueryOptions<TEntity, Entity, S>["queryOptions"]
+    >(queryOptions, isSuspense);
+
+    const useHook = createQueriesHook(isSuspense);
+
+    return useHook({
+      queries: (ids || [])?.map((id) => {
         return {
-          queryKey: buildKey(params.entity, ...(queryKey || []), slug),
+          queryKey: buildQueryKey(params.entity, "get", id, ...queryKey),
           queryFn: async () => {
-            if (slug) {
-              const res = await getRaw<ReturnModelType<TEntity, Entity>>({
-                slug,
+            if (id) {
+              const res = await getRaw<ReturnModel<TEntity, Entity>>({
+                id,
                 params,
                 options: {
-                  ...callOpts?.options,
+                  ...callOptions?.options,
                   requestOptions: {
-                    ...(callOpts?.options?.requestOptions || {}),
+                    ...(callOptions?.options?.requestOptions || {}),
                     // signal,
                   },
                 },
@@ -556,300 +630,202 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           },
 
           retry: false,
-          ...(isSuspense ? {} : { enabled: !!slug }),
-          ...safeQueryOptions,
+          ...(isSuspense ? {} : { enabled: !!id }),
+          ...queryoptions,
         };
       }),
       combine: (results) => {
-        return {
-          data: results.map((result) => result.data),
-          isLoading: results.some((result) => result.isLoading),
-          error: results.map((result) => result.error),
+        const result = {
+          data: results.map((r) => r.data),
+          isLoading: results.some((r) => r.isLoading),
+          isError: results.some((r) => r.isError),
+          errors: results.map((r) => r.error),
         };
+        callOptions?.onSuccess?.(result.data);
+        return result;
       },
     });
-  }
+  };
 
-  function useList<Entity = never>(
-    callOpts?: OffsetCallOptions<IMergeTypes<TEntity, Entity>[]>
-  ) {
-    return useEntitQuery<Entity>({
-      ...callOpts,
-      queryOptions: {
-        ...(callOpts?.queryOptions || {}),
-      },
-      queryKey: [...(callOpts?.queryKey || []), "offset_list"],
-    });
-  }
-  // ---------- React Query hooks ----------
-  function useSuspenseList<Entity = never>(
-    callOpts?: OffsetCallOptions<IMergeTypes<TEntity, Entity>[], true>
-  ) {
-    return useEntitQuery<Entity>({
-      ...callOpts,
-      queryOptions: {
-        ...(callOpts?.queryOptions || {}),
-      },
-      queryKey: [...(callOpts?.queryKey || []), "offset_suspense_list"],
-    });
-  }
+  // ---------- Mutation Hooks ----------
 
-  function useEntityInfinteList<
-    Entity = never,
-    IS_SUSPENSE extends boolean = false
-  >(
-    callOpts?: CursorCallOptions<IMergeTypes<TEntity, Entity>[], IS_SUSPENSE>,
-    isSuspense = false
-  ) {
-    const params = mergeParams(callOpts?.params) as any;
-
-    const { isEnabled = true } = params || { isEnabled: false };
-    const { queryFn, getNextPageParam, ...rest } =
-      callOpts?.infiniteOptions || {};
-    const { queryKey = [] } = callOpts || { queryKey: [] };
-    const Select = (
-      data: InfiniteData<ApiHooksResp<IMergeTypes<TEntity, Entity>[]>, unknown>
-    ) => {
-      // Flatten and apply selection function if provided
-      const isPages = data.pages?.length > 0;
-      let items = [];
-      // const allItems = data.pages
-      //   .filter((p) => !!p.data?.length)
-      //   .flatMap((page) =>  page.data!
-      //   );
-      for (let index = 0; index < data.pages.length; index++) {
-        const element = data.pages[index];
-        if (element.data?.length) {
-          items.push(...element.data!);
-        }
-      }
-      console.log(items);
-      const pagination_meta = isPages
-        ? data.pages?.[data.pages?.length - 1]?.pagination_meta
-        : getEmptyPaginationMeta({ limit: params.limit });
-      return {
-        pagination_meta,
-        data: items,
-        pageParams: data.pageParams,
-        pages: data.pages as {
-          data: IMergeTypes<TEntity, Entity>[];
-          pagination_meta: IPaginationMeta;
-        }[],
-        // pages: data.pages as {
-        //   data: IMergeTypes<TEntity, Entity>[];
-        //   pagination_meta: IPaginationMeta;
-        // }[],
-      };
-      // ? select(meta, allItems, data.pageParams)
-      // : { meta, data: allItems, pageParams: data.pageParams };
-    };
-    const useHook = createQueryListHook(isSuspense);
-
-    return useHook({
-      queryKey: buildKey(params.entity, params.limit, ...queryKey),
-      queryFn: async ({ pageParam }) => {
-        if (pageParam) params.cursor = pageParam as string;
-        return await listRaw<Entity>({
-          params: { ...params, mode: "cursor" },
-          options: {
-            ...callOpts?.options,
-            requestOptions: {
-              ...(callOpts?.options?.requestOptions || {}),
-              // signal,
-            },
-          },
-        });
-      },
-      getNextPageParam: (lastPage) => {
-        // console.log(lastPage, "lastpage");
-
-        // return lastPage?.nextCursor || undefined;
-        return lastPage.pagination_meta?.next || undefined;
-      },
-      initialPageParam: params?.cursor || undefined,
-      ...rest,
-      ...(isSuspense ? {} : { enabled: isEnabled }),
-
-      select: Select,
-    });
-  }
-  function useCursorList<Entity = never>(
-    callOpts?: CursorCallOptions<IMergeTypes<TEntity, Entity>[]>
-  ) {
-    return useEntityInfinteList({
-      ...(callOpts || {}),
-      queryOptions: {
-        ...(callOpts?.queryOptions || {}),
-      },
-      queryKey: [...(callOpts?.queryKey || []), "cursor_list"],
-    });
-  }
-  function useSuspenseCursorList<Entity = never>(
-    callOpts?: CursorCallOptions<IMergeTypes<TEntity, Entity>[], true>
-  ) {
-    return useEntityInfinteList({
-      ...(callOpts || {}),
-      queryOptions: {
-        ...(callOpts?.queryOptions || {}),
-      },
-      queryKey: [...(callOpts?.queryKey || []), "cursor_suspense_list"],
-    });
-  }
-
-  function useGet<Entity = never>(
-    slug?: Id,
-    callOpts?: IQueryOptions<TEntity, Entity, false>
-  ) {
-    return useEntitGetQuery(slug, callOpts);
-  }
-  function useGetQuries<Entity = never>(
-    slugs?: Id[],
-    callOpts?: IQueryOptions<TEntity, Entity, false>
-  ) {
-    return useEntitGetQueries(slugs, callOpts);
-  }
-  function useSuspenseGetQuries<Entity = never>(
-    slugs?: Id[],
-    callOpts?: IQueryOptions<TEntity, Entity, false>
-  ) {
-    return useEntitGetQueries(slugs, callOpts, true);
-  }
-  function useSuspenseGet<Entity = never>(
-    slug?: Id,
-    callOpts?: IQueryOptions<TEntity, Entity, true>
-  ) {
-    return useEntitGetQuery(slug, callOpts, true);
-  }
-
-  function useCreate<Entity = never, Tvars = never>(
-    callOpts?: MutateCallOptions<
-      IMergeTypes<TEntity, Entity>,
-      Partial<ReturnModelType<TEntity, Tvars>>
-    >
-  ) {
-    return useMutation<
-      IApiResponse<IMergeTypes<TEntity, Entity>>,
-      // ApiModelDataTypes[T],
-      IResponseError<null>,
-      Partial<ReturnModelType<TEntity, Tvars>>
-    >({
-      mutationFn: (payload: Partial<ReturnModelType<TEntity, Tvars>>) =>
+  const useCreate = <Entity = TEntity, TVars = Partial<TEntity>>(
+    callOptions?: MutationCallOptions<ReturnModel<TEntity, Entity>, TVars>
+  ) =>
+    useMutation({
+      mutationFn: (payload: TVars) =>
         createRaw({
           payload,
-          params: callOpts?.params,
-          options: callOpts?.options,
+          params: callOptions?.params,
+          options: callOptions?.options,
+          onSuccess: callOptions?.onSuccess,
         }),
-      onSuccess: async (data) => {
-        return data;
-      },
-      ...(callOpts?.mutationOptions ?? {}),
+      ...callOptions?.mutationOptions,
     });
-  }
-  function usePost<Entity = never, Tvars = never>(
-    callOpts?: MutateCallOptions<
-      IMergeTypes<TEntity, Entity>,
-      Partial<ReturnModelType<TEntity, Tvars>>
-    >
-  ) {
-    return useMutation<
-      IApiResponse<IMergeTypes<TEntity, Entity>>,
-      // ApiModelDataTypes[T],
-      IResponseError<null>,
-      Partial<ReturnModelType<TEntity, Tvars>>
-    >({
-      mutationFn: (payload: Partial<ReturnModelType<TEntity, Tvars>>) =>
-        createRaw({
-          payload,
-          params: callOpts?.params,
-          options: callOpts?.options,
-        }),
-      onSuccess: async (data) => {
-        return data;
-      },
-      ...(callOpts?.mutationOptions ?? {}),
-    });
-  }
 
-  function useUpdate<Entity = never, Tvars = never>(
-    callOpts?: MutateCallOptions<
+  const useUpdate = <Entity = TEntity, TVars = Partial<TEntity>>(
+    callOptions?: MutationCallOptions<
       { id: Id; data: TEntity & IPartialIfExist<Entity> },
-      { id: Id; data: Partial<ReturnModelType<TEntity, Tvars>> }
+      { id: Id; data: TVars }
     >
-  ) {
-    return useMutation<
-      IApiResponse<{ id: Id; data: TEntity & IPartialIfExist<Entity> }>,
-      // ApiModelDataTypes[T],
-      IResponseError<null>,
-      { id: Id; data: Partial<ReturnModelType<TEntity, Tvars>> }
-    >({
-      mutationFn: ({
-        id,
-        data,
-      }: {
-        id: Id;
-        data: Partial<ReturnModelType<TEntity, Tvars>>;
-      }) =>
+  ) =>
+    useMutation({
+      mutationFn: ({ id, data }: { id: Id; data: TVars }) =>
         updateRaw({
-          slug: id,
+          id,
           payload: data,
-          params: callOpts?.params,
-          options: callOpts?.options,
+          params: callOptions?.params,
+          options: callOptions?.options,
+          onSuccess: callOptions?.onSuccess,
         }),
-      onSuccess: async (_res) => {
-        return _res;
-      },
-      ...(callOpts?.mutationOptions ?? {}),
+      ...callOptions?.mutationOptions,
     });
-  }
 
-  function useDelete(callOpts?: MutateCallOptions<Id, Id>) {
-    return useMutation<IApiResponse<Id>, IResponseError<null>, Id>({
+  const useDelete = (callOptions?: MutationCallOptions<Id, Id>) =>
+    useMutation({
       mutationFn: (id: Id) =>
         deleteRaw({
-          slug: id,
-          params: callOpts?.params,
-          options: callOpts?.options,
+          id,
+          params: callOptions?.params,
+          options: callOptions?.options,
+          onSuccess: callOptions?.onSuccess,
         }),
-
-      ...(callOpts?.mutationOptions ?? {}),
+      ...callOptions?.mutationOptions,
     });
-  }
 
-  function updateCacheById(
-    id?: Id,
-    payLoad?: Partial<TEntity>,
-    queryKey?: QueryKey | string
-  ) {
-    if (!id) {
-      return false;
-    }
-    const keys = [opts?.defaultParams?.entity, id, queryKey].filter(Boolean);
-    qs.setQueryData(keys, (data: TEntity) => {
-      if (!data) {
-        return undefined;
-      }
-      return { ...data, ...payLoad };
+  // ---------- Cache Utilities ----------
+
+  const updateCache = (
+    id: Id,
+    updates: Partial<TEntity>,
+    queryKey?: QueryKey
+  ) => {
+    const key = buildQueryKey(opts?.defaultParams?.entity, id, queryKey);
+    queryClient.setQueryData(key, (old: TEntity | undefined) =>
+      old ? { ...old, ...updates } : undefined
+    );
+  };
+
+  const getUrl = (endpoint?: string) =>
+    `${model.fullURL}${endpoint ? `/${endpoint}` : ""}`;
+
+  // ---------- Prefetch Methods ----------
+
+  const prefetchList = async <Entity = TEntity>(
+    callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>[], false>
+  ) => {
+    const params = mergeParams(callOptions?.params) as OffsetPaginationParams;
+
+    await queryClient.prefetchQuery({
+      queryKey: buildQueryKey(
+        params.entity,
+        "list",
+        params.limit,
+        params.page,
+        ...(callOptions?.queryKey || [])
+      ),
+      queryFn: async ({ signal }) => {
+        const response = await listRaw<Entity>({
+          params,
+          options: {
+            ...callOptions?.options,
+            requestOptions: { signal },
+          },
+        });
+        callOptions?.onSuccess?.(response);
+        return response;
+      },
+      ...callOptions?.queryOptions,
     });
-  }
+  };
+
+  const prefetchGet = async <Entity = TEntity>(
+    callOptions: SingleQueryOptions<TEntity, Entity, false> & { id: Id }
+  ) => {
+    const params = mergeParams(callOptions.params);
+
+    await queryClient.prefetchQuery({
+      queryKey: buildQueryKey(
+        params.entity,
+        "get",
+        callOptions.id,
+        ...(callOptions.queryKey || [])
+      ),
+      queryFn: async ({ signal }) => {
+        const response = await getRaw<ReturnModel<TEntity, Entity>>({
+          id: callOptions.id,
+          params,
+          options: {
+            ...callOptions.options,
+            requestOptions: { signal },
+          },
+        });
+        callOptions.onSuccess?.(response);
+        return response;
+      },
+      ...callOptions.queryOptions,
+    });
+  };
+  const useSuspenseList = <Entity = TEntity>(
+    opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>[], true>
+  ) => useListEntities(opts, true);
+  const useList = <Entity = TEntity>(
+    opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>[]>
+  ) => useListEntities(opts);
+
+  const useSuspenseInfiniteList = <Entity = TEntity>(
+    opts?: CursorCallOptions<ReturnModel<TEntity, Entity>[], true>
+  ) => useInfiniteListEntities(opts, true);
+  const useInfiniteList = <Entity = TEntity>(
+    opts?: CursorCallOptions<ReturnModel<TEntity, Entity>[]>
+  ) => useInfiniteListEntities(opts);
+
+  const useSuspenseGet = <Entity = TEntity>(
+    opts?: SingleQueryOptions<TEntity, Entity, true>
+  ) => useGetEntity(opts, true);
+  const useGet = <Entity = TEntity>(
+    opts?: SingleQueryOptions<TEntity, Entity>
+  ) => useGetEntity(opts);
+
+  const useSuspenseGetMany = <Entity = TEntity>(
+    opts?: MultiQueryOptions<TEntity, Entity, true>
+  ) => useGetEntities(opts, true);
+  const useGetMany = <Entity = TEntity>(
+    opts?: MultiQueryOptions<TEntity, Entity>
+  ) => useGetEntities(opts, true);
+  // ---------- Public API ----------
 
   return {
+    // Raw methods
     listRaw,
     getRaw,
     createRaw,
     updateRaw,
     deleteRaw,
+
+    // Query hooks
     useList,
-    useSuspenseList,
+    useInfiniteList,
     useGet,
+    useGetMany,
+
+    // Suspense variants
+    useSuspenseList,
+    useSuspenseInfiniteList,
     useSuspenseGet,
-    useGetQuries,
-    useSuspenseGetQuries,
+    useSuspenseGetMany,
+
+    // Mutation hooks
     useCreate,
-    usePost,
     useUpdate,
     useDelete,
-    useCursorList,
-    useSuspenseCursorList,
-    updateCacheById,
+
+    // Utilities
+    updateCache,
+    getUrl,
+
+    // Prefetch
+    prefetchList,
+    prefetchGet,
   };
 }

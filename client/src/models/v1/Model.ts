@@ -18,6 +18,10 @@ class Model<
   private resolveBaseUrl(apiPoolName?: keyof typeof API_POOL): string {
     return apiPoolName ? API_POOL[apiPoolName] : API_POOL["public-1"];
   }
+
+  public get fullURL() {
+    return `${this.baseUrl}${this.endpoint}`;
+  }
   async sendRequest<T>(
     path: string,
     method: "GET" | "POST" | "PUT" | "DELETE",
@@ -28,7 +32,7 @@ class Model<
       method,
       data,
       baseURL: this.baseUrl,
-      ...options
+      ...options,
     });
     return res?.data as IApiResponse<T>;
   }

@@ -2,6 +2,7 @@ import { APP_CONFIG } from "@/config/app.config";
 import { paginatedQuerySchema } from "@/schema/pagination";
 import { UserService } from "@/services/user.service";
 import { BadRequestException, NotFoundException } from "@/utils/catch-errors";
+import { resetCookies } from "@/utils/cookie";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
 
@@ -15,12 +16,13 @@ class UserController {
     const user = request.user;
     const accessToken = request.cookies?.[APP_CONFIG.COOKIE_NAME];
     const refreshToken = request.cookies?.[APP_CONFIG.REFRESH_COOKIE_NAME];
-
     const { data } = await this.userService.getUserById(user?.id, true);
-
+    if (!data) {
+      resetCookies(reply);
+    }
     return SuccessResponse(reply, {
-      data: { ...(data || {}), accessToken, refreshToken },
-      message: user?.id ? "User Found" : "User not found",
+      data: data ? { ...data, accessToken, refreshToken } : null,
+      message: data ? "User Found" : "User not found",
     });
   };
 
@@ -28,11 +30,10 @@ class UserController {
    * GET /users/:id
    */
   public findById = async (
-    request: FastifyRequest<{ Params: { id: string } }>,
+    req: FastifyRequest<{ Params: { userId: string } }>,
     reply: FastifyReply
   ) => {
-    const { id } = request.params;
-
+    const { userId: id } = req.params;
     if (!id) {
       throw new BadRequestException("User Id is required");
     }

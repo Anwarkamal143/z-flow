@@ -6,15 +6,20 @@ export default async function userRoutes(fastify: FastifyInstance) {
   // Optional: apply middleware to all routes in this module
   fastify.addHook("preHandler", authMiddleware.loggedInUser);
 
-  // GET /user → findAll
-  fastify.get("/", userController.findAll);
-
   // GET /user/me → current user
   fastify.get("/me", userController.me);
 
-  // POST /user/me → findById via POST
-  fastify.post("/me", userController.findById);
+  // GET /user → findAll
+  fastify.get(
+    "/",
+    { preHandler: authMiddleware.isAuthenticated },
+    userController.findAll
+  );
 
   // GET /user/:userId → findById
-  fastify.get("/:userId", userController.findById);
+  fastify.get<{ Params: { userId: string } }>(
+    "/:userId",
+    { preHandler: authMiddleware.isAuthenticated },
+    userController.findById
+  );
 }

@@ -1,5 +1,4 @@
 import { stringToNumber } from "@/lib";
-import getStripe from "@/lib/get-stripejs";
 
 export const DB_URL = process.env.DATABASE_URL as string;
 export const DOMAIN = process.env.NEXT_PUBLIC_APP_URL;
@@ -31,7 +30,6 @@ export const JWT_REFRESH_EXPIRES_IN =
   process.env.JWT_REFRESH_EXPIRES_IN || "7d";
 export const JWT_COOKIE_EXPIRES_IN =
   stringToNumber(process.env.JWT_COOKIE_EXPIRES_IN) || "7d";
-export const stripePromise = getStripe();
 
 export const REDIS_HOST = process.env.REDIS_HOST;
 export const REDIS_PASSWORD = process.env.REDIS_PASSWORD;

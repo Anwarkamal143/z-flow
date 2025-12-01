@@ -2,9 +2,8 @@
 import axios, {
   AxiosRequestConfig,
   AxiosResponse,
-  InternalAxiosRequestConfig
+  InternalAxiosRequestConfig,
 } from "axios";
-import { toast } from "sonner";
 
 import { API_BASE_URL, POKEMON_API_BASE_URL } from "@/config";
 export var API_POOL = {
@@ -15,7 +14,7 @@ export var API_POOL = {
   //   contact: process.env.REACT_APP_CONTACT_BASE_URL,
   //   "public-1": process.env.REACT_APP_PUBLIC_API_1_BASE_URL,
   "public-1": API_BASE_URL,
-  "pokemon-1": POKEMON_API_BASE_URL
+  "pokemon-1": POKEMON_API_BASE_URL,
 } as const;
 
 const codeMessage: { [key: string]: string } = {
@@ -33,7 +32,7 @@ const codeMessage: { [key: string]: string } = {
   500: "The server has encountered a situation it doesn't know how to handle",
   502: "Bad Gateway",
   503: "The server is not ready to handle the request",
-  504: "Timeout"
+  504: "Timeout",
 };
 
 const baseURL = API_POOL["public-1"];
@@ -54,7 +53,7 @@ function createAxiosInstance(base: string) {
   return axios.create({
     baseURL: base,
     // timeout: 60000,
-    withCredentials: true
+    withCredentials: true,
   });
 }
 const axiosRequest = createAxiosInstance(baseURL);
@@ -66,7 +65,7 @@ export let requestQueue: RequestQueueCallback[] = []; // Queue to hold pending r
 // Add request interceptor
 
 axiosRequest.interceptors.request.use(
-  (reqConfig: InternalAxiosRequestConfig<any> & IAxiosRequest) => {
+  async (reqConfig: InternalAxiosRequestConfig<any> & IAxiosRequest) => {
     return reqConfig;
   },
   (error) => {
@@ -88,17 +87,14 @@ axiosRequest.interceptors.response.use(
     return response;
   },
   async (error) => {
-    // Skip if already retried
-
     // All other errors
     const status = error?.response?.status;
     const message =
       error?.response?.data?.message || codeMessage[status] || "Unknown error";
 
     if (status && codeMessage[status]) {
-      toast.error(message);
+      // toast.error(message);
     }
-
     return Promise.reject(error);
 
     // return Promise.reject({
@@ -132,34 +128,33 @@ const errorHandler = (error: RequestError): CustomResponse => {
       errorHandled: true,
       reason: reason,
 
-      ...error
+      ...error,
     };
   }
 
   const { response } = error;
 
   if (response && response.status) {
-    // if (response.status === 400) {
-    //   notification.error({
-    //     message: response.data?.message || codeMessage[response.status],
-    //   });
-    // }
+    if (response.status === 401) {
+      window.location.href = "/login";
+    }
     response.success = false;
     response.errorHandled = true;
     const errorText = codeMessage[response.status];
+    console.log(response, "response");
     return {
       message: response?.data?.message || response?.message,
       ...response,
       success: false,
       errorHandled: true,
-      reason: errorText
+      reason: errorText,
     };
   } else if (!response) {
     return {
       success: false,
       errorHandled: true,
       reason: axios.isCancel(error) ? "cancelled" : "network",
-      message: axios.isCancel(error) ? "Request cancelled" : "Network error"
+      message: axios.isCancel(error) ? "Request cancelled" : "Network error",
     };
   }
 
@@ -168,7 +163,7 @@ const errorHandler = (error: RequestError): CustomResponse => {
     ...response,
     success: false,
     errorHandled: true,
-    reason: "network"
+    reason: "network",
   };
 };
 
@@ -184,7 +179,7 @@ async function request(
   url: string,
   options: IAxiosRequest = {
     handleError: true,
-    public: true
+    public: true,
   }
 ) {
   const handleError = options.handleError ?? true;
@@ -205,7 +200,7 @@ async function request(
 const secondaryRequest = async (
   url: string,
   options: IAxiosRequest = {
-    handleError: true
+    handleError: true,
   }
 ) => {
   const handleError = options.handleError ?? true;

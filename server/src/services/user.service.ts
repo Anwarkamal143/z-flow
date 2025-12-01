@@ -2,7 +2,7 @@ import { HTTPSTATUS } from "@/config/http.config";
 import { db, eq, Provider, Role } from "@/db";
 import { users } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
-import { InsertUser, SelectUser } from "@/schema/user";
+import { InsertUser, IUpdateUser, SelectUser } from "@/schema/user";
 import { stringToNumber } from "@/utils";
 import {
   BadRequestException,
@@ -10,9 +10,10 @@ import {
   NotFoundException,
 } from "@/utils/catch-errors";
 import { toUTC } from "@/utils/date-time";
+import cacheManager from "@/utils/redis-cache/cache-manager";
+import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { AccountService } from "./accounts.service";
 import { BaseService, IPaginatedParams } from "./base.service";
-import { cache } from "./redis.service";
 type CreateUserInput = Pick<SelectUser, "email" | "name"> &
   Partial<Omit<SelectUser, "email" | "name">>;
 
@@ -97,29 +98,31 @@ export class UserService extends BaseService<
     usecahce = false,
     excludePassword = true
   ) {
-    try {
-      if (!id) {
-        return {
-          data: null,
+    if (!id) {
+      return {
+        data: null,
 
-          error: new BadRequestException("User Id is required", {
-            errorCode: ErrorCode.VALIDATION_ERROR,
-          }),
-        };
-      }
-      const { data: user } = await cache(
-        `user:${id}`,
+        error: new BadRequestException("User Id is required", {
+          errorCode: ErrorCode.VALIDATION_ERROR,
+        }),
+      };
+    }
+    try {
+      const user = await drizzleCache.query(
         async () => {
-          const { data, ...rest } = await this.findOne((fields) =>
-            eq(fields.id, id)
-          );
+          const { data } = await this.findOne((fields) => eq(fields.id, id));
+          console.log(data, "data from db");
           if (data && excludePassword) {
-            return { ...rest, data: { ...data, password: undefined } };
+            const { password, ...restData } = data;
+            return restData;
           }
-          return { ...rest, data };
+          return data;
         },
-        { ttl: 600, useCache: usecahce }
+        {
+          options: { ttl: 600, useCache: usecahce, cacheKey: `users:${id}` },
+        }
       );
+
       // const { data: user } = await this.findOne((fields) => eq(fields.id, id));
       if (!user) {
         return {
@@ -127,9 +130,7 @@ export class UserService extends BaseService<
           error: new NotFoundException("User not found"),
         };
       }
-      if (excludePassword) {
-        user.password = undefined;
-      }
+
       return { data: user };
     } catch (e) {
       console.log("getUserById Error", e);
@@ -140,6 +141,7 @@ export class UserService extends BaseService<
       };
     }
   }
+
   public async createUser(data: CreateUserInput) {
     try {
       const [user] = await db
@@ -208,6 +210,16 @@ export class UserService extends BaseService<
       googleId,
       Provider.google
     );
+  }
+
+  async updateUser(userId: string, updateData: IUpdateUser) {
+    const { password, ...userData } = updateData;
+    const { data, ...rest } = await this.update<IUpdateUser>(
+      (fields) => eq(fields.id, userId),
+      userData
+    );
+    await cacheManager.deleteNamespace(`users`);
+    return { ...rest, data };
   }
 }
 export const userService = new UserService();

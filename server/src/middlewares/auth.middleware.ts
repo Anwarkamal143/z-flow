@@ -5,7 +5,10 @@ import { resetCookies, setCookies } from "@/utils/cookie";
 
 import { Role } from "@/db";
 import { UserService } from "@/services/user.service";
-import { UnauthorizedException } from "@/utils/catch-errors";
+import {
+  UnauthenticatedException,
+  UnauthorizedException,
+} from "@/utils/catch-errors";
 import { verifyAccessToken, verifyRefreshToken } from "@/utils/jwt";
 import { FastifyReply, FastifyRequest } from "fastify";
 // Helpers
@@ -27,11 +30,11 @@ export class AuthMiddleware {
   constructor(public userService: UserService) {}
 
   // --------- AUTH REQUIRED ----------
-  isAuthenticated = async (request: FastifyRequest, reply: FastifyReply) => {
-    const { accessToken, refreshToken } = getRequestTokens(request);
+  isAuthenticated = async (req: FastifyRequest, reply: FastifyReply) => {
+    const { accessToken, refreshToken } = getRequestTokens(req);
 
     if (!accessToken && !refreshToken) {
-      throw new UnauthorizedException("Not authenticated");
+      throw new UnauthenticatedException("Not authenticated");
     }
 
     const tokenData = await verifyAccessToken(accessToken);
@@ -48,22 +51,27 @@ export class AuthMiddleware {
 
     if (!finalTokenData?.data?.user) {
       resetCookies(reply);
-      throw new UnauthorizedException("Invalid or expired token", {
-        errorCode: ErrorCode.AUTH_INVALID_TOKEN,
-      });
+      throw new UnauthenticatedException("Invalid or expired token");
     }
-
-    request.user = finalTokenData.data.user;
+    // const { data } = await this.userService.getUserById(
+    //   finalTokenData.data.user.id,
+    //   true
+    // );
+    // if (!data) {
+    //   resetCookies(reply);
+    //   return reply.status(401).redirect(`${APP_CONFIG.APP_URL}/login`);
+    // }
+    req.user = finalTokenData.data.user;
 
     if (isExpired) {
-      request.tokenData = finalTokenData.data.user;
+      req.tokenData = finalTokenData.data.user;
       await setCookies(reply, finalTokenData.data.user);
     }
   };
 
   // ---------- OPTIONAL AUTH ----------
-  loggedInUser = async (request: FastifyRequest, reply: FastifyReply) => {
-    const { accessToken, refreshToken } = getRequestTokens(request);
+  loggedInUser = async (req: FastifyRequest, reply: FastifyReply) => {
+    const { accessToken, refreshToken } = getRequestTokens(req);
 
     if (!accessToken && !refreshToken) return;
 
@@ -80,11 +88,11 @@ export class AuthMiddleware {
       }
 
       await setCookies(reply, refreshData.user);
-      request.user = refreshData.user;
+      req.user = refreshData.user;
       return;
     }
 
-    if (accessData?.user) request.user = accessData.user;
+    if (accessData?.user) req.user = accessData.user;
   };
 
   // ---------- API KEY PROTECTION ----------

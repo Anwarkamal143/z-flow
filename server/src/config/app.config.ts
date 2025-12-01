@@ -64,4 +64,9 @@ export const APP_CONFIG = {
   // REDIS_CLUSTER: process.env.REDIS_CLUSTER,
   // REDIS_CLUSTER_NODES: process.env.REDIS_CLUSTER_NODES,
   SENTRY_DNS: process.env.SENTRY_DNS,
+
+  // POLAR
+  POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN || "",
+  ENABLE_INNGEST: process.env.ENABLE_INNGEST === "true" || false,
+  INNGEST_MODE: process.env.INNGEST_MODE || "dev",
 };

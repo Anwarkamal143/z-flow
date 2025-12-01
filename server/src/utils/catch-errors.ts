@@ -43,8 +43,21 @@ export class UnauthorizedException extends AppError {
   constructor(message = "Unauthorized access", options: ExceptionOptions = {}) {
     super(
       message,
+      HTTPSTATUS.FORBIDDEN,
+      options.errorCode || ErrorCode.ACCESS_UNAUTHORIZED,
+      {
+        metadata: options.metadata,
+        cause: options.cause,
+      }
+    );
+  }
+}
+export class UnauthenticatedException extends AppError {
+  constructor(message = "Not authenticated", options: ExceptionOptions = {}) {
+    super(
+      message,
       HTTPSTATUS.UNAUTHORIZED,
-      options.errorCode || ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
+      options.errorCode || ErrorCode.AUTH_UNAUTHORIZED,
       {
         metadata: options.metadata,
         cause: options.cause,
@@ -58,7 +71,7 @@ export class ForbiddenException extends AppError {
     super(
       message,
       HTTPSTATUS.FORBIDDEN,
-      options.errorCode || ErrorCode.ACCESS_FORBIDDEN,
+      options.errorCode || ErrorCode.ACCESS_UNAUTHORIZED,
       {
         metadata: options.metadata,
         cause: options.cause,
@@ -176,8 +189,8 @@ export class HttpException extends AppError {
 function getDefaultErrorCode(statusCode: HttpStatusCode): ErrorCode {
   const mapping: Partial<Record<HttpStatusCode, ErrorCode>> = {
     [HTTPSTATUS.BAD_REQUEST]: ErrorCode.BAD_REQUEST,
-    [HTTPSTATUS.UNAUTHORIZED]: ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
-    [HTTPSTATUS.FORBIDDEN]: ErrorCode.ACCESS_FORBIDDEN,
+    [HTTPSTATUS.FORBIDDEN]: ErrorCode.ACCESS_UNAUTHORIZED,
+    [HTTPSTATUS.UNAUTHORIZED]: ErrorCode.AUTH_UNAUTHORIZED,
     [HTTPSTATUS.NOT_FOUND]: ErrorCode.RESOURCE_NOT_FOUND,
     [HTTPSTATUS.CONFLICT]: ErrorCode.DATA_CONFLICT,
     [HTTPSTATUS.UNPROCESSABLE_ENTITY]: ErrorCode.VALIDATION_ERROR,

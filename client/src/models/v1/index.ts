@@ -1,5 +1,5 @@
 export { assetClient, default as assetModelInstance } from "./Asset.model";
 export { authClient, default as authModelInstance } from "./Auth.model";
 export { default as Model, type IRequestOptions } from "./Model";
-export { stripeClient, default as stripeModelInstance } from "./Stripe.model";
+export * from "./payments";
 export { userClient, default as userModelInstance } from "./User.model";

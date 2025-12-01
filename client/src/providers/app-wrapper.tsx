@@ -22,7 +22,7 @@ const AppWrapper = ({ children }: IAppWrapper) => {
   const isAuthenticating = useStoreUserIsAuthenticating();
   useEffect(() => {
     if (isFirstTimeLoading) return;
-    if (userData?.data) {
+    if (userData?.data?.id) {
       const { accounts, accessToken, refreshToken, ...rest } = userData.data;
       setUser({
         user: rest,

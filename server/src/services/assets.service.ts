@@ -2,17 +2,10 @@ import { eq } from "@/db";
 
 import { HTTPSTATUS } from "@/config/http.config";
 import { assets } from "@/db/tables";
-import { ErrorCode } from "@/enums/error-code.enum";
 import { IAsset, InsertAsset, InsertAssetSchema } from "@/schema/asset";
 import { formatZodError, stringToNumber } from "@/utils";
-import {
-  BadRequestException,
-  InternalServerException,
-  NotFoundException,
-  ValidationException,
-} from "@/utils/catch-errors";
+import { ValidationException } from "@/utils/catch-errors";
 import { BaseService, IPaginatedParams } from "./base.service";
-import { cache } from "./redis.service";
 
 export class AseetService extends BaseService<
   typeof assets,
@@ -50,40 +43,7 @@ export class AseetService extends BaseService<
       deleted_at: new Date(),
     });
   }
-  public async getAssetById(id: string, usecahce = false) {
-    try {
-      if (!id) {
-        return {
-          data: null,
 
-          error: new BadRequestException("Asset Id is required", {
-            errorCode: ErrorCode.VALIDATION_ERROR,
-          }),
-        };
-      }
-      const { data: user } = await cache(
-        `asset:${id}`,
-        async () => await this.findOne((fields) => eq(fields.id, id)),
-        { ttl: 600, useCache: usecahce }
-      );
-      // const { data: user } = await this.findOne((fields) => eq(fields.id, id));
-      if (!user) {
-        return {
-          data: null,
-          error: new NotFoundException("Asset not found"),
-        };
-      }
-
-      return { data: user };
-    } catch (e) {
-      console.log("getAssetById Error", e);
-      return {
-        data: null,
-
-        error: new InternalServerException(),
-      };
-    }
-  }
   async createAsset(data: InsertAsset) {
     const result = InsertAssetSchema.safeParse(data);
     if (result.error) {
