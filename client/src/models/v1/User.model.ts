@@ -19,5 +19,5 @@ class UserModel extends Model<IAppUser> {
 const userModel = new UserModel();
 export default userModel;
 export const userClient = createCrudClient(userModel, {
-  defaultParams: { entity: "user" }
+  defaultParams: { entity: "user" },
 });

@@ -150,12 +150,15 @@ export class BaseService<
     }
   }
 
-  async update(where: SQL<unknown>, values: Partial<TInsert>) {
+  async update<T = Partial<TInsert>>(
+    where: (table: TTable) => SQL<unknown> | undefined,
+    values: T
+  ) {
     try {
       const result = await db
         .update(this.table)
         .set(values)
-        .where(where)
+        .where(where(this.table))
         .returning();
       return {
         data: result,

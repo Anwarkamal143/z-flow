@@ -7,7 +7,6 @@ export default fp(async (app: FastifyInstance) => {
     (error: any, _request: FastifyRequest, reply: FastifyReply) => {
       // Log the full error
       app.log.error(error);
-
       if (error instanceof AppError) {
         // Structured response for custom AppError
         return reply.status(error.statusCode).send({

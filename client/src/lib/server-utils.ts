@@ -1,7 +1,9 @@
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "@/config";
 import "server-only";
 //
+import { RequestOptions } from "@/queries/v1";
 import { JWTPayload, jwtVerify } from "jose";
+import { cookies } from "next/headers";
 import { decodeToken } from ".";
 
 export type VerifyResult =
@@ -32,7 +34,7 @@ export function createJwtService(options: {
       return {
         isExpired: false,
         data: null,
-        error: "Not Sign In"
+        error: "Not Sign In",
       };
     try {
       const { payload } = await jwtVerify(token, jwtsecret);
@@ -40,7 +42,7 @@ export function createJwtService(options: {
       return {
         isExpired: false,
         data: { token_data: payload, user: userData as IServerCookieType },
-        error: null
+        error: null,
       };
     } catch (err: unknown) {
       console.log(err, "err");
@@ -49,7 +51,7 @@ export function createJwtService(options: {
       return {
         isExpired: false,
         data: null,
-        error: "Not Sign In"
+        error: "Not Sign In",
       };
     }
   }
@@ -66,5 +68,21 @@ export function createJwtService(options: {
 // Access token service
 export const TokenService = createJwtService({
   jwt_secret: JWT_SECRET,
-  refrest_secret: JWT_REFRESH_SECRET
+  refrest_secret: JWT_REFRESH_SECRET,
 });
+
+export const getOptionsWithCookies = async (options: RequestOptions = {}) => {
+  const cookieStore = await cookies();
+  const newOptions = { ...(options || {}) };
+
+  return {
+    ...newOptions,
+    requestOptions: {
+      ...(newOptions.requestOptions || {}),
+      headers: {
+        ...(newOptions.requestOptions?.headers || {}),
+        cookie: cookieStore.toString(),
+      },
+    },
+  } satisfies RequestOptions;
+};

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 
-export function gracefulShutdown(fastify: FastifyInstance) {
+function gracefulShutdown(fastify: FastifyInstance) {
   const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGQUIT"];
 
   for (const signal of signals) {
@@ -18,4 +18,21 @@ export function gracefulShutdown(fastify: FastifyInstance) {
       }
     });
   }
+}
+
+function handleUncaughtErrors(fastify: FastifyInstance) {
+  process.on("uncaughtException", (err) => {
+    fastify.log.error("❌ Uncaught Exception:" + err);
+    process.exit(1); // Exit to avoid unknown state
+  });
+
+  process.on("unhandledRejection", (reason, promise) => {
+    fastify.log.error("❌ Unhandled Rejection at:" + reason);
+    process.exit(1); // Exit to avoid unknown state
+  });
+}
+
+export function setupShutdownHandlers(fastify: FastifyInstance) {
+  gracefulShutdown(fastify);
+  handleUncaughtErrors(fastify);
 }

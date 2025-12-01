@@ -1,53 +1,37 @@
 // utils/cache.ts
-
-import { HTTPSTATUS } from "@/config/http.config";
-import fastify from "@/server";
 import { createRedisKey } from "@/utils/redis";
-import { RedisOptions } from "ioredis";
+import { Redis } from "ioredis";
 
-type CacheOptions = RedisOptions & {
-  ttl?: number; // in seconds
+type CacheOptions = {
+  ttl?: number;
   useCache?: boolean;
 };
 
 export async function cache<T>(
+  redis: Redis,
   key: string,
   fetcher: () => Promise<T>,
-  options?: CacheOptions
+  options: CacheOptions = { useCache: true }
 ): Promise<T> {
-  if (options?.useCache) {
-    // 1. Try cache
-    const cached = await fastify.redis.get(createRedisKey(key));
+  const redisKey = createRedisKey(key);
+
+  if (options.useCache) {
+    const cached = await redis.get(redisKey);
     if (cached) {
-      console.log("Cache hit", createRedisKey(key));
-      return {
-        data: JSON.parse(cached),
-        error: null,
-        status: HTTPSTATUS.OK,
-      } as T;
+      console.log("Cache hit:", redisKey);
+      return JSON.parse(cached) as T;
     }
   }
 
-  // 2. Run query
-  const result = (await fetcher()) as {
-    data: any;
-    error: any;
-    status?: number;
-  };
+  const result = await fetcher();
 
-  if (options?.useCache && result?.data) {
-    // 3. Save to cache
-    if (options?.ttl) {
-      await fastify.redis.set(
-        createRedisKey(key),
-        JSON.stringify(result.data),
-        "EX",
-        options.ttl
-      );
+  if (options.useCache) {
+    if (options.ttl) {
+      await redis.set(redisKey, JSON.stringify(result), "EX", options.ttl);
     } else {
-      await fastify.redis.set(createRedisKey(key), JSON.stringify(result.data));
+      await redis.set(redisKey, JSON.stringify(result));
     }
   }
 
-  return result as T;
+  return result;
 }

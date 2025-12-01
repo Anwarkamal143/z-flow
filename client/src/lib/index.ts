@@ -205,3 +205,10 @@ export function decodeToken(token: string) {
   }
   return null;
 }
+type OpenWindowTarget = "_blank" | "_self" | "_parent" | "_top";
+export const openWindow = (
+  url: string,
+  target: OpenWindowTarget = "_blank"
+) => {
+  window.open(url, target, "noopener,noreferrer");
+};

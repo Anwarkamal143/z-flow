@@ -5,10 +5,17 @@ type IProps = {
   className?: string;
   fill?: string;
   full?: boolean;
+  message?: string;
 };
 
 export const Loader = (props: IProps) => {
-  const { size = "md", className = "", fill = "", full = false } = props;
+  const {
+    size = "md",
+    className = "",
+    fill = "",
+    full = false,
+    message,
+  } = props;
 
   function getLoaderSize(size: IProps["size"]) {
     switch (size) {
@@ -28,6 +35,7 @@ export const Loader = (props: IProps) => {
     <div
       role="status"
       className={cn(
+        "flex flex-col gap-y-2  ",
         full ? "h-full w-full flex items-center justify-center" : "",
         className
       )}
@@ -51,6 +59,9 @@ export const Loader = (props: IProps) => {
         />
       </svg>
       <span className="sr-only">Loading...</span>
+      {!!message ? (
+        <p className="text-muted-foreground text-md animate-pulse">{message}</p>
+      ) : null}
     </div>
   );
 };
@@ -61,27 +72,29 @@ const loaderVariants = cva(
     variants: {
       variant: {
         default: "",
-        scroll: "relative flex-initial h-10"
+        scroll: "relative flex-initial h-10",
         // secondary:
         //   "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         // destructive:
         //   "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         // outline: "text-foreground",
-      }
+      },
     },
     defaultVariants: {
-      variant: "default"
-    }
+      variant: "default",
+    },
   }
 );
 export default function Dataloader({
   className,
   loaderClassName,
-  variant
+  variant,
+  message,
 }: {
   className?: string;
   loaderClassName?: string;
   variant?: VariantProps<typeof loaderVariants>["variant"];
+  message?: string;
 }) {
   let loaderClasses = loaderClassName;
   if (variant === "default") {
@@ -91,12 +104,17 @@ export default function Dataloader({
     <>
       <div className={cn(loaderVariants({ variant }), className)}>
         <Loader className={loaderClasses} />
+        {!!message ? (
+          <p className="text-muted-foreground text-sm animate-pulse">
+            {message}
+          </p>
+        ) : null}
       </div>
     </>
   );
 }
 
-export const PageLoader = () => {
+export const PageLoader = ({ message }: { message?: string }) => {
   return (
     // <div
     //   className="w-full h-full fixed top-0 lef-0 flex justify-center items-center z-[999] after:content-['']
@@ -107,6 +125,9 @@ export const PageLoader = () => {
     <div className="w-full h-full flex justify-center items-center bg-slack">
       <div className="loader"></div>
       <span className="sr-only">Loading...</span>
+      {!!message ? (
+        <p className="text-muted-foreground text-sm animate-pulse">{message}</p>
+      ) : null}
     </div>
   );
 };

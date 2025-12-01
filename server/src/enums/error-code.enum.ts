@@ -13,7 +13,7 @@ const enum ErrorCode {
   AUTH_USER_NOT_FOUND = "AUTH_USER_NOT_FOUND",
   AUTH_ACCOUNT_NOT_FOUND = "AUTH_ACCOUNT_NOT_FOUND",
   AUTH_TOO_MANY_ATTEMPTS = "AUTH_TOO_MANY_ATTEMPTS",
-  AUTH_UNAUTHORIZED_ACCESS = "AUTH_UNAUTHORIZED_ACCESS",
+  AUTH_UNAUTHORIZED = "AUTH_UNAUTHORIZED",
   AUTH_TOKEN_NOT_FOUND = "AUTH_TOKEN_NOT_FOUND",
   AUTH_TOKEN_REUSED = "AUTH_TOKEN_REUSED",
   AUTH_2FA_REQUIRED = "AUTH_2FA_REQUIRED",
@@ -22,7 +22,6 @@ const enum ErrorCode {
   // ======================
   // Access Control Errors
   // ======================
-  ACCESS_FORBIDDEN = "ACCESS_FORBIDDEN",
   ACCESS_UNAUTHORIZED = "ACCESS_UNAUTHORIZED",
   ACCESS_ROLE_REQUIRED = "ACCESS_ROLE_REQUIRED",
   ACCESS_PERMISSION_DENIED = "ACCESS_PERMISSION_DENIED",
@@ -90,6 +89,9 @@ const enum ErrorCode {
   STRIPE_PROCESSING_RESTRICTED = "STRIPE_PROCESSING_RESTRICTED",
   STRIPE_WEBHOOK_ERROR = "STRIPE_WEBHOOK_ERROR",
 
+  // POLAR
+  POLAR_CUSTOMER_CREATION_FAILED = "POLAR_CUSTOMER_CREATION_FAILED",
+
   // ======================
   // Business Logic Errors
   // ======================
@@ -153,7 +155,7 @@ function mapStripeErrorToCode(
     StripeConnectionError: ErrorCode.STRIPE_CONNECTION_ERROR,
     StripeAuthenticationError: ErrorCode.STRIPE_AUTHENTICATION_ERROR,
     StripeIdempotencyError: ErrorCode.STRIPE_IDEMPOTENCY_ERROR,
-    StripePermissionError: ErrorCode.ACCESS_FORBIDDEN,
+    StripePermissionError: ErrorCode.ACCESS_UNAUTHORIZED,
     StripeSignatureVerificationError: ErrorCode.VALIDATION_ERROR,
     StripeWebhookError: ErrorCode.STRIPE_WEBHOOK_ERROR,
   };

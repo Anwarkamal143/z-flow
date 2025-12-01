@@ -12,11 +12,6 @@ export const verifyAccessToken = (token?: string) =>
 export const decodeAccessToken = (token: string | null | undefined) =>
   AccessTokenService.decode(token);
 
-export const isAccessTokenExpiringSoon = (
-  exp: number,
-  windowInSeconds?: number
-) => AccessTokenService.isExpiringSoon(exp, windowInSeconds);
-
 // ------------------- REFRESH TOKEN -------------------
 export const generateRefreshToken = (payload: {
   id: string;
@@ -28,8 +23,3 @@ export const verifyRefreshToken = (token?: string) =>
 
 export const decodeRefreshToken = (token: string | null | undefined) =>
   RefreshTokenService.decode(token);
-
-export const isRefreshTokenExpiringSoon = (
-  exp: number,
-  windowInSeconds?: number
-) => RefreshTokenService.isExpiringSoon(exp, windowInSeconds);

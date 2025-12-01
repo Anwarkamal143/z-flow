@@ -1,6 +1,7 @@
 import { UserAddressType } from "@/db/enumTypes";
 import { addressTypeEnum, baseTimestamps } from "@/db/helpers";
 import { generateUlid } from "@/utils";
+import { CountryAlpha2Input } from "@polar-sh/sdk/models/components/addressinput.js";
 import { relations } from "drizzle-orm";
 import { boolean, index, pgTable, text, varchar } from "drizzle-orm/pg-core";
 import { users } from "./users";
@@ -23,7 +24,9 @@ export const userAddresses = pgTable(
     city: varchar("city", { length: 100 }).notNull(),
     state: varchar("state", { length: 100 }).notNull(),
     postal_code: varchar("postal_code", { length: 20 }).notNull(),
-    country: varchar("country", { length: 100 }).notNull(),
+    country: varchar("country", { length: 5 })
+      .$type<CountryAlpha2Input>()
+      .notNull(),
     phone: varchar("phone", { length: 20 }),
     is_default: boolean("is_default").default(false),
     ...baseTimestamps,

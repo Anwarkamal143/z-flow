@@ -103,7 +103,7 @@ export class ResponseUtils {
   static async getFingerprint(
     request: FastifyRequest,
     options: FingerprintOptions = {}
-  ): Promise<string> {
+  ): Promise<string | null> {
     const headersToInclude = options.includeHeaders || ["user-agent"];
 
     const headerValues = headersToInclude

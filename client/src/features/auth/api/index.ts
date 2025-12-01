@@ -9,7 +9,6 @@ const getRefreshTokens = async (refreshToken?: string) => {
       accessToken: string;
       refreshToken: string;
     }>({ slug: "refresh-tokens" });
-    console.log(res.data, "res on refreshTokens");
     if (res.data) {
       return res.data;
     }

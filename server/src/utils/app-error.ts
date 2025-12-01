@@ -62,9 +62,9 @@ export default class AppError extends Error {
 
     if (
       [
-        ErrorCode.AUTH_UNAUTHORIZED_ACCESS,
+        ErrorCode.AUTH_UNAUTHENTICATED,
         ErrorCode.AUTH_INVALID_TOKEN,
-        ErrorCode.ACCESS_FORBIDDEN,
+        ErrorCode.ACCESS_UNAUTHORIZED,
       ].includes(this.errorCode)
     ) {
       return "security";

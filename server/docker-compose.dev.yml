@@ -40,7 +40,8 @@ services:
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
       - JWT_COOKIE_EXPIRES_IN=${JWT_COOKIE_EXPIRES_IN}
       # inngest keys
-      - INNGEST_DEV=${INNGEST_DEV}
+      - INNGEST_MODE=${INNGEST_MODE}
+      - ENABLE_INNGEST=${ENABLE_INNGEST}
       - INNGEST_BASE_URL=http://inngest:8288
       - INNGEST_EVENT_KEY=${INNGEST_EVENT_KEY}
       - INNGEST_SIGNING_KEY=${INNGEST_SIGNING_KEY}
@@ -64,9 +65,14 @@ services:
   inngest:
     image: inngest/inngest
     container_name: zFlow_inngest
-    command: "inngest dev -u http://app:4000/api/inngest"
+    # command: "inngest dev -u http://app:4000/api/inngest"
+    environment:
+      - MODE= ${INNGEST_MODE:-dev}
+      - ENABLE_INNGEST= ${ENABLE_INNGEST:-false}
     ports:
       - "8288:8288"
+    depends_on:
+      - app
 
   dev_fastify_pg_db:
     image: postgres:18

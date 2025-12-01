@@ -9,6 +9,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import aiRoutes from "./v1/ai.route";
 import authRoutes from "./v1/auth.route";
 import inngestRoutes from "./v1/inngest.route";
+import paymentRoutes from "./v1/payments";
 import socialRoutes from "./v1/social.route";
 import userRoutes from "./v1/user.route";
 
@@ -26,6 +27,7 @@ async function v1RoutesV1(fastify: FastifyInstance) {
       instance.register(socialRoutes, { prefix: "/google" });
       instance.register(inngestRoutes, { prefix: "/inngest" });
       instance.register(aiRoutes, { prefix: "/ai" });
+      instance.register(paymentRoutes, { prefix: "/payments" });
       //   instance.register(uploaderRoutes, { prefix: "/media" });
       //   instance.register(stripeRoutes, { prefix: "/stripe" });
       //   instance.register(assetsRoutes, { prefix: "/assets" });

@@ -1,10 +1,12 @@
 import { APP_CONFIG } from "@/config/app.config";
-import { HTTPSTATUS } from "@/config/http.config";
 import { ErrorCode } from "@/enums/error-code.enum";
 // @ts-ignore
 import { JWTPayload, SignJWT, decodeJwt, jwtVerify } from "jose";
 import { generateJti } from ".";
-import { HttpException, UnauthorizedException } from "./catch-errors";
+import {
+  UnauthenticatedException,
+  UnauthorizedException,
+} from "./catch-errors";
 import { getCookiesOptions } from "./cookie";
 import { setRefreshTokenWithJTI } from "./redis";
 
@@ -68,7 +70,7 @@ export function createJwtService(options: {
       return {
         isExpired: false,
         data: null,
-        error: new UnauthorizedException("Invalid Token", {
+        error: new UnauthenticatedException("Invalid Token", {
           errorCode: ErrorCode.AUTH_INVALID_TOKEN,
         }),
       };
@@ -86,7 +88,7 @@ export function createJwtService(options: {
       return {
         isExpired: false,
         data: null,
-        error: new UnauthorizedException("Invalid Token", {
+        error: new UnauthenticatedException("Invalid Token", {
           errorCode: ErrorCode.AUTH_INVALID_TOKEN,
         }),
       };
@@ -103,16 +105,6 @@ export function createJwtService(options: {
     } catch {
       return null;
     }
-  }
-
-  /** Check if token is expiring soon */
-  function isExpiringSoon(exp: number, windowInSeconds = 3600) {
-    if (!exp)
-      throw new HttpException("Invalid token", HTTPSTATUS.UNAUTHORIZED, {
-        errorCode: ErrorCode.AUTH_INVALID_TOKEN,
-      });
-    const currentTime = Math.floor(Date.now() / 1000);
-    return exp > currentTime && exp < currentTime + windowInSeconds;
   }
 
   /** Generate token + cookie options */
@@ -135,7 +127,7 @@ export function createJwtService(options: {
       : { accessToken: token, cookieAttributes };
   }
 
-  return { sign, verify, decode, isExpiringSoon, generate };
+  return { sign, verify, decode, generate };
 }
 
 /** ------------------- USAGE ------------------- */

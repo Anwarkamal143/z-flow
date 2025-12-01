@@ -1,20 +1,22 @@
+import { UserStatus } from "@/config/enums";
 import { Role } from "@/lib/enumTypes";
 
 type IUser = {
   id: string;
-  status: UserStatus | null;
-  email: string;
   name: string | null;
-  phone: string | null;
+  email: string;
   password: string | null;
+  phone: string | null;
   image: string | null;
   email_verified: Date | null;
-  isActive: boolean | null;
+  polar_customer_id: string | null;
+  is_active: boolean | null;
   role: Role | null;
+  status: UserStatus | null;
   last_login: Date | null;
-  updatedAt: Date;
-  createdAt: Date;
-  deletedAt: Date | null;
+  updated_at: Date;
+  created_at: Date;
+  deleted_at: Date | null;
 };
 
 type IAccount = {
