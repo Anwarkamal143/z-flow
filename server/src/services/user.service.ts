@@ -10,7 +10,7 @@ import {
   NotFoundException,
 } from "@/utils/catch-errors";
 import { toUTC } from "@/utils/date-time";
-import cacheManager from "@/utils/redis-cache/cache-manager";
+import { cacheManager } from "@/utils/redis-cache/cache-manager";
 import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { AccountService } from "./accounts.service";
 import { BaseService, IPaginatedParams } from "./base.service";
@@ -111,7 +111,6 @@ export class UserService extends BaseService<
       const user = await drizzleCache.query(
         async () => {
           const { data } = await this.findOne((fields) => eq(fields.id, id));
-          console.log(data, "data from db");
           if (data && excludePassword) {
             const { password, ...restData } = data;
             return restData;
@@ -218,7 +217,7 @@ export class UserService extends BaseService<
       (fields) => eq(fields.id, userId),
       userData
     );
-    await cacheManager.deleteNamespace(`users`);
+    await cacheManager.remove(`users`);
     return { ...rest, data };
   }
 }

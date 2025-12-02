@@ -122,9 +122,7 @@ export class AuthController {
   public signOut = async (req: FastifyRequest, rep: FastifyReply) => {
     try {
       try {
-        const refreshToken = (req.cookies as any)?.[
-          APP_CONFIG.REFRESH_COOKIE_NAME
-        ];
+        const refreshToken = req.cookies?.[APP_CONFIG.REFRESH_COOKIE_NAME];
         const data = decodeRefreshToken(refreshToken);
         if (data?.token_data?.jti) {
           await deleteRefreshTokenWithJTI(data.token_data.jti);

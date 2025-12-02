@@ -1,16 +1,16 @@
 // utils/drizzle-cache.ts
-import IoRedis from "@/config/redis";
+import redisClient, { RedisClient } from "@/config/redis";
 import crypto from "crypto";
-import { cache, CacheOptions } from "./cache";
+import { cacheManager, CacheOptions } from "./cache-manager";
 
 export type DrizzleCacheOptions = CacheOptions & {
   cacheKey?: string; // optional custom key
 };
 
 export class DrizzleCache {
-  private redis: IoRedis;
+  private redis: RedisClient;
 
-  constructor(redis: IoRedis = IoRedis.connect()) {
+  constructor(redis: RedisClient = redisClient) {
     this.redis = redis;
   }
 
@@ -39,7 +39,11 @@ export class DrizzleCache {
     const key = cacheKey
       ? cacheKey
       : this.createKey(meta.query, meta.params, namespace);
-    return cache<T>(this.redis, key, qb, { ttl, useCache, namespace });
+    return cacheManager.cache<T>(this.redis, key, qb, {
+      ttl,
+      useCache,
+      namespace,
+    });
   }
 }
 export default new DrizzleCache();

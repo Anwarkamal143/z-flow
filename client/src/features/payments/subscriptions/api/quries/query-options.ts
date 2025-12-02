@@ -4,6 +4,6 @@ export const CUSTOMER_QUERY_KEYS = {
 };
 export const subscriptionQueryOptions: ICustomerHooksTypes["GetSuspenseQueryOptions"] =
   {
-    slug: "state",
+    id: "state",
     queryKey: [CUSTOMER_QUERY_KEYS.state],
   };

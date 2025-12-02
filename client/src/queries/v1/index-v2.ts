@@ -365,8 +365,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     options?: RequestOptions<ReturnModel<TEntity, T>>; // Generic options
     onSuccess?: (data: IPaginatedReturnType<ReturnModel<TEntity, T>[]>) => void;
   }): Promise<IPaginatedReturnType<ReturnModel<TEntity, T>[]>> => {
-    const { isEnabled, ...mergedParams } =
-      mergeParams<ReturnModel<TEntity, T>>(params);
+    const mergedParams = mergeParams<ReturnModel<TEntity, T>>(params);
     const mergedRequestOptions = mergeRequestOptions(
       { params: mergedParams },
       options?.requestOptions
@@ -398,7 +397,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     options?: RequestOptions<T>; // Generic options
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
+    const mergedParams = mergeParams<T>(
       params,
       options?.requestOptions?.params
     );
@@ -431,7 +430,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     options?: RequestOptions<T>; // Generic options
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
+    const mergedParams = mergeParams<T>(
       params,
       options?.requestOptions?.params
     );
@@ -466,7 +465,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     options?: RequestOptions<T>; // Generic options
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
+    const mergedParams = mergeParams<T>(
       params,
       options?.requestOptions?.params
     );
@@ -503,7 +502,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     options?: RequestOptions<T>; // Generic options
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
+    const mergedParams = mergeParams<T>(
       params,
       options?.requestOptions?.params
     );
@@ -637,10 +636,16 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     callOptions?: SingleQueryOptions<TEntity, Entity, S>,
     isSuspense: S = false as S
   ) => {
+    const {
+      isEnabled = true,
+      sort,
+      sortBy,
+    } = mergeParams(callOptions?.params) as QueryParams<
+      ReturnModel<TEntity, Entity>
+    >;
     const params = mergeParams(callOptions?.params) as QueryParams<
       ReturnModel<TEntity, Entity>
     >;
-    const { sort, entity, sortBy, isEnabled = true } = params;
     const { id } = { ...params, ...callOptions };
     const useHook = createQueryHook(isSuspense);
     const queryoptions = filterSuspenseOptions<
@@ -648,7 +653,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     >(callOptions?.queryOptions, isSuspense);
     return useHook({
       queryKey: buildQueryKey(
-        entity,
+        params.entity,
         "get",
         id,
         sort,
@@ -939,7 +944,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   };
 
   const prefetchGet = async <Entity = TEntity>(
-    callOptions: SingleQueryOptions<TEntity, Entity, false> & { id?: Id }
+    callOptions: SingleQueryOptions<TEntity, Entity, false> & { id: Id }
   ) => {
     const params = mergeParams(callOptions?.params) as QueryParams<
       ReturnModel<TEntity, Entity>
@@ -956,7 +961,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       ),
       queryFn: async ({ signal }) => {
         const response = await getRaw<ReturnModel<TEntity, Entity>>({
-          id: callOptions.id as Id,
+          id: callOptions.id,
           params,
           options: {
             ...callOptions.options,

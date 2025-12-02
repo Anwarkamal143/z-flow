@@ -5,7 +5,7 @@ import {
   useStoreAuthActions,
 } from "@/store/userAuthStore";
 
-import { getRefreshTokens } from "@/features/auth/api";
+import { getRefreshTokens, signOut } from "@/features/auth/api";
 import { decodeToken } from "@/lib";
 import { useEffect, useRef } from "react";
 
@@ -15,11 +15,6 @@ export function useTokenRefresher() {
   const refreshToken = useAuthRefreshToken();
   const authStoreActions = useStoreAuthActions();
   const counter = useRef(0);
-
-  function getAccessToken() {
-    // Your API that returns cookies tokens or from localStorage
-    return accessToken;
-  }
 
   function isExpired(token: string) {
     try {
@@ -43,7 +38,9 @@ export function useTokenRefresher() {
           isRefreshing: false,
         });
         counter.current = 0;
+        return;
       }
+      await signOut();
     } catch (err) {
       console.log("Token refresh failed:", err);
       counter.current = counter.current + 1;
@@ -51,8 +48,7 @@ export function useTokenRefresher() {
   }
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
+    if (!accessToken) {
       return;
     }
     intervalRef.current = setInterval(async () => {
@@ -60,13 +56,14 @@ export function useTokenRefresher() {
         clearInterval(intervalRef.current!);
         return;
       }
-      const token = getAccessToken();
-      if (!token) {
+      console.log("console.log after", counter.current);
+
+      if (!accessToken) {
         clearInterval(intervalRef.current!);
         return;
       }
 
-      if (isExpired(token)) {
+      if (isExpired(accessToken)) {
         console.log("🔄 Access token expired → refreshing…");
         await refreshTokens();
       }

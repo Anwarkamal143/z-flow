@@ -74,15 +74,15 @@ export type QueryParams<T = Record<string, any>> =
    Request Options
    ----------------------- */
 
-export type RequestOptions<T = Record<string, any>> = {
-  query?: QueryParams<T>; // Make query match params type
+export type RequestOptions = {
+  query?: QueryParams;
   path?: string;
   requestOptions?: Partial<IRequestOptions>;
 };
 
 export type CallOptions<T = Record<string, any>> = {
   params?: QueryParams<T>;
-  options?: RequestOptions<T>; // Use generic RequestOptions
+  options?: RequestOptions;
   queryKey?: QueryKey;
 };
 
@@ -131,8 +131,8 @@ type InfiniteQueryOptions<
    ----------------------- */
 
 type CommonListOptions<T, S extends boolean = false, ErrorT = DefaultError> = {
-  options?: RequestOptions<T>; // Use generic RequestOptions
-  queryOptions?: Omit<QueryOptions<T[], S, ErrorT>, "queryKey">;
+  options?: RequestOptions;
+  queryOptions?: Omit<QueryOptions<T, S, ErrorT>, "queryKey">;
   queryKey?: QueryKey;
 };
 
@@ -142,10 +142,10 @@ export type ListCallOptions<
   ErrorT = DefaultError
 > = CommonListOptions<T, S, ErrorT> & {
   infiniteOptions?: Partial<
-    Omit<InfiniteQueryOptions<T[], S, ErrorT>, "queryKey">
+    Omit<InfiniteQueryOptions<T, S, ErrorT>, "queryKey">
   >;
-  getNextPageParam?: InfiniteQueryOptions<T[], S, ErrorT>["getNextPageParam"];
-  onSuccess?: (data: ListReturnType<T[]>) => void;
+  getNextPageParam?: InfiniteQueryOptions<T, S, ErrorT>["getNextPageParam"];
+  onSuccess?: (data: ListReturnType<T>) => void;
 };
 
 export type CursorCallOptions<
@@ -153,8 +153,8 @@ export type CursorCallOptions<
   S extends boolean = false,
   ErrorT = DefaultError
 > = {
-  params?: CursorPaginationParams<T>;
-  onSuccess?: (data: ListReturnType<T[]>) => void;
+  params?: CursorPaginationParams;
+  onSuccess?: (data: ListReturnType<T>) => void;
 } & ListCallOptions<T, S, ErrorT>;
 
 export type OffsetCallOptions<
@@ -162,8 +162,8 @@ export type OffsetCallOptions<
   S extends boolean = false,
   ErrorT = DefaultError
 > = CommonListOptions<T, S, ErrorT> & {
-  params?: OffsetPaginationParams<T>;
-  onSuccess?: (data: IPaginatedReturnType<T[]>) => void;
+  params?: OffsetPaginationParams;
+  onSuccess?: (data: IPaginatedReturnType<T>) => void;
 };
 
 /* -----------------------
@@ -175,8 +175,8 @@ export type MutationCallOptions<
   TVars = any,
   ErrorT = DefaultError
 > = {
-  params?: QueryParams<TData>;
-  options?: RequestOptions<TData>; // Use generic RequestOptions
+  params?: Record<string, any>;
+  options?: RequestOptions;
   mutationOptions?: UseMutationOptions<IApiResponse<TData>, ErrorT, TVars>;
   onSuccess?: (data: TData) => void;
   invalidateQueries?: {
@@ -259,7 +259,7 @@ export type PrefetchOptions<TEntity, Entity> = {
     id: Id;
     options?: SingleQueryOptions<TEntity, Entity, false>;
   }>;
-  infiniteList?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>;
+  infiniteList?: CursorCallOptions<ReturnModel<TEntity, Entity>[], false>;
 };
 
 /* -----------------------
@@ -349,34 +349,35 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       (p): p is QueryParams<T> => p !== undefined
     );
     return validParams.reduce(
-      (result, params) => deepMerge(result || {}, params || {}),
+      (result, params) => deepMerge(result, params),
       opts?.defaultParams || {}
-    ) as QueryParams<T>;
+    );
   };
 
   // ---------- Enhanced Raw API Methods ----------
 
-  const listRaw = async <T = TEntity>({
+  const listRaw = async <Entity = TEntity>({
     params,
     options,
     onSuccess,
   }: {
-    params?: QueryParams<ReturnModel<TEntity, T>>;
-    options?: RequestOptions<ReturnModel<TEntity, T>>; // Generic options
-    onSuccess?: (data: IPaginatedReturnType<ReturnModel<TEntity, T>[]>) => void;
-  }): Promise<IPaginatedReturnType<ReturnModel<TEntity, T>[]>> => {
-    const { isEnabled, ...mergedParams } =
-      mergeParams<ReturnModel<TEntity, T>>(params);
+    params?: Record<string, any>;
+    options?: RequestOptions;
+    onSuccess?: (
+      data: IPaginatedReturnType<ReturnModel<TEntity, Entity>[]>
+    ) => void;
+  }): Promise<IPaginatedReturnType<ReturnModel<TEntity, Entity>[]>> => {
+    const mergedParams = mergeParams(params);
     const mergedRequestOptions = mergeRequestOptions(
       { params: mergedParams },
       options?.requestOptions
     );
 
     const response = await model.list<
-      IPaginatedReturnType<ReturnModel<TEntity, T>[]>
+      IPaginatedReturnType<ReturnModel<TEntity, Entity>[]>
     >({
       path: options?.path,
-      query: options?.query, // Now query type matches params type
+      query: options?.query,
       requestOptions: mergedRequestOptions,
     });
 
@@ -384,7 +385,9 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       onSuccess?.(response.data);
     }
 
-    return response.data as IPaginatedReturnType<ReturnModel<TEntity, T>[]>;
+    return response.data as IPaginatedReturnType<
+      ReturnModel<TEntity, Entity>[]
+    >;
   };
 
   const getRaw = async <T = TEntity>({
@@ -394,14 +397,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     onSuccess,
   }: {
     id: Id;
-    params?: QueryParams<T>;
-    options?: RequestOptions<T>; // Generic options
+    params?: Record<string, any>;
+    options?: RequestOptions;
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
-      params,
-      options?.requestOptions?.params
-    );
+    const mergedParams = mergeParams(params, options?.requestOptions?.params);
     const mergedRequestOptions = mergeRequestOptions(
       { params: mergedParams },
       options?.requestOptions
@@ -409,7 +409,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
     const response = await model.get<T>(`${id}`, {
       path: options?.path,
-      query: options?.query, // Now query type matches params type
+      query: options?.query,
       requestOptions: mergedRequestOptions,
     });
 
@@ -427,21 +427,18 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     onSuccess,
   }: {
     payload?: TVars;
-    params?: QueryParams<T>;
-    options?: RequestOptions<T>; // Generic options
+    params?: Record<string, any>;
+    options?: RequestOptions;
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
-      params,
-      options?.requestOptions?.params
-    );
+    const mergedParams = mergeParams(params, options?.requestOptions?.params);
     const mergedRequestOptions = mergeRequestOptions(
       { params: mergedParams },
       options?.requestOptions
     );
 
     const response = await model.create<T>(payload as Partial<TEntity>, {
-      query: options?.query, // Now query type matches params type
+      query: options?.query,
       path: options?.path,
       requestOptions: mergedRequestOptions,
     });
@@ -462,14 +459,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   }: {
     id: Id;
     payload: TVars;
-    params?: QueryParams<T>;
-    options?: RequestOptions<T>; // Generic options
+    params?: Record<string, any>;
+    options?: RequestOptions;
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
-      params,
-      options?.requestOptions?.params
-    );
+    const mergedParams = mergeParams(params, options?.requestOptions?.params);
     const mergedRequestOptions = mergeRequestOptions(
       { params: mergedParams },
       options?.requestOptions
@@ -480,7 +474,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       payload as Partial<TEntity>,
       {
         path: options?.path,
-        query: options?.query, // Now query type matches params type
+        query: options?.query,
         requestOptions: mergedRequestOptions,
       }
     );
@@ -499,14 +493,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     onSuccess,
   }: {
     id: Id;
-    params?: QueryParams<T>;
-    options?: RequestOptions<T>; // Generic options
+    params?: Record<string, any>;
+    options?: RequestOptions;
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
-      params,
-      options?.requestOptions?.params
-    );
+    const mergedParams = mergeParams(params, options?.requestOptions?.params);
     const mergedRequestOptions = mergeRequestOptions(
       { params: mergedParams },
       options?.requestOptions
@@ -514,7 +505,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
     const response = await model.delete<T>(`/${id}`, {
       path: options?.path,
-      query: options?.query, // Now query type matches params type
+      query: options?.query,
       requestOptions: mergedRequestOptions,
     });
 
@@ -539,12 +530,10 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   // ---------- List Hooks ----------
 
   const useListEntities = <Entity = TEntity, S extends boolean = false>(
-    callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>, S>,
+    callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>[], S>,
     isSuspense: S = false as S
   ) => {
-    const params = mergeParams(callOptions?.params) as OffsetPaginationParams<
-      ReturnModel<TEntity, Entity>
-    >;
+    const params = mergeParams(callOptions?.params) as OffsetPaginationParams;
     const { isEnabled = true, sort, sortBy } = params;
     const useHook = createQueryHook(isSuspense);
 
@@ -578,12 +567,10 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   };
 
   const useInfiniteListEntities = <Entity = TEntity, S extends boolean = false>(
-    callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>, S>,
+    callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>[], S>,
     isSuspense: S = false as S
   ) => {
-    const params = mergeParams(callOptions?.params) as CursorPaginationParams<
-      ReturnModel<TEntity, Entity>
-    >;
+    const params = mergeParams(callOptions?.params) as CursorPaginationParams;
     const { isEnabled = true } = params;
     const useHook = createInfiniteQueryHook(isSuspense);
 
@@ -637,10 +624,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     callOptions?: SingleQueryOptions<TEntity, Entity, S>,
     isSuspense: S = false as S
   ) => {
-    const params = mergeParams(callOptions?.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >;
-    const { sort, entity, sortBy, isEnabled = true } = params;
+    const {
+      isEnabled = true,
+      sort,
+      sortBy,
+      ...params
+    } = mergeParams(callOptions?.params);
     const { id } = { ...params, ...callOptions };
     const useHook = createQueryHook(isSuspense);
     const queryoptions = filterSuspenseOptions<
@@ -648,7 +637,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     >(callOptions?.queryOptions, isSuspense);
     return useHook({
       queryKey: buildQueryKey(
-        entity,
+        params.entity,
         "get",
         id,
         sort,
@@ -681,9 +670,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     callOptions?: MultiQueryOptions<TEntity, Entity, S>,
     isSuspense: S = false as S
   ) => {
-    const params = mergeParams(callOptions?.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >;
+    const params = mergeParams(callOptions?.params);
     const { ids = [], queryKey = [], queryOptions = {} } = callOptions || {};
     const queryoptions = filterSuspenseOptions<
       MultiQueryOptions<TEntity, Entity, S>["queryOptions"]
@@ -704,9 +691,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
                   ...callOptions?.options,
                   requestOptions: {
                     ...(callOptions?.options?.requestOptions || {}),
+                    // signal,
                   },
                 },
               });
+              // Cast the response to the expected type
+              // return res.data as IApiResponse<UnionIfBPresent<TEntity, Entity>>;
               return res;
             }
           },
@@ -728,7 +718,6 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       },
     });
   };
-
   // ---------- Enhanced Mutation Hooks with Cache Management ----------
 
   const useCreate = <Entity = TEntity, TVars = Partial<TEntity>>(
@@ -743,22 +732,26 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           onSuccess: callOptions?.onSuccess,
         }),
       onSuccess: (data, variables, mutationResult, context) => {
+        // Call user's onSuccess first
         if (data.data) {
           callOptions?.onSuccess?.(data.data);
         }
 
+        // Handle cache invalidation
         if (callOptions?.invalidateQueries) {
           callOptions.invalidateQueries.forEach(({ queryKey, exact }) => {
             queryClient.invalidateQueries({ queryKey, exact });
           });
         }
 
+        // Handle refetch queries
         if (callOptions?.refetchQueries) {
           callOptions.refetchQueries.forEach(({ queryKey, exact }) => {
             queryClient.refetchQueries({ queryKey, exact });
           });
         }
 
+        // Call mutationOptions.onSuccess if provided
         callOptions?.mutationOptions?.onSuccess?.(
           data,
           variables,
@@ -767,6 +760,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         );
       },
       onMutate: async (variables, ctx) => {
+        // Handle optimistic updates
         if (callOptions?.optimisticUpdate) {
           const { queryKey, updateFn } = callOptions.optimisticUpdate;
           await queryClient.cancelQueries({ queryKey });
@@ -782,6 +776,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         return callOptions?.mutationOptions?.onMutate?.(variables, ctx);
       },
       onError: (error, variables, mutationResult, context) => {
+        // Rollback optimistic updates
         if (context && (context as any).previousData) {
           const { queryKey } = callOptions?.optimisticUpdate!;
           queryClient.setQueryData(queryKey, (context as any).previousData);
@@ -817,6 +812,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           callOptions?.onSuccess?.(data.data);
         }
 
+        // Update specific entity cache
         if (variables?.id) {
           const entityKey = buildQueryKey(
             opts?.defaultParams?.entity,
@@ -860,9 +856,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           callOptions?.onSuccess?.(data.data);
         }
 
+        // Remove entity from cache
         const entityKey = buildQueryKey(opts?.defaultParams?.entity, id);
         queryClient.removeQueries({ queryKey: entityKey, exact: true });
 
+        // Invalidate lists that might contain this entity
         const listKey = buildQueryKey(opts?.defaultParams?.entity, "list");
         queryClient.invalidateQueries({
           queryKey: listKey,
@@ -904,14 +902,22 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const getUrl = (endpoint?: string) =>
     `${model.fullURL}${endpoint ? `/${endpoint}` : ""}`;
 
+  // ---------- Enhanced Query Hooks (keeping your existing implementation) ----------
+  // [Your existing query hook implementations remain unchanged]
+  // ... (useListEntities, useInfiniteListEntities, useGetEntity, useGetEntities)
+
   // ---------- Enhanced Prefetch Methods ----------
+  // [Your existing prefetch methods remain unchanged]
+  // ... (prefetchList, prefetchGet, prefetchInfiniteList, prefetchGetMany, prefetchAll)
+
+  // ---------- Public API ----------
+
+  // ---------- Prefetch Methods ----------
 
   const prefetchList = async <Entity = TEntity>(
-    callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>, false>
+    callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>[], false>
   ) => {
-    const params = mergeParams(callOptions?.params) as OffsetPaginationParams<
-      ReturnModel<TEntity, Entity>
-    >;
+    const params = mergeParams(callOptions?.params) as OffsetPaginationParams;
 
     await queryClient.prefetchQuery({
       queryKey: buildQueryKey(
@@ -939,11 +945,9 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   };
 
   const prefetchGet = async <Entity = TEntity>(
-    callOptions: SingleQueryOptions<TEntity, Entity, false> & { id?: Id }
+    callOptions: SingleQueryOptions<TEntity, Entity, false> & { id: Id }
   ) => {
-    const params = mergeParams(callOptions?.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >;
+    const params = mergeParams(callOptions?.params);
 
     await queryClient.prefetchQuery({
       queryKey: buildQueryKey(
@@ -956,7 +960,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       ),
       queryFn: async ({ signal }) => {
         const response = await getRaw<ReturnModel<TEntity, Entity>>({
-          id: callOptions.id as Id,
+          id: callOptions.id,
           params,
           options: {
             ...callOptions.options,
@@ -969,13 +973,46 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       ...callOptions.queryOptions,
     });
   };
+  const useSuspenseList = <Entity = TEntity>(
+    opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>[], true>
+  ) => useListEntities(opts, true);
+  const useList = <Entity = TEntity>(
+    opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>[]>
+  ) => useListEntities(opts);
+
+  const useSuspenseInfiniteList = <Entity = TEntity>(
+    opts?: CursorCallOptions<ReturnModel<TEntity, Entity>[], true>
+  ) => useInfiniteListEntities(opts, true);
+  const useInfiniteList = <Entity = TEntity>(
+    opts?: CursorCallOptions<ReturnModel<TEntity, Entity>[]>
+  ) => useInfiniteListEntities(opts);
+
+  const useSuspenseGet = <Entity = TEntity>(
+    opts?: SingleQueryOptions<TEntity, Entity, true>
+  ) => useGetEntity(opts, true);
+  const useGet = <Entity = TEntity>(
+    opts?: SingleQueryOptions<TEntity, Entity>
+  ) => useGetEntity(opts);
+
+  const useSuspenseGetMany = <Entity = TEntity>(
+    opts?: MultiQueryOptions<TEntity, Entity, true>
+  ) => useGetEntities(opts, true);
+  const useGetMany = <Entity = TEntity>(
+    opts?: MultiQueryOptions<TEntity, Entity>
+  ) => useGetEntities(opts, true);
+  // ---------- Public API ----------
+  /*********************************************PreFetch methods */
+
+  /* -----------------------
+   Prefetch Methods
+   ----------------------- */
+
+  // Add these methods to the return object at the end of the factory function
 
   const prefetchInfiniteList = async <Entity = TEntity>(
-    callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>
+    callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>[], false>
   ) => {
-    const params = mergeParams(callOptions?.params) as CursorPaginationParams<
-      ReturnModel<TEntity, Entity>
-    >;
+    const params = mergeParams(callOptions?.params) as CursorPaginationParams;
 
     await queryClient.prefetchInfiniteQuery({
       queryKey: buildQueryKey(
@@ -985,6 +1022,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         params.cursor,
         params.sort,
         params.sortBy,
+
         ...(callOptions?.queryKey || [])
       ),
       queryFn: async ({ pageParam }) => {
@@ -1002,11 +1040,10 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const prefetchGetMany = async <Entity = TEntity>(
     callOptions: MultiQueryOptions<TEntity, Entity, false> & { ids: Id[] }
   ) => {
-    const params = mergeParams(callOptions.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >;
+    const params = mergeParams(callOptions.params);
     const { ids = [] } = callOptions;
 
+    // Prefetch each individual entity
     const prefetchPromises = ids.map((id) =>
       queryClient.prefetchQuery({
         queryKey: buildQueryKey(
@@ -1034,12 +1071,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   };
 
   const prefetchAll = async <Entity = TEntity>(options?: {
-    list?: OffsetCallOptions<ReturnModel<TEntity, Entity>, false>;
+    list?: OffsetCallOptions<ReturnModel<TEntity, Entity>[], false>;
     items?: Array<{
       id: Id;
       options?: SingleQueryOptions<TEntity, Entity, false>;
     }>;
-    infiniteList?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>;
+    infiniteList?: CursorCallOptions<ReturnModel<TEntity, Entity>[], false>;
   }) => {
     const promises = [];
 
@@ -1061,42 +1098,6 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
     await Promise.all(promises);
   };
-
-  // ---------- Query Hook Convenience Methods ----------
-
-  const useSuspenseList = <Entity = TEntity>(
-    opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>, true>
-  ) => useListEntities(opts, true);
-
-  const useList = <Entity = TEntity>(
-    opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>>
-  ) => useListEntities(opts);
-
-  const useSuspenseInfiniteList = <Entity = TEntity>(
-    opts?: CursorCallOptions<ReturnModel<TEntity, Entity>, true>
-  ) => useInfiniteListEntities(opts, true);
-
-  const useInfiniteList = <Entity = TEntity>(
-    opts?: CursorCallOptions<ReturnModel<TEntity, Entity>>
-  ) => useInfiniteListEntities(opts);
-
-  const useSuspenseGet = <Entity = TEntity>(
-    opts?: SingleQueryOptions<TEntity, Entity, true>
-  ) => useGetEntity(opts, true);
-
-  const useGet = <Entity = TEntity>(
-    opts?: SingleQueryOptions<TEntity, Entity>
-  ) => useGetEntity(opts);
-
-  const useSuspenseGetMany = <Entity = TEntity>(
-    opts?: MultiQueryOptions<TEntity, Entity, true>
-  ) => useGetEntities(opts, true);
-
-  const useGetMany = <Entity = TEntity>(
-    opts?: MultiQueryOptions<TEntity, Entity>
-  ) => useGetEntities(opts);
-
-  // ---------- Public API ----------
 
   return {
     // Raw methods
@@ -1122,20 +1123,72 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     prefetchGetMany,
     prefetchInfiniteList,
     prefetchAll,
-
-    // Query hooks
     useList,
     useGet,
     useInfiniteList,
-    useGetMany,
-
-    // Suspense variants
-    useSuspenseList,
     useSuspenseGet,
-    useSuspenseInfiniteList,
     useSuspenseGetMany,
-
+    useSuspenseInfiniteList,
+    useGetMany,
+    useSuspenseList,
     // Query client access
     getQueryClient: () => queryClient,
   };
 }
+
+/**
+ *
+ *
+ * // Mutation with cache management
+const { mutate } = crudClient.useUpdate({
+  // Standard options
+  params: { version: 'v2' },
+  options: {
+    requestOptions: {
+      headers: { 'X-Custom': 'value' },
+      timeout: 5000
+    }
+  },
+
+  // Cache management
+  invalidateQueries: [
+    { queryKey: ['products', 'list'], exact: false },
+    { queryKey: ['products', 'featured'], exact: true }
+  ],
+
+  // Optimistic update
+  optimisticUpdate: {
+    queryKey: ['products', 'list'],
+    updateFn: (oldData, newData) => {
+      // Update the list optimistically
+      return oldData.map(item =>
+        item.id === newData.id ? { ...item, ...newData.data } : item
+      );
+    }
+  },
+
+  onSuccess: (data) => {
+    console.log('Updated successfully:', data);
+  }
+});
+
+// Creating with automatic cache updates
+const createMutation = crudClient.useCreate({
+  invalidateQueries: [
+    { queryKey: ['products'] } // Invalidate all product queries
+  ],
+  refetchQueries: [
+    { queryKey: ['products', 'stats'] } // Refetch stats
+  ]
+});
+
+// Deleting with cache cleanup
+const deleteMutation = crudClient.useDelete({
+  onSuccess: (id) => {
+    // Entity automatically removed from cache
+    // Lists automatically invalidated
+  }
+});
+ *
+ *
+ */
