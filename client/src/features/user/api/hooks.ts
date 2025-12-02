@@ -3,11 +3,11 @@ export const useGetAllUsers = (isEnabled: boolean = true) => {
   return userClient.useList({});
 };
 export const useCursorGetAllUsers = (isEnabled: boolean = true) => {
-  return userClient.useCursorList({
+  return userClient.useInfiniteList({
     params: {
-      limit: 1000
+      limit: 1000,
     },
 
-    queryKey: ["all_users"]
+    queryKey: ["all_users"],
   });
 };

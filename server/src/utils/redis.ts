@@ -1,23 +1,24 @@
 import { APP_CONFIG } from "@/config/app.config";
-import fastify from "@/server";
+import redisClient from "@/config/redis";
 import { parseDurationToSeconds } from "./cookie";
 export const REDIS_KEYS = {
-  REFRESH_TOKEN_JTI: (jti?: string) =>
-    createRedisKey("refresh-token-jit" + jti),
+  REFRESH_TOKEN_JTI: (jti?: string) => "refresh-token-jit:" + jti,
 };
 export const createRedisKey = (key: string) => {
-  return `${APP_CONFIG.REDIS_PREFIX}:${key}`;
+  return `${APP_CONFIG.REDIS_KEY_PREFIX}:${key}`;
 };
 export const getRefreshTokenByJTI = async (jti?: string) => {
   if (!jti) {
     return null;
   }
-  const jtires = await fastify.redis.get(REDIS_KEYS.REFRESH_TOKEN_JTI(jti));
+  const jtires = await redisClient.get<IStoredRefreshToken>(
+    REDIS_KEYS.REFRESH_TOKEN_JTI(jti)
+  );
   if (!jtires) {
     return null;
   }
 
-  return JSON.parse(jtires) as IStoredRefreshToken;
+  return jtires;
 };
 export const setRefreshTokenWithJTI = async (
   jti?: string,
@@ -26,10 +27,10 @@ export const setRefreshTokenWithJTI = async (
   if (!jti || !text) {
     return null;
   }
-  return await fastify.redis.setex(
+  return await redisClient.set(
     REDIS_KEYS.REFRESH_TOKEN_JTI(jti),
-    parseDurationToSeconds(APP_CONFIG.JWT_REFRESH_EXPIRES_IN || "7d"),
-    JSON.stringify(text)
+    text,
+    parseDurationToSeconds(APP_CONFIG.JWT_REFRESH_EXPIRES_IN || "7d")
   );
 };
 export const deleteRefreshTokenWithJTI = async (jti?: string) => {
@@ -37,5 +38,5 @@ export const deleteRefreshTokenWithJTI = async (jti?: string) => {
     return null;
   }
 
-  return await fastify.redis.del(REDIS_KEYS.REFRESH_TOKEN_JTI(jti));
+  return await redisClient.del(REDIS_KEYS.REFRESH_TOKEN_JTI(jti));
 };

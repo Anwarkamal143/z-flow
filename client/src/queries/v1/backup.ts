@@ -1119,3 +1119,53 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     prefetchMany,
   };
 }
+
+/***
+ *
+ *
+ *   const prefetchInfinteList = async <Entity = TEntity>(
+     callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>[], false>
+   ) => {
+     const params = mergeParams(callOptions?.params) as OffsetPaginationParams;
+     const { isEnabled = true } = params;
+
+     const select = (data: InfiniteListData<ReturnModel<TEntity, Entity>[]>) => {
+       const items = data.pages.flatMap((page) => page.data || []);
+       const paginationMeta =
+         data.pages.length > 0
+           ? data.pages[data.pages.length - 1].pagination_meta
+           : getEmptyPaginationMeta({ limit: params.limit });
+
+       const result: ListReturnType<ReturnModel<TEntity, Entity>[]> = {
+         pagination_meta: paginationMeta,
+         data: items,
+         pageParams: data.pageParams,
+         pages: data.pages as any,
+       };
+
+       callOptions?.onSuccess?.(result);
+       return result;
+     };
+     await queryClient.prefetchInfiniteQuery({
+       queryKey: buildQueryKey(
+         params.entity,
+         "infinite-list",
+         params.limit,
+         ...(callOptions?.queryKey || [])
+       ),
+       queryFn: async ({ pageParam }) => {
+         const cursorParams = pageParam ? { cursor: pageParam as string } : {};
+         return await listRaw<Entity>({
+           params: { ...params, ...cursorParams },
+           options: callOptions?.options,
+         });
+       },
+       // getNextPageParam: (lastPage) =>
+       //   lastPage.pagination_meta?.next || undefined,
+       getNextPageParam: (lastPage) => lastPage.pagination_meta?.next || undefined,
+       initialPageParam: params.cursor,
+       select,
+       ...filterSuspenseOptions(callOptions?.infiniteOptions, false),
+     });
+   };
+ */

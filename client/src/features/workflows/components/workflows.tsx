@@ -5,7 +5,11 @@ import { useHasActiveSubscription } from "@/features/payments/subscriptions";
 type Props = {};
 
 const Workflows = (props: Props) => {
-  const { subscription, isSubscriptionLoading } = useHasActiveSubscription();
+  const { subscription, isSubscriptionLoading, error, isError } =
+    useHasActiveSubscription();
+  if (isSubscriptionLoading) {
+    return <p>Loading...</p>;
+  }
   console.log(isSubscriptionLoading, "isSubscriptionLoading");
 
   return (

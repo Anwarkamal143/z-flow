@@ -8,7 +8,7 @@ const getRefreshTokens = async (refreshToken?: string) => {
     const res = await authClient.getRaw<{
       accessToken: string;
       refreshToken: string;
-    }>({ slug: "refresh-tokens" });
+    }>({ id: "refresh-tokens" });
     if (res.data) {
       return res.data;
     }

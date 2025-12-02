@@ -26,7 +26,8 @@ export const APP_CONFIG = {
   REDIS_USER: process.env.REDIS_USER || "default",
   REDIS_PORT: stringToNumber(process.env.REDIS_PORT!) || 6379,
   REDIS_PATH: process.env.REDIS_PATH,
-  REDIS_PREFIX: process.env.REDIS_PREFIX || "x",
+  REDIS_DB: stringToNumber(process.env.REDIS_DB) || 0,
+  REDIS_KEY_PREFIX: process.env.REDIS_KEY_PREFIX || "x",
   JWT_SECRET: process.env.JWT_SECRET || "xLDL9bqmNO:PI9Q5O`+#GnGFTukFKl",
   JWT_REFRESH_SECRET:
     process.env.JWT_REFRESH_SECRET ||

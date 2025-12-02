@@ -6,11 +6,11 @@ import { verifyAccessToken } from "@/utils/jwt";
 import fastify from "@/server";
 import { createAdapter } from "@socket.io/redis-streams-adapter";
 import { Server as HttpServer } from "http";
-import Redis from "ioredis";
 import CircuitBreaker from "opossum";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { Server, Socket } from "socket.io";
 import { logger } from "./logger";
+import IoRedis, { RedisClient } from "./redis";
 
 /**
  * Environment variable configuration with defaults
@@ -63,7 +63,7 @@ redisCircuitBreaker.fallback(() => {
  */
 class RedisSocket {
   private _io!: Server;
-  private _redis!: Redis;
+  private _redis!: RedisClient;
   private _timeInterval!: NodeJS.Timeout;
   // private socket!: ISocket;
   private metrics = {
@@ -77,9 +77,9 @@ class RedisSocket {
    *
    */
   constructor() {
-    this.redis = fastify.redis;
+    this.redis = IoRedis;
     this.rateLimiter = new RateLimiterRedis({
-      storeClient: this.redis,
+      storeClient: this.redis.getRedis,
       points: config.MAX_EVENTS_PER_MINUTE,
       duration: 60,
       keyPrefix: "socket_rate_limit",
@@ -96,7 +96,7 @@ class RedisSocket {
   public get redis() {
     return this._redis;
   }
-  public set redis(redis: Redis) {
+  public set redis(redis: RedisClient) {
     this._redis = redis;
   }
 
@@ -136,7 +136,7 @@ class RedisSocket {
           methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
           credentials: config.NODE_ENV === "production",
         },
-        adapter: createAdapter(this.redis),
+        adapter: createAdapter(this.redis.getRedis),
         serveClient: false,
         pingTimeout: config.HEARTBEAT_INTERVAL * 2,
         pingInterval: config.HEARTBEAT_INTERVAL,
@@ -211,7 +211,6 @@ class RedisSocket {
         next();
       } catch (err) {
         this.metrics.rateLimited++;
-        console.log(err);
         logger.warn(`Rate limit exceeded for socket: ${socket.id}`);
         socket.emit("error", { message: "Rate limit exceeded" });
         socket.disconnect(true);
@@ -234,7 +233,7 @@ class RedisSocket {
 
       try {
         await this.safeRedisCommand((client) =>
-          client.sadd(this.getkey(socket.user?.id), socket.id)
+          client.sadd(this.getkey(socket.user?.id), [socket.id])
         );
         await this.safeRedisCommand((client) => client.set("user", socket.id));
       } catch (err) {
@@ -260,7 +259,7 @@ class RedisSocket {
 
         try {
           await this.safeRedisCommand((client) =>
-            client.srem(this.getkey(socket.user?.id), socket.id)
+            client.srem(this.getkey(socket.user?.id), [socket.id])
           );
         } catch (err) {
           logger.error("Failed to remove socket ID from Redis:", err);

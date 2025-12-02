@@ -3,7 +3,6 @@ import Model from "../Model";
 
 export class PolarModel<T> extends Model<T> {
   constructor(endpoint?: string) {
-    console.log("endPoint: ", endpoint);
     super(`/payments${endpoint ? `/${endpoint}` : ""}`, "public-1");
   }
   // async requestCredit() {
