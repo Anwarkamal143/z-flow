@@ -1,6 +1,6 @@
 import { PageLoader } from "@/components/loaders";
 import SignInScreen from "@/features/auth/components/sign-in";
-import { requireUnAuth } from "@/lib/auth";
+import { requireUnAuth } from "@/lib/auth/auth";
 import { Suspense } from "react";
 
 const SignInPage = async () => {

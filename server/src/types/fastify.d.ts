@@ -17,7 +17,7 @@ declare module "fastify" {
       $client: postgres.Sql<{}>;
     };
     logger: import("pino").Logger;
-    redis_socket: typeof RedisSocket;
+    redis_socket: RedisSocket;
     inngest: typeof inngest;
   }
 

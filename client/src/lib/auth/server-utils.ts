@@ -4,7 +4,7 @@ import "server-only";
 import { RequestOptions } from "@/queries/v1";
 import { JWTPayload, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { decodeToken } from ".";
+import { decodeToken } from "..";
 
 export type VerifyResult =
   | { isExpired: boolean; data: null; error: string | null }

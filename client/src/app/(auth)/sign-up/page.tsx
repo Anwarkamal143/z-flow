@@ -1,5 +1,5 @@
 import SignUpScreen from "@/features/auth/components/sign-up";
-import { requireUnAuth } from "@/lib/auth";
+import { requireUnAuth } from "@/lib/auth/auth";
 
 const SignUpPage = async () => {
   await requireUnAuth();
