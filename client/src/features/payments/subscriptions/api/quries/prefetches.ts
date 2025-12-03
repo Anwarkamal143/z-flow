@@ -1,4 +1,4 @@
-import { getOptionsWithCookies } from "@/lib/server-utils";
+import { getOptionsWithCookies } from "@/lib/auth/server-utils";
 import { customerClient } from "@/models";
 import { subscriptionQueryOptions } from "./query-options";
 

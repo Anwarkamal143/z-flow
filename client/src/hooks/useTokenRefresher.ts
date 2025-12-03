@@ -42,6 +42,7 @@ export function useTokenRefresher() {
       }
       await signOut();
     } catch (err) {
+      await signOut();
       console.log("Token refresh failed:", err);
       counter.current = counter.current + 1;
     }

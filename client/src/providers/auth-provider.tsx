@@ -1,33 +1,20 @@
 "use client";
 import { PageLoader } from "@/components/loaders";
-import { useSignOut } from "@/features/auth/api";
-import {
-  useStoreUserIsAuthenticated,
-  useStoreUserIsAuthenticating,
-} from "@/store/userAuthStore";
-import { ReactNode, useEffect } from "react";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
-type IAuthProvider = {
-  children: ReactNode;
-  isServer?: boolean;
-};
+function AuthGuard({
+  children,
+  roles,
+}: {
+  children: React.ReactNode;
+  roles?: string[];
+}) {
+  const { loading, user } = useAuthGuard(roles);
 
-const AuthWrapper = ({ children }: IAuthProvider) => {
-  const isAuthenticated = useStoreUserIsAuthenticated();
-  const isAuthenticating = useStoreUserIsAuthenticating();
-  const { signOut } = useSignOut();
-  useEffect(() => {
-    if (isAuthenticated) return;
-    signOut(true);
-    return () => {};
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  if (loading) return <PageLoader />;
 
-  if (isAuthenticating) {
-    return <PageLoader />;
-  }
+  if (!user) return null; // redirect already handled
 
   return <>{children}</>;
-};
-
-export default AuthWrapper;
+}
+export default AuthGuard;

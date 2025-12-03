@@ -1,7 +1,5 @@
 "use client";
 
-import { z } from "zod";
-
 import { EmailIcon, EyeIcon, EyeOffIcon } from "@/assets/icons";
 import ButtonLoader from "@/components/ButtonLoader";
 import Form from "@/components/form/Form";
@@ -15,23 +13,7 @@ import { useSignIn } from "../api/hooks";
 import { SIGN_IN_SCHEMA, SignInSchemaType } from "../schema";
 import AuthForm from "./AuthForm";
 
-/* -------------------------- Zod Validation -------------------------- */
-const authSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters" }),
-});
-
-type AuthFormValues = z.infer<typeof authSchema>;
-
 /* ------------------------- Component Props ------------------------- */
-interface AuthFormProps {
-  mode?: "signin" | "signup";
-  onSubmit: (data: AuthFormValues) => void;
-  onOAuthClick?: (provider: "google" | "github") => void;
-  switchMode?: () => void;
-}
 
 /* ---------------------------- Component ---------------------------- */
 const SignInScreen = ({}) => {

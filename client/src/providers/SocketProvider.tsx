@@ -5,16 +5,16 @@ import { ISocketContextProps, SocketContext } from "@/context/socket";
 import {
   useAuthAccessToken,
   useAuthIsTokensRefreshing,
-  useStoreUserIsAuthenticated
+  useStoreUserIsAuthenticated,
 } from "@/store/userAuthStore";
 import { ReactNode, useEffect, useState } from "react";
 import { connect } from "socket.io-client";
 export const socket = connect(SOCKET_URL, {
   // withCredentials: true,
-  autoConnect: false
+  autoConnect: false,
 });
 export default function SocketContextProvider({
-  children
+  children,
 }: {
   children: ReactNode;
 }) {
@@ -47,7 +47,7 @@ export default function SocketContextProvider({
     if (socket?.connected) {
       onConnect();
     }
-    if (socket?.disconnected && isAuthenticated && accessToken) {
+    if (socket?.disconnected && accessToken) {
       socket.auth = { token: accessToken };
       socket.connect();
     }
@@ -66,7 +66,7 @@ export default function SocketContextProvider({
       value={
         {
           socket,
-          isConnected
+          isConnected,
         } as ISocketContextProps
       }
     >
