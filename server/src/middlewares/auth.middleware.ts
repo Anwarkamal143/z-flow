@@ -32,8 +32,8 @@ export class AuthMiddleware {
   // --------- AUTH REQUIRED ----------
   isAuthenticated = async (req: FastifyRequest, reply: FastifyReply) => {
     const { accessToken, refreshToken } = getRequestTokens(req);
-
-    if (!accessToken && !refreshToken) {
+    if (!accessToken || !refreshToken) {
+      resetCookies(reply);
       throw new UnauthenticatedException("Not authenticated");
     }
 

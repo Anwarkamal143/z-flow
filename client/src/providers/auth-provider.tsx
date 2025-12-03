@@ -1,5 +1,6 @@
 "use client";
 import { PageLoader } from "@/components/loaders";
+import { Role } from "@/config/enums";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 function AuthGuard({
@@ -7,7 +8,7 @@ function AuthGuard({
   roles,
 }: {
   children: React.ReactNode;
-  roles?: string[];
+  roles?: Role[];
 }) {
   const { loading, user } = useAuthGuard(roles);
 

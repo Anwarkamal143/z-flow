@@ -1,11 +1,10 @@
+import { Role } from "@/config/enums";
 import {
   useStoreUser,
   useStoreUserIsAuthenticating,
 } from "@/store/userAuthStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-
-type Role = string;
 
 export function useAuthGuard(requiredRoles?: Role[]) {
   const router = useRouter();
