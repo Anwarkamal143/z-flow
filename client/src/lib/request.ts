@@ -141,7 +141,6 @@ const errorHandler = (error: RequestError): CustomResponse => {
     response.success = false;
     response.errorHandled = true;
     const errorText = codeMessage[response.status];
-    console.log(response, "response");
     return {
       message: response?.data?.message || response?.message,
       ...response,

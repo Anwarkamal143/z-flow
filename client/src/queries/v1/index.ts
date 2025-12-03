@@ -928,7 +928,10 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           params,
           options: {
             ...callOptions?.options,
-            requestOptions: { signal },
+            requestOptions: {
+              ...(callOptions?.options?.requestOptions || {}),
+              signal,
+            },
           },
         });
         callOptions?.onSuccess?.(response);
@@ -959,8 +962,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           id: callOptions.id as Id,
           params,
           options: {
-            ...callOptions.options,
-            requestOptions: { signal },
+            ...callOptions?.options,
+            requestOptions: {
+              ...(callOptions?.options?.requestOptions || {}),
+              signal,
+            },
           },
         });
         callOptions.onSuccess?.(response);
@@ -1020,8 +1026,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
             id,
             params,
             options: {
-              ...callOptions.options,
-              requestOptions: { signal },
+              ...callOptions?.options,
+              requestOptions: {
+                ...(callOptions?.options?.requestOptions || {}),
+                signal,
+              },
             },
           });
           return response;

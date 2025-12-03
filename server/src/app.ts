@@ -1,6 +1,7 @@
 import { APP_CONFIG, ENVIRONMENTS } from "@/config/app.config";
 import cookieParser from "@fastify/cookie";
 import cors from "@fastify/cors";
+import fastifyFormbody from "@fastify/formbody";
 import rateLimit from "@fastify/rate-limit";
 import Fastify from "fastify";
 import drizzlePlugin from "./plugins/drizzle-plugin";
@@ -61,7 +62,7 @@ export function buildApp() {
     max: 100,
     timeWindow: "1 minute",
   });
-
+  fastify.register(fastifyFormbody);
   fastify.register(errorPlugin);
   fastify.register(cookieParser);
   fastify.register(registerLogger);

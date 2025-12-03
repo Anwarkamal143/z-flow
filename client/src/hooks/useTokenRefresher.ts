@@ -14,7 +14,6 @@ export function useTokenRefresher() {
   const accessToken = useAuthAccessToken();
   const refreshToken = useAuthRefreshToken();
   const authStoreActions = useStoreAuthActions();
-  const counter = useRef(0);
 
   function isExpired(token: string) {
     try {
@@ -37,14 +36,14 @@ export function useTokenRefresher() {
           ...resp,
           isRefreshing: false,
         });
-        counter.current = 0;
         return;
       }
+      if (intervalRef.current) clearInterval(intervalRef.current);
       await signOut();
     } catch (err) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
       await signOut();
       console.log("Token refresh failed:", err);
-      counter.current = counter.current + 1;
     }
   }
 
@@ -53,12 +52,6 @@ export function useTokenRefresher() {
       return;
     }
     intervalRef.current = setInterval(async () => {
-      if (counter.current == 2) {
-        clearInterval(intervalRef.current!);
-        return;
-      }
-      console.log("console.log after", counter.current);
-
       if (!accessToken) {
         clearInterval(intervalRef.current!);
         return;
@@ -72,7 +65,6 @@ export function useTokenRefresher() {
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      counter.current = 0;
     };
   }, [accessToken]);
   return null;
