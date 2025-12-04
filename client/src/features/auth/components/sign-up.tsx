@@ -4,7 +4,7 @@ import { FormInput } from "@/components/form/Input";
 import useZodForm from "@/hooks/useZodForm";
 
 import ButtonLoader from "@/components/ButtonLoader";
-import { useAuthClient } from "@/hooks/useAuthGuard";
+import { useRequireUnAuthClient } from "@/hooks/useAuthGuard";
 import { useStoreAuthActions } from "@/store/userAuthStore";
 import { IUser } from "@/types/user";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import { SIGN_UP_SCHEMA, SignUpSchemaType } from "../schema";
 import AuthForm from "./AuthForm";
 
 const SignUpScreen = () => {
-  useAuthClient();
+  useRequireUnAuthClient();
   const router = useRouter();
   // useIsAuth(true);
   const form = useZodForm({

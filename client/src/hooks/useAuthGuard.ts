@@ -32,7 +32,7 @@ export function useAuthGuard(requiredRoles?: Role[]) {
 
   return { loading: false, user };
 }
-export function useAuthClient(requiredRoles?: Role[]) {
+export function useRequireUnAuthClient() {
   const router = useRouter();
   const user = useStoreUser();
   const isAuthenticating = useStoreUserIsAuthenticating();
@@ -41,21 +41,14 @@ export function useAuthClient(requiredRoles?: Role[]) {
   useEffect(() => {
     if (!isAuthenticating) {
       if (user?.id) {
-        if (requiredRoles && !requiredRoles.includes(user.role)) {
-          return router.replace("/unauthorize");
-        }
         router.replace("/");
       }
     }
-  }, [isAuthenticating, user, requiredRoles]);
+  }, [isAuthenticating, user]);
 
   if (isAuthenticating) return { loading: true, user: null };
 
   if (!user?.id) return { loading: false, user: null };
-
-  if (requiredRoles && !requiredRoles.includes(user.role)) {
-    return { loading: false, user: null };
-  }
 
   return { loading: false, user };
 }

@@ -47,7 +47,7 @@ const AppWrapper = ({ children }: IAppWrapper) => {
       refreshToken: undefined,
     });
     return () => {};
-  }, [isFetching]);
+  }, [isFirstTimeLoading]);
   const isLoading = isFirstTimeLoading || isAuthenticating;
   if (isLoading) {
     return <Loader size="xlg" full />;

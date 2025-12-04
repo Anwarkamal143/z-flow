@@ -4,7 +4,7 @@ import { EmailIcon, EyeIcon, EyeOffIcon } from "@/assets/icons";
 import ButtonLoader from "@/components/ButtonLoader";
 import Form from "@/components/form/Form";
 import FormInput from "@/components/form/Input";
-import { useAuthClient } from "@/hooks/useAuthGuard";
+import { useRequireUnAuthClient } from "@/hooks/useAuthGuard";
 import useZodForm from "@/hooks/useZodForm";
 import { useStoreAuthActions } from "@/store/userAuthStore";
 import { useRouter } from "next/navigation";
@@ -22,7 +22,7 @@ const SignInScreen = ({}) => {
   const router = useRouter();
   const [isSocialLogginIn, setIsSocialLogginIn] = useState(false);
   const setUser = useStoreAuthActions().setUser;
-  useAuthClient();
+  useRequireUnAuthClient();
   const { handleSignIn } = useSignIn();
   const form = useZodForm({
     schema: SIGN_IN_SCHEMA,

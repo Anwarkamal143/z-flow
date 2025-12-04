@@ -130,7 +130,7 @@ export type CustomResponse = {
 
 type RequestError = { response: CustomResponse };
 
-const errorHandler = async (error: RequestError): Promise<CustomResponse> => {
+const errorHandler = async (error: RequestError): CustomResponse => {
   // if (error instanceof axios.Cancel) {
   if (axios.isCancel(error)) {
     const reason =
@@ -186,26 +186,34 @@ const errorHandler = async (error: RequestError): Promise<CustomResponse> => {
     }
 
     // Check if server is reachable
-    try {
-      const hasInternet = await checkNetworkConnection();
-      return {
-        success: false,
-        errorHandled: true,
-        issue: hasInternet ? "down" : "offline",
-        message: hasInternet
-          ? "Server is not responding"
-          : "No internet connection",
-        reason: hasInternet ? "server" : "network",
-      };
-    } catch {
-      return {
-        success: false,
-        errorHandled: true,
-        reason: "network",
-        message: "Network error occurred",
-        issue: "unknown",
-      };
-    }
+    // try {
+    //   const hasInternet = await checkNetworkConnection();
+    //   return {
+    //     success: false,
+    //     errorHandled: true,
+    //     issue: hasInternet ? "down" : "offline",
+    //     message: hasInternet
+    //       ? "Server is not responding"
+    //       : "No internet connection",
+    //     reason: hasInternet ? "server" : "network",
+    //   };
+    // } catch {
+    //   return {
+    //     success: false,
+    //     errorHandled: true,
+    //     reason: "network",
+    //     message: "Network error occurred",
+    //     issue: "unknown",
+    //   };
+    // }
+
+    return {
+      success: false,
+      errorHandled: true,
+      reason: "network",
+      message: "Network error occurred",
+      issue: "unknown",
+    };
   }
 
   return {
