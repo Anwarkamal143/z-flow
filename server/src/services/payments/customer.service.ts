@@ -105,9 +105,36 @@ export class CustomerService extends PolarService {
       const customer = await this.customers.getExternal({ externalId });
       return { data: customer, error: null };
     } catch (error) {
-      console.log(error, "error");
       return {
         error: new InternalServerException("Error getting Polar customer: "),
+        data: null,
+      };
+    }
+  }
+  public async getPolarCustomerActiveSubscription(id: string) {
+    if (!id) {
+      return {
+        error: new BadRequestException("External ID is required."),
+        data: null,
+      };
+    }
+    try {
+      const customer = await this.customers.getState({ id });
+      if (
+        !customer.activeSubscriptions ||
+        customer.activeSubscriptions?.length == 0
+      ) {
+        return {
+          error: new BadRequestException("Active subscription required."),
+          data: null,
+        };
+      }
+      return { data: customer, error: null };
+    } catch (error) {
+      return {
+        error: new InternalServerException(
+          "Error getting Active Subscription: "
+        ),
         data: null,
       };
     }

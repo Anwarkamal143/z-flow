@@ -6,10 +6,8 @@ type Props = {};
 
 const Workflows = (props: Props) => {
   const { subscription, isSubscriptionLoading, error, isError } =
-    useHasActiveSubscription();
-  if (isSubscriptionLoading) {
-    return <p>Loading...</p>;
-  }
+    useHasActiveSubscription(true);
+
   console.log(isSubscriptionLoading, "isSubscriptionLoading");
 
   return (

@@ -407,7 +407,6 @@ export class RedisClient {
       if (!this._client || !this._isReady) {
         throw new Error("Redis client not ready");
       }
-      console.log(operation, "Operations");
       const client =
         operation.startsWith("get") || operation === "mget"
           ? this.getReadClient()

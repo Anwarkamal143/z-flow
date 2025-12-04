@@ -11,12 +11,12 @@ export const useGetSuspenseSubscriptions = () => {
   return customerClient.useSuspenseGet(subscriptionQueryOptions);
 };
 
-export const useHasActiveSubscription = () => {
+export const useHasActiveSubscription = (useSuspense = false) => {
   const {
     data: customerState,
     isLoading: isSubscriptionLoading,
     ...rest
-  } = useGetSuspenseSubscriptions();
+  } = useSuspense ? useGetSuspenseSubscriptions() : useGetSubscriptions();
   const hasActiveSubscription =
     customerState?.data?.activeSubscriptions &&
     customerState.data.activeSubscriptions.length > 0;
@@ -24,7 +24,7 @@ export const useHasActiveSubscription = () => {
   return {
     hasExist: !!customerState?.data?.id,
     hasActiveSubscription,
-    subscription: customerState?.data?.activeSubscriptions[0],
+    subscription: customerState?.data?.activeSubscriptions?.[0],
     isSubscriptionLoading,
     ...rest,
   };

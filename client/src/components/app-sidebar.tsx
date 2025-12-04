@@ -9,10 +9,12 @@ import {
 } from "@/assets/icons";
 import LogoIcon from "@/assets/icons/LogoIcon";
 import { signOut } from "@/features/auth/api";
+import { useHasActiveSubscription } from "@/features/payments/subscriptions";
 import { openWindow } from "@/lib";
 import { cn } from "@/lib/utils";
+import { checkoutClient } from "@/models";
 import { portalClient } from "@/models/v1/payments/Portal.model";
-import { LucideProps } from "lucide-react";
+import { LucideProps, StarIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -82,8 +84,8 @@ const AppSidebar = (props: IPageProps) => {
   const newTheme = theme === "dark" ? "light" : "dark";
   const pathName = usePathname();
   const { open, isMobile } = useSidebar();
-  // const { hasActiveSubscription, isSubscriptionLoading, hasExist } =
-  //   useHasActiveSubscription();
+  const { hasActiveSubscription, isSubscriptionLoading } =
+    useHasActiveSubscription();
   const isSidebarClosed = !open && !isMobile;
   return (
     <Sidebar collapsible="icon">
@@ -163,7 +165,7 @@ const AppSidebar = (props: IPageProps) => {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          {/* {!isSubscriptionLoading && !hasActiveSubscription && (
+          {!isSubscriptionLoading && !hasActiveSubscription && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip={"Upgrade to Pro"}
@@ -178,7 +180,7 @@ const AppSidebar = (props: IPageProps) => {
                 </RenderIfNotClosed>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )} */}
+          )}
 
           <SidebarMenuItem>
             <SidebarMenuButton

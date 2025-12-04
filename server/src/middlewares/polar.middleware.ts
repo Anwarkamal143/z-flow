@@ -3,6 +3,7 @@ import { AddressService } from "@/services/address.service";
 import { customerService } from "@/services/payments/customer.service";
 import { UserService } from "@/services/user.service";
 import {
+  BadRequestException,
   NotFoundException,
   UnauthenticatedException,
 } from "@/utils/catch-errors";
@@ -68,15 +69,20 @@ export class PolarMiddleware {
       throw new UnauthenticatedException("User Not Found");
     }
     const { data } = await this.userService.getUserById(user.id);
+
     if (!data) {
       throw new NotFoundException("User not found");
     }
+    if (!data.polar_customer_id) {
+      throw new NotFoundException("User don't have any subscription");
+    }
 
-    const polarCustomer = await customerService.getPolarCustomerByExternalId(
-      user.id
-    );
+    const polarCustomer =
+      await customerService.getPolarCustomerActiveSubscription(
+        data.polar_customer_id
+      );
     if (polarCustomer.error) {
-      throw polarCustomer.error;
+      throw new BadRequestException("Active subscription required");
     }
     request.customer = polarCustomer.data;
   };
