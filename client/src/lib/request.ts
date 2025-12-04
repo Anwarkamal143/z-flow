@@ -130,7 +130,7 @@ export type CustomResponse = {
 
 type RequestError = { response: CustomResponse };
 
-const errorHandler = async (error: RequestError): CustomResponse => {
+const errorHandler = (error: RequestError): CustomResponse => {
   // if (error instanceof axios.Cancel) {
   if (axios.isCancel(error)) {
     const reason =
@@ -250,7 +250,7 @@ async function request(
     return res;
   } catch (e) {
     if (handleError) {
-      throw await errorHandler(e as RequestError);
+      throw errorHandler(e as RequestError);
     } else {
       throw e;
     }
@@ -270,7 +270,7 @@ const secondaryRequest = async (
     return res;
   } catch (e) {
     if (handleError) {
-      throw await errorHandler(e as RequestError);
+      throw errorHandler(e as RequestError);
     } else {
       throw e;
     }
