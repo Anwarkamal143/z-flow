@@ -1,11 +1,9 @@
 import { APP_CONFIG } from "@/config/app.config";
+import { HTTPSTATUS } from "@/config/http.config";
+import { ErrorCode } from "@/enums/error-code.enum";
 import AppError from "@/utils/app-error";
+import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-// import assetsRoutes from "./asset.routes";
-// import socialRoutes from "./social.routes";
-// import stripeRoutes from "./stripe.routes";
-// import uploaderRoutes from "./uploader.routes";
-// import userRoutes from "./user.routes";
 import aiRoutes from "./v1/ai.route";
 import authRoutes from "./v1/auth.route";
 import inngestRoutes from "./v1/inngest.route";
@@ -28,9 +26,24 @@ async function v1RoutesV1(fastify: FastifyInstance) {
       instance.register(inngestRoutes, { prefix: "/inngest" });
       instance.register(aiRoutes, { prefix: "/ai" });
       instance.register(paymentRoutes, { prefix: "/payments" });
-      //   instance.register(uploaderRoutes, { prefix: "/media" });
-      //   instance.register(stripeRoutes, { prefix: "/stripe" });
-      //   instance.register(assetsRoutes, { prefix: "/assets" });
+      // healthcheck
+
+      // simple ready check
+      instance.get("/ready", async (_request, reply) => {
+        try {
+          return SuccessResponse(reply, {
+            message: "server is running",
+            data: { ready: true },
+          });
+        } catch (err) {
+          return SuccessResponse(reply, {
+            message: "server is not running",
+            data: { ready: false },
+            statusCode: HTTPSTATUS.SERVICE_UNAVAILABLE,
+            errorCode: ErrorCode.SERVICE_UNAVAILABLE,
+          });
+        }
+      });
     },
     { prefix: APP_CONFIG.BASE_API_PATH }
   );

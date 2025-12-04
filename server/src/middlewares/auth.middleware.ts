@@ -160,6 +160,21 @@ export class AuthMiddleware {
       errorCode: ErrorCode.AUTH_INVALID_TOKEN,
     });
   };
+  redirectIfLoggedIn = async (req: FastifyRequest, rep: FastifyReply) => {
+    try {
+      const { accessToken: atkn, refreshToken: rtkn } = getRequestTokens(req);
+
+      // If both exist, try to verify access token
+      if (atkn && rtkn) {
+        const { data } = await verifyAccessToken(atkn);
+        if (data?.user) {
+          return rep.redirect(APP_CONFIG.APP_URL); // already logged in → redirect
+        }
+      }
+    } catch (err) {
+      // ignore errors → let request continue
+    }
+  };
 }
 
 export default new AuthMiddleware(new UserService());

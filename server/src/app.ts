@@ -60,7 +60,7 @@ export function buildApp() {
   fastify.register(cors, CORS_OPTIONS);
   fastify.register(rateLimit, {
     max: 100,
-    timeWindow: "1 minute",
+    timeWindow: "5 minute",
   });
   fastify.register(fastifyFormbody);
   fastify.register(errorPlugin);
@@ -73,17 +73,6 @@ export function buildApp() {
 
   // routes
   fastify.register(v1Routes);
-
-  // healthcheck
-
-  // simple ready check
-  fastify.get("/ready", async (_request, reply) => {
-    try {
-      return reply.status(200).send({ ready: true });
-    } catch (err) {
-      reply.status(503).send({ ready: false });
-    }
-  });
 
   return fastify;
 }

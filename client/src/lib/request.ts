@@ -38,8 +38,6 @@ const codeMessage: { [key: string]: string } = {
 const baseURL = API_POOL["public-1"];
 // const baseURL = 'https://401d-182-184-90-121.eu.ngrok.io';
 
-const TOKEN_PAYLOAD_KEY = "authorization";
-
 export interface IAxiosRequest extends Partial<AxiosRequestConfig> {
   public?: boolean;
   handleError?: boolean;
@@ -59,9 +57,25 @@ function createAxiosInstance(base: string) {
 const axiosRequest = createAxiosInstance(baseURL);
 const axiosSecondaryRequest = createAxiosInstance(baseURL);
 
-// export let requestQueue: any = [];
-type RequestQueueCallback = () => void;
-export let requestQueue: RequestQueueCallback[] = []; // Queue to hold pending requests
+// Network Check Utility
+const checkNetworkConnection = async (): Promise<boolean> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+  try {
+    const response = await fetch("https://www.google.com/generate_204", {
+      method: "HEAD",
+      signal: controller.signal,
+      cache: "no-cache",
+    });
+    clearTimeout(timeoutId);
+    return response.status === 204 || response.ok;
+  } catch {
+    clearTimeout(timeoutId);
+    return false;
+  }
+};
+
 // Add request interceptor
 
 axiosRequest.interceptors.request.use(
@@ -73,7 +87,7 @@ axiosRequest.interceptors.request.use(
     // notification.error({
     // 	message: 'Error'
     // })
-    Promise.reject(error);
+    return Promise.reject(error);
   }
 );
 
@@ -111,11 +125,12 @@ export type CustomResponse = {
   errorHandled?: boolean;
   reason?: string;
   message?: string;
+  issue?: string;
 } & Partial<AxiosResponse>;
 
 type RequestError = { response: CustomResponse };
 
-const errorHandler = (error: RequestError): CustomResponse => {
+const errorHandler = async (error: RequestError): Promise<CustomResponse> => {
   // if (error instanceof axios.Cancel) {
   if (axios.isCancel(error)) {
     const reason =
@@ -140,7 +155,7 @@ const errorHandler = (error: RequestError): CustomResponse => {
     }
     response.success = false;
     response.errorHandled = true;
-    const errorText = codeMessage[response.status];
+    const errorText = codeMessage[response.status] || "Unknown error";
     return {
       message: response?.data?.message || response?.message,
       ...response,
@@ -149,16 +164,53 @@ const errorHandler = (error: RequestError): CustomResponse => {
       reason: errorText,
     };
   } else if (!response) {
-    return {
-      success: false,
-      errorHandled: true,
-      reason: axios.isCancel(error) ? "cancelled" : "network",
-      message: axios.isCancel(error) ? "Request cancelled" : "Network error",
-    };
+    const isOnline = navigator?.onLine ? true : false;
+
+    if (navigator) {
+      if (!isOnline) {
+        return {
+          success: false,
+          errorHandled: true,
+          issue: "offline",
+          message: "You are offline. Please check your internet connection.",
+          reason: "network",
+        };
+      }
+      return {
+        success: false,
+        errorHandled: true,
+        issue: "down",
+        message: "Server is not responding",
+        reason: "server",
+      };
+    }
+
+    // Check if server is reachable
+    try {
+      const hasInternet = await checkNetworkConnection();
+      return {
+        success: false,
+        errorHandled: true,
+        issue: hasInternet ? "down" : "offline",
+        message: hasInternet
+          ? "Server is not responding"
+          : "No internet connection",
+        reason: hasInternet ? "server" : "network",
+      };
+    } catch {
+      return {
+        success: false,
+        errorHandled: true,
+        reason: "network",
+        message: "Network error occurred",
+        issue: "unknown",
+      };
+    }
   }
 
   return {
-    message: response?.data?.message || response?.message,
+    message:
+      response?.data?.message || response?.message || "Unknown error occurred",
     ...response,
     success: false,
     errorHandled: true,
@@ -190,7 +242,7 @@ async function request(
     return res;
   } catch (e) {
     if (handleError) {
-      throw errorHandler(e as RequestError);
+      throw await errorHandler(e as RequestError);
     } else {
       throw e;
     }
@@ -210,7 +262,7 @@ const secondaryRequest = async (
     return res;
   } catch (e) {
     if (handleError) {
-      throw errorHandler(e as RequestError);
+      throw await errorHandler(e as RequestError);
     } else {
       throw e;
     }

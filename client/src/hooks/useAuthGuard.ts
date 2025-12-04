@@ -17,7 +17,34 @@ export function useAuthGuard(requiredRoles?: Role[]) {
       if (!user?.id) {
         router.replace("/login");
       } else if (requiredRoles && !requiredRoles.includes(user.role)) {
-        router.replace("/unauthorized");
+        router.replace("/unauthorize");
+      }
+    }
+  }, [isAuthenticating, user, requiredRoles]);
+
+  if (isAuthenticating) return { loading: true, user: null };
+
+  if (!user?.id) return { loading: false, user: null };
+
+  if (requiredRoles && !requiredRoles.includes(user.role)) {
+    return { loading: false, user: null };
+  }
+
+  return { loading: false, user };
+}
+export function useAuthClient(requiredRoles?: Role[]) {
+  const router = useRouter();
+  const user = useStoreUser();
+  const isAuthenticating = useStoreUserIsAuthenticating();
+
+  // Redirect logic
+  useEffect(() => {
+    if (!isAuthenticating) {
+      if (user?.id) {
+        if (requiredRoles && !requiredRoles.includes(user.role)) {
+          return router.replace("/unauthorize");
+        }
+        router.replace("/");
       }
     }
   }, [isAuthenticating, user, requiredRoles]);
