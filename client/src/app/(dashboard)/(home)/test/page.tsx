@@ -3,23 +3,21 @@
 import ButtonLoader from "@/components/ButtonLoader";
 import Dataloader from "@/components/loaders";
 import { useCursorGetAllUsers } from "@/features/user/api/hooks";
-import { useState } from "react";
 
-type Props = {};
+const TestPage = () => {
+  const { data, isLoading, fetchNextPage } = useCursorGetAllUsers();
 
-const TestPage = (props: Props) => {
-  const [page, setPage] = useState(0);
-  const { data, isLoading } = useCursorGetAllUsers();
   if (isLoading) {
     return <Dataloader message="Loading cursor users list..." />;
   }
   return (
-    <div>
+    <div className="gap-2 px-2 flex justify-center items-center flex-col">
       {JSON.stringify(data?.data, null, 2)}
 
       <ButtonLoader
+        disabled={!data?.pagination_meta?.hasMore}
         onClick={() => {
-          setPage(page + 1);
+          fetchNextPage();
         }}
       >
         Fetch Next

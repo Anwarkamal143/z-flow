@@ -13,11 +13,8 @@ type IAppWrapper = {
 };
 
 const AppWrapper = ({ children }: IAppWrapper) => {
-  const {
-    data: userData,
-    isLoading: isFirstTimeLoading,
-    isFetching,
-  } = useGetLoggedInUser();
+  const { data: userData, isLoading: isFirstTimeLoading } =
+    useGetLoggedInUser();
   const { setUser } = useStoreAuthActions();
   const isAuthenticating = useStoreUserIsAuthenticating();
   useEffect(() => {

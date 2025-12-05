@@ -53,7 +53,6 @@ export type BaseParams = {
 export type OffsetPaginationParams<T = Record<string, any>> = BaseParams & {
   page?: number;
   limit?: number;
-  isEnabled?: boolean;
   sort?: SortOrder;
   sortBy?: keyof T;
   mode?: "offset";
@@ -62,7 +61,6 @@ export type OffsetPaginationParams<T = Record<string, any>> = BaseParams & {
 export type CursorPaginationParams<T = Record<string, any>> = BaseParams & {
   cursor?: string;
   limit?: number;
-  isEnabled?: boolean;
   sort?: SortOrder;
   sortBy?: keyof T;
   mode?: "cursor";
@@ -73,8 +71,8 @@ export type QueryParams<T = Record<string, any>> =
   | CursorPaginationParams<T>;
 
 /* -----------------------
-   Request Options
-   ----------------------- */
+Request Options
+----------------------- */
 
 export type RequestOptions<T = Record<string, any>> = {
   query?: QueryParams<T>; // Make query match params type
@@ -86,6 +84,7 @@ export type CallOptions<T = Record<string, any>> = {
   // params?: QueryParams<T>;
   options?: RequestOptions<T>; // Use generic RequestOptions
   queryKey?: QueryKey;
+  isEnabled?: boolean;
 } & {
   params?: Partial<Record<keyof T, any>>;
 };
@@ -140,6 +139,7 @@ type CommonListOptions<T, S extends boolean = false, ErrorT = DefaultError> = {
   options?: RequestOptions<T>; // Use generic RequestOptions
   queryOptions?: Omit<QueryOptions<T[], S, ErrorT>, "queryKey">;
   queryKey?: QueryKey;
+  isEnabled?: boolean;
 };
 
 export type ListCallOptions<
@@ -551,7 +551,8 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     const params = mergeParams(callOptions?.params) as OffsetPaginationParams<
       ReturnModel<TEntity, Entity>
     >;
-    const { isEnabled = true, sort, sortBy } = params;
+    const { sort, sortBy } = params;
+    const { isEnabled = true } = callOptions || {};
     const useHook = createQueryHook(isSuspense);
 
     return useHook({
@@ -588,7 +589,8 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     const params = mergeParams(callOptions?.params) as CursorPaginationParams<
       ReturnModel<TEntity, Entity>
     >;
-    const { isEnabled = true } = params;
+    const { isEnabled = true } = callOptions || {};
+
     const useHook = createInfiniteQueryHook(isSuspense);
 
     const select = (data: InfiniteListData<ReturnModel<TEntity, Entity>[]>) => {
@@ -644,7 +646,9 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     const params = mergeParams(callOptions?.params) as QueryParams<
       ReturnModel<TEntity, Entity>
     >;
-    const { sort, entity, sortBy, isEnabled = true } = params;
+    const { isEnabled = true } = callOptions || {};
+
+    const { sort, entity, sortBy } = params;
     const { id } = { ...params, ...callOptions };
     const useHook = createQueryHook(isSuspense);
     const queryoptions = filterSuspenseOptions<
@@ -686,7 +690,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     const params = mergeParams(callOptions?.params) as QueryParams<
       ReturnModel<TEntity, Entity>
     >;
-    const { ids = [], queryKey = [], queryOptions = {} } = callOptions || {};
+    const {
+      ids = [],
+      queryKey = [],
+      queryOptions = {},
+      isEnabled = true,
+    } = callOptions || {};
     const queryoptions = filterSuspenseOptions<
       MultiQueryOptions<TEntity, Entity, S>["queryOptions"]
     >(queryOptions, isSuspense);
@@ -712,7 +721,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           },
 
           retry: false,
-          ...(isSuspense ? {} : { enabled: !!id }),
+          ...(isSuspense ? {} : { enabled: isEnabled }),
           ...(queryoptions || {}),
         };
       }),

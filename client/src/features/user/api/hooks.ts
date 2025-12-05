@@ -1,24 +1,6 @@
-import { IUserHooksTypes, userClient } from "@/models";
+import { userClient } from "@/models";
+import useQueryFn from "@/queries/useQueryFn";
 
-export const useGetAllUsers = (
-  props: IUserHooksTypes["listParamsOptions"] = {}
-) => {
-  return userClient.useList({
-    params: {
-      mode: "offset",
-      limit: 1,
-      page: 0,
-      ...props,
-    },
-  });
-};
-export const useCursorGetAllUsers = (isEnabled: boolean = true) => {
-  return userClient.useInfiniteList({
-    params: {
-      limit: 1,
-      mode: "cursor",
-    },
+export const useGetAllUsers = useQueryFn(userClient.useList);
 
-    queryKey: ["all_users"],
-  });
-};
+export const useCursorGetAllUsers = useQueryFn(userClient.useInfiniteList);

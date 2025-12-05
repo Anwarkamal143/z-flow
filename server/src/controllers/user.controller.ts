@@ -1,5 +1,4 @@
 import { APP_CONFIG } from "@/config/app.config";
-import { logger } from "@/config/logger";
 import { paginatedQuerySchema } from "@/schema/pagination";
 import { UserService } from "@/services/user.service";
 import { BadRequestException, NotFoundException } from "@/utils/catch-errors";
@@ -55,14 +54,6 @@ class UserController {
    * GET /users
    */
   public findAll = async (request: FastifyRequest, reply: FastifyReply) => {
-    // const {
-    //   limit = null,
-    //   cursor = null,
-    //   mode = "offset",
-    //   sort = "asc",
-    //   page = null,
-    // } = request.query as Record<string, string | number>;
-    logger.error(JSON.stringify(request.query) + ": findAll");
     const paginations = paginatedQuerySchema.safeParse(request.query);
     if (!paginations.success) {
       throw new BadRequestException("Invalid pagination parameters");
