@@ -1,7 +1,10 @@
-import { IPaginationMeta } from '@/types/api';
+import { IPaginationMeta } from "@/types/api";
 
-export function calculateTotalPages(total: number, limit: number): number {
-  return total > 0 && limit > 0 ? Math.ceil(total / limit) : 0;
+export function calculateTotalPages(total: number = 0, limit?: number): number {
+  if (total > 0) {
+    return limit != null && limit > 0 ? Math.ceil(total / limit) : 1;
+  }
+  return 0;
 }
 export function buildPaginationMetaCursor({
   items,
@@ -12,18 +15,18 @@ export function buildPaginationMetaCursor({
   columnName,
 }: {
   items: any[];
-  limit: number;
-  total?: number;
+  limit?: number;
+  total: number;
   cursor: number | string;
   hasMore: boolean;
   columnName: string;
 }): IPaginationMeta {
   return {
     hasMore,
-    totalRecords: (total = 0),
+    totalRecords: total,
     isLast: !hasMore,
     next:
-      items.length > 0 && hasMore
+      columnName && items?.length > 0 && hasMore
         ? (items[items.length - 1][`${columnName}`] as string)
         : undefined,
     limit,
@@ -38,9 +41,9 @@ export function buildPaginationMetaForOffset({
   page,
   hasMore,
 }: {
-  limit: number;
+  limit?: number;
   total: number;
-  page: number;
+  page?: number;
   hasMore: boolean;
 }): IPaginationMeta {
   return {
@@ -52,7 +55,7 @@ export function buildPaginationMetaForOffset({
     totalPages: calculateTotalPages(total, limit),
     isFirst: page === 0,
     current: page,
-    next: hasMore ? page + 1 : undefined,
-    previous: page > 0 ? page - 1 : undefined,
+    next: hasMore && page != null ? page + 1 : undefined,
+    previous: page != null && page > 0 ? page - 1 : undefined,
   };
 }

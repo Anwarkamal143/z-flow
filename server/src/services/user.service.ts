@@ -1,9 +1,8 @@
 import { HTTPSTATUS } from "@/config/http.config";
-import { db, eq, Provider, Role } from "@/db";
+import { eq, Provider, Role } from "@/db";
 import { users } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
 import { InsertUser, IUpdateUser, SelectUser } from "@/schema/user";
-import { stringToNumber } from "@/utils";
 import {
   BadRequestException,
   InternalServerException,
@@ -13,7 +12,7 @@ import { toUTC } from "@/utils/date-time";
 import { cacheManager } from "@/utils/redis-cache/cache-manager";
 import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { AccountService } from "./accounts.service";
-import { BaseService, IPaginatedParams } from "./base.service";
+import { BaseService } from "./base.service";
 type CreateUserInput = Pick<SelectUser, "email" | "name"> &
   Partial<Omit<SelectUser, "email" | "name">>;
 
@@ -26,34 +25,32 @@ export class UserService extends BaseService<
     super(users);
   }
 
-  async listAllPaginatedUsers(params: IPaginatedParams) {
-    const { mode, limit, sort = "desc" } = params;
-    const limitNumber = stringToNumber(limit || "50") as number;
-    if (mode === "offset") {
-      const { page } = params;
-      const pageNumber = stringToNumber(page || "0") as number;
-      const res = await this.paginateOffset({
-        limit: limitNumber,
-        page: pageNumber,
-        order: sort,
-      });
-      if (res.data) {
-        res.data = res.data.map((r) => ({ ...r, password: undefined }));
-      }
-      return res;
-    }
-    const { cursor } = params;
+  async listAllPaginatedUsers(params: typeof this._types.PaginatedParams = {}) {
+    const { mode, sort = "desc", ...rest } = params;
 
-    const resp = await this.paginateCursor({
-      cursor,
-      limit: limitNumber,
-      order: sort,
-      cursorColumn: (table) => table.id,
-    });
-    if (resp.data) {
-      resp.data = resp.data.map((r) => ({ ...r, password: undefined }));
+    if (mode == "cursor") {
+      const { cursor } = params;
+
+      const resp = await this.paginateCursor({
+        ...rest,
+        cursor,
+        sort,
+        cursorColumn: (table) => table.id,
+      });
+      if (resp.data) {
+        resp.data = resp.data.map((r) => ({ ...r, password: null }));
+      }
+      return resp;
     }
-    return resp;
+
+    const res = await this.paginateOffset({
+      ...rest,
+      sort,
+    });
+    if (res.data) {
+      res.data = res.data.map((r) => ({ ...r, password: null }));
+    }
+    return res;
   }
   async softDeleteUserById(accountId: string) {
     return this.softDelete((table) => eq(table.id, accountId), {
@@ -107,66 +104,44 @@ export class UserService extends BaseService<
         }),
       };
     }
-    try {
-      const user = await drizzleCache.query(
-        async () => {
-          const { data } = await this.findOne((fields) => eq(fields.id, id));
-          if (data && excludePassword) {
-            const { password, ...restData } = data;
-            return restData;
-          }
-          return data;
-        },
-        {
-          options: { ttl: 600, useCache: usecahce, cacheKey: `users:${id}` },
+    const user = await drizzleCache.query(
+      async () => {
+        const { data } = await this.findOne((fields) => eq(fields.id, id));
+        if (data && excludePassword) {
+          const { password, ...restData } = data;
+          return restData;
         }
-      );
-
-      // const { data: user } = await this.findOne((fields) => eq(fields.id, id));
-      if (!user) {
-        return {
-          data: null,
-          error: new NotFoundException("User not found"),
-        };
+        return data;
+      },
+      {
+        options: { ttl: 600, useCache: usecahce, cacheKey: `users:${id}` },
       }
+    );
 
-      return { data: user };
-    } catch (e) {
-      console.log("getUserById Error", e);
+    // const { data: user } = await this.findOne((fields) => eq(fields.id, id));
+    if (!user) {
       return {
         data: null,
-
-        error: new InternalServerException(),
+        error: new NotFoundException("User not found"),
       };
     }
+
+    return { data: user };
   }
 
-  public async createUser(data: CreateUserInput) {
-    try {
-      const [user] = await db
-        .insert(users)
-        .values({
-          ...data,
-        })
-        .returning();
-      if (!user) {
-        return {
-          data: null,
-          error: new BadRequestException("User not created", {
-            errorCode: ErrorCode.BAD_REQUEST,
-          }),
-        };
-      }
-      return {
-        data: { ...user, password: undefined },
-        status: HTTPSTATUS.CREATED,
-      };
-    } catch (error) {
+  public async createUser(userData: CreateUserInput) {
+    const { data } = await this.create([userData]);
+    const user = data?.[0];
+    if (!user) {
       return {
         data: null,
-        error: new InternalServerException(),
+        error: new BadRequestException("User not created"),
       };
     }
+    return {
+      data: { ...user, password: undefined },
+      status: HTTPSTATUS.CREATED,
+    };
   }
 
   async createGoogleUserUseCase(googleUser: IGoogleUser) {
@@ -215,7 +190,7 @@ export class UserService extends BaseService<
     const { password, ...userData } = updateData;
     const { data, ...rest } = await this.update<IUpdateUser>(
       (fields) => eq(fields.id, userId),
-      userData
+      [userData]
     );
     await cacheManager.remove(`users`);
     return { ...rest, data };

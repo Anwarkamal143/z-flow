@@ -5,7 +5,7 @@ import { assets } from "@/db/tables";
 import { IAsset, InsertAsset, InsertAssetSchema } from "@/schema/asset";
 import { formatZodError, stringToNumber } from "@/utils";
 import { ValidationException } from "@/utils/catch-errors";
-import { BaseService, IPaginatedParams } from "./base.service";
+import { BaseService } from "./base.service";
 
 export class AseetService extends BaseService<
   typeof assets,
@@ -16,24 +16,26 @@ export class AseetService extends BaseService<
     super(assets);
   }
 
-  async listPaginatedAseets(params: IPaginatedParams) {
-    const { mode, limit, sort = "desc" } = params;
+  async listPaginatedAseets(params: typeof this._types.PaginatedParams) {
+    const { mode, limit, sort = "desc", ...rest } = params;
     const limitNumber = stringToNumber(limit || "50") as number;
     if (mode === "offset") {
       const { page } = params;
       const pageNumber = stringToNumber(page || "0") as number;
       return await this.paginateOffset({
+        ...rest,
         limit: limitNumber,
         page: pageNumber,
-        order: sort,
+        sort,
       });
     }
     const { cursor } = params;
 
     return await this.paginateCursor({
+      ...rest,
       cursor,
       limit: limitNumber,
-      order: sort,
+      sort,
       cursorColumn: (table) => table.id,
     });
   }
@@ -58,7 +60,7 @@ export class AseetService extends BaseService<
       };
     }
 
-    return this.create(data);
+    return await this.create([data]);
   }
 }
 export const assetsService = new AseetService();

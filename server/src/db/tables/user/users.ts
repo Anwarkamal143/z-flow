@@ -9,6 +9,7 @@ import {
   userStatusEnum,
 } from "../../helpers";
 
+import { workflows } from "../workflow";
 import { userAddresses } from "./user-addresses";
 
 /* =========================
@@ -40,4 +41,5 @@ export const users = pgTable(
 
 export const usersRelations = relations(users, ({ many }) => ({
   addresses: many(userAddresses),
+  workflows: many(workflows),
 }));

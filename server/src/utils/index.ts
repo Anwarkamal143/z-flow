@@ -5,12 +5,30 @@ export const stringToNumber = (
   strNumber?: string | number
 ): number | undefined => {
   if (strNumber === null || strNumber === undefined) return undefined;
-  const strTypeof = typeof strNumber;
-  if (strTypeof !== "string" && strTypeof !== "number") return undefined;
-  if (strTypeof === "string" && (strNumber as string).trim() == "")
-    return undefined;
-  const number = 1 * (strNumber as unknown as number);
-  return isNaN(number) ? undefined : number;
+
+  // Handle number input
+  if (typeof strNumber === "number") {
+    return isNaN(strNumber) ? undefined : strNumber;
+  }
+
+  // Handle string input
+  if (typeof strNumber !== "string") return undefined;
+
+  const trimmed = strNumber.trim();
+  if (trimmed === "") return undefined;
+
+  // Use Number() for more predictable parsing
+  // Or use parseFloat() for more permissive parsing
+
+  // Option 1: Strict parsing (recommended)
+  const num = Number(trimmed);
+  if (isNaN(num) || !isFinite(num)) return undefined;
+
+  // Option 2: For integers only
+  // const num = parseInt(trimmed, 10);
+  // if (isNaN(num)) return undefined;
+
+  return num;
 };
 export function generateJti() {
   return crypto.randomBytes(16).toString("hex");

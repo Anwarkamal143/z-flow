@@ -37,6 +37,8 @@ export type CrudHookOptionsTypes<Client extends Record<string, any>> = {
   CreateMutationOptions: ExtractHookOptions<Client["useCreate"]>;
   UpdateMutationOptions: ExtractHookOptions<Client["useUpdate"]>;
   DeleteMutationOptions: ExtractHookOptions<Client["useDelete"]>;
+  listParamsOptions: Client["listParamsOptions"];
+  listInfiniteParamsOptions: Client["listInfiniteParamsOptions"];
 };
 
 // Single operation extractors

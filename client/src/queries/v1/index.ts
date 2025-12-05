@@ -56,14 +56,16 @@ export type OffsetPaginationParams<T = Record<string, any>> = BaseParams & {
   isEnabled?: boolean;
   sort?: SortOrder;
   sortBy?: keyof T;
+  mode?: "offset";
 } & Partial<Record<keyof T, any>>;
 
 export type CursorPaginationParams<T = Record<string, any>> = BaseParams & {
   cursor?: string;
-  limit: number;
+  limit?: number;
   isEnabled?: boolean;
   sort?: SortOrder;
   sortBy?: keyof T;
+  mode?: "cursor";
 } & Partial<Record<keyof T, any>>;
 
 export type QueryParams<T = Record<string, any>> =
@@ -81,9 +83,11 @@ export type RequestOptions<T = Record<string, any>> = {
 };
 
 export type CallOptions<T = Record<string, any>> = {
-  params?: QueryParams<T>;
+  // params?: QueryParams<T>;
   options?: RequestOptions<T>; // Use generic RequestOptions
   queryKey?: QueryKey;
+} & {
+  params?: Partial<Record<keyof T, any>>;
 };
 
 /* -----------------------
@@ -116,13 +120,15 @@ type InfiniteQueryOptions<
   ? UseSuspenseInfiniteQueryOptions<
       ApiHooksResp<T>,
       ErrorT,
-      InfiniteListData<T>,
+      // InfiniteListData<T>,
+      ListReturnType<T>,
       QueryKey
     >
   : UseInfiniteQueryOptions<
       ApiHooksResp<T>,
       ErrorT,
-      InfiniteListData<T>,
+      // InfiniteListData<T>,,
+      ListReturnType<T>,
       QueryKey
     >;
 
@@ -268,7 +274,7 @@ export type PrefetchOptions<TEntity, Entity> = {
 
 const buildQueryKey = (
   ...parts: (string | number | undefined | null | unknown)[]
-) => parts.filter(Boolean);
+) => parts.filter((a) => a != null);
 
 const getEmptyPaginationMeta = (
   meta: Partial<IPaginationMeta> = {}
@@ -358,11 +364,10 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
   const listRaw = async <T = TEntity>({
     params,
-    options,
     onSuccess,
-  }: {
+    ...options
+  }: RequestOptions<ReturnModel<TEntity, T>> & {
     params?: QueryParams<ReturnModel<TEntity, T>>;
-    options?: RequestOptions<ReturnModel<TEntity, T>>; // Generic options
     onSuccess?: (data: IPaginatedReturnType<ReturnModel<TEntity, T>[]>) => void;
   }): Promise<IPaginatedReturnType<ReturnModel<TEntity, T>[]>> => {
     const { isEnabled, ...mergedParams } =
@@ -390,26 +395,27 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const getRaw = async <T = TEntity>({
     id,
     params,
-    options,
+
     onSuccess,
-  }: {
+    ...rest
+  }: RequestOptions<T> & {
     id: Id;
     params?: QueryParams<T>;
-    options?: RequestOptions<T>; // Generic options
+    // options?: RequestOptions<T>; // Generic options
     onSuccess?: (data: T) => void;
   }) => {
     const { isEnabled, ...mergedParams } = mergeParams<T>(
       params,
-      options?.requestOptions?.params
+      rest?.requestOptions?.params
     );
     const mergedRequestOptions = mergeRequestOptions(
       { params: mergedParams },
-      options?.requestOptions
+      rest?.requestOptions
     );
 
     const response = await model.get<T>(`${id}`, {
-      path: options?.path,
-      query: options?.query, // Now query type matches params type
+      path: rest?.path,
+      query: rest?.query, // Now query type matches params type
       requestOptions: mergedRequestOptions,
     });
 
@@ -560,13 +566,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       ),
       queryFn: async ({ signal }) => {
         const response = await listRaw<Entity>({
-          params,
-          options: {
-            ...callOptions?.options,
-            requestOptions: {
-              ...(callOptions?.options?.requestOptions || {}),
-              signal,
-            },
+          params: { mode: "offset", ...params },
+          ...callOptions?.options,
+          requestOptions: {
+            ...(callOptions?.options?.requestOptions || {}),
+            signal,
           },
         });
         callOptions?.onSuccess?.(response);
@@ -618,16 +622,16 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       queryFn: async ({ pageParam }) => {
         const cursorParams = pageParam ? { cursor: pageParam as string } : {};
         return await listRaw<Entity>({
-          params: { ...params, ...cursorParams },
-          options: callOptions?.options,
+          params: { mode: "cursor", ...params, ...cursorParams },
+          ...(callOptions?.options || {}),
         });
       },
       getNextPageParam: (lastPage) =>
         lastPage.pagination_meta?.next || undefined,
       initialPageParam: params.cursor,
-      select,
       ...(isSuspense ? {} : { enabled: isEnabled }),
       ...filterSuspenseOptions(callOptions?.infiniteOptions, isSuspense),
+      select: callOptions?.infiniteOptions?.select || select,
     });
   };
 
@@ -656,24 +660,22 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         ...(callOptions?.queryKey || [])
       ),
       queryFn: async ({ signal }) => {
-        if (!id) throw new Error("ID is required for useGet");
+        // if (id == null) throw new Error("ID is required for useGet");
 
         const response = await getRaw<ReturnModel<TEntity, Entity>>({
-          id: id as Id,
-          params,
-          options: {
-            ...callOptions?.options,
-            requestOptions: {
-              ...(callOptions?.options?.requestOptions || {}),
-              signal,
-            },
+          id: (id as Id) || "",
+          params: { ...params },
+          ...(callOptions?.options || {}),
+          requestOptions: {
+            ...(callOptions?.options?.requestOptions || {}),
+            signal,
           },
         });
         callOptions?.onSuccess?.(response);
         return response;
       },
-      ...(isSuspense ? {} : { enabled: isEnabled && !!id }),
-      ...queryoptions,
+      ...(isSuspense ? {} : { enabled: isEnabled }),
+      ...(queryoptions || {}),
     });
   };
 
@@ -700,11 +702,9 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
               const res = await getRaw<ReturnModel<TEntity, Entity>>({
                 id,
                 params,
-                options: {
-                  ...callOptions?.options,
-                  requestOptions: {
-                    ...(callOptions?.options?.requestOptions || {}),
-                  },
+                ...(callOptions?.options || {}),
+                requestOptions: {
+                  ...(callOptions?.options?.requestOptions || {}),
                 },
               });
               return res;
@@ -713,7 +713,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
           retry: false,
           ...(isSuspense ? {} : { enabled: !!id }),
-          ...queryoptions,
+          ...(queryoptions || {}),
         };
       }),
       combine: (results) => {
@@ -925,19 +925,17 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       ),
       queryFn: async ({ signal }) => {
         const response = await listRaw<Entity>({
-          params,
-          options: {
-            ...callOptions?.options,
-            requestOptions: {
-              ...(callOptions?.options?.requestOptions || {}),
-              signal,
-            },
+          params: { mode: "offset", ...params },
+          ...(callOptions?.options || {}),
+          requestOptions: {
+            ...(callOptions?.options?.requestOptions || {}),
+            signal,
           },
         });
         callOptions?.onSuccess?.(response);
         return response;
       },
-      ...callOptions?.queryOptions,
+      ...(callOptions?.queryOptions || {}),
     });
   };
 
@@ -961,18 +959,16 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         const response = await getRaw<ReturnModel<TEntity, Entity>>({
           id: callOptions.id as Id,
           params,
-          options: {
-            ...callOptions?.options,
-            requestOptions: {
-              ...(callOptions?.options?.requestOptions || {}),
-              signal,
-            },
+          ...(callOptions?.options || {}),
+          requestOptions: {
+            ...(callOptions?.options?.requestOptions || {}),
+            signal,
           },
         });
         callOptions.onSuccess?.(response);
         return response;
       },
-      ...callOptions.queryOptions,
+      ...(callOptions.queryOptions || {}),
     });
   };
 
@@ -996,12 +992,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       queryFn: async ({ pageParam }) => {
         const cursorParams = pageParam ? { cursor: pageParam as string } : {};
         return await listRaw<Entity>({
-          params: { ...params, ...cursorParams },
-          options: callOptions?.options,
+          params: { mode: "cursor", ...params, ...cursorParams },
+          ...(callOptions?.options || {}),
         });
       },
       initialPageParam: params.cursor,
-      ...callOptions?.infiniteOptions,
+      ...(callOptions?.infiniteOptions || {}),
     });
   };
 
@@ -1011,7 +1007,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     const params = mergeParams(callOptions.params) as QueryParams<
       ReturnModel<TEntity, Entity>
     >;
-    const { ids = [] } = callOptions;
+    const { ids = [] } = callOptions || {};
 
     const prefetchPromises = ids.map((id) =>
       queryClient.prefetchQuery({
@@ -1025,17 +1021,15 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           const response = await getRaw<ReturnModel<TEntity, Entity>>({
             id,
             params,
-            options: {
-              ...callOptions?.options,
-              requestOptions: {
-                ...(callOptions?.options?.requestOptions || {}),
-                signal,
-              },
+            ...(callOptions?.options || {}),
+            requestOptions: {
+              ...(callOptions?.options?.requestOptions || {}),
+              signal,
             },
           });
           return response;
         },
-        ...callOptions.queryOptions,
+        ...(callOptions.queryOptions || {}),
       })
     );
 
@@ -1058,7 +1052,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
     if (options?.items) {
       promises.push(
-        ...options.items.map((item) =>
+        ...options?.items.map((item) =>
           prefetchGet({ ...item.options, id: item.id })
         )
       );
@@ -1080,7 +1074,6 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const useList = <Entity = TEntity>(
     opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>>
   ) => useListEntities(opts);
-
   const useSuspenseInfiniteList = <Entity = TEntity>(
     opts?: CursorCallOptions<ReturnModel<TEntity, Entity>, true>
   ) => useInfiniteListEntities(opts, true);
@@ -1106,6 +1099,8 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   ) => useGetEntities(opts);
 
   // ---------- Public API ----------
+  const listInfiniteParamsOptions = {} as CursorPaginationParams<TEntity>;
+  const listParamsOptions = {} as OffsetPaginationParams<TEntity>;
 
   return {
     // Raw methods
@@ -1146,5 +1141,9 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
     // Query client access
     getQueryClient: () => queryClient,
+
+    // types options
+    listParamsOptions,
+    listInfiniteParamsOptions,
   };
 }

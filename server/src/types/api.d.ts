@@ -20,7 +20,7 @@ export type IPaginationMeta = {
   previous?: number | string | undefined;
   totalRecords: number;
   totalPages: number;
-  limit: number;
+  limit?: number;
   current?: number | string;
   isFirst?: boolean;
   isLast?: boolean;

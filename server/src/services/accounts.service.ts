@@ -21,12 +21,14 @@ export class AccountService extends BaseService<
 
   async upsertGithubAccount(userId: string, githubId: string) {
     return this.upsert(
-      {
-        userId: userId,
-        provider: "github",
-        provider_account_id: githubId,
-        type: AccountType.oauth,
-      },
+      [
+        {
+          userId: userId,
+          provider: "github",
+          provider_account_id: githubId,
+          type: AccountType.oauth,
+        },
+      ],
       [accounts.userId, accounts.provider],
       { updated_at: new Date() }
     );
@@ -41,7 +43,7 @@ export class AccountService extends BaseService<
       return await this.paginateOffset({
         limit: limitNumber,
         page: pageNumber,
-        order: sort,
+        sort,
       });
     }
     const { cursor } = params;
@@ -49,7 +51,7 @@ export class AccountService extends BaseService<
     return await this.paginateCursor({
       cursor,
       limit: limitNumber,
-      order: sort,
+      sort,
       cursorColumn: (table) => table.id,
     });
   }
@@ -66,11 +68,13 @@ export class AccountService extends BaseService<
         data: account,
         error,
         status,
-      } = await this.create({
-        userId: userId,
-        type: AccountType.email,
-        provider: Provider.email,
-      });
+      } = await this.create([
+        {
+          userId: userId,
+          type: AccountType.email,
+          provider: Provider.email,
+        },
+      ]);
 
       if (!account) {
         return {
@@ -95,12 +99,14 @@ export class AccountService extends BaseService<
         data: account,
         error,
         status,
-      } = await this.create({
-        userId: userId,
-        provider: Provider.github,
-        provider_account_id: githubId,
-        type: AccountType.oauth,
-      });
+      } = await this.create([
+        {
+          userId: userId,
+          provider: Provider.github,
+          provider_account_id: githubId,
+          type: AccountType.oauth,
+        },
+      ]);
 
       if (!account) {
         return {
@@ -124,12 +130,14 @@ export class AccountService extends BaseService<
         data: account,
         error,
         status,
-      } = await this.create({
-        userId: userId,
-        provider: Provider.google,
-        provider_account_id: googleId,
-        type: AccountType.oauth,
-      });
+      } = await this.create([
+        {
+          userId: userId,
+          provider: Provider.google,
+          provider_account_id: googleId,
+          type: AccountType.oauth,
+        },
+      ]);
 
       if (!account) {
         return {

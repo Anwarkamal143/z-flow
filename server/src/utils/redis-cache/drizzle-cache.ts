@@ -21,6 +21,12 @@ export class DrizzleCache {
     return namespace ? `${namespace}:${hash}` : hash;
   }
 
+  //   async query<
+  //   T extends ReturnType<QB> extends Promise<infer R> ? R : never,
+  //   QB extends () => Promise<any>
+  // >(
+  //   qb: QB, // drizzle query executor
+
   async query<T>(
     qb: () => Promise<T>, // drizzle query executor
     options: {

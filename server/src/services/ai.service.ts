@@ -19,10 +19,6 @@ export class AIService {
         prompt: prompt,
       },
     });
-    // const { text } = await generateText({
-    //   model: this.model,
-    //   prompt,
-    // });
 
     return resp;
   }

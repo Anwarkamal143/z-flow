@@ -142,12 +142,13 @@ export const cacheManager = {
     // Missing or disabled → fetch fresh data
     try {
       let result = (await fetcher()) as any;
-      if (result?.data) {
-        result = result.data as T;
-      }
+      const jsonResult = result.data ? result.data : result;
+
       if (useCache) {
         const json =
-          typeof result != "string" ? JSON.stringify(result) : result;
+          typeof jsonResult != "string"
+            ? JSON.stringify(jsonResult)
+            : jsonResult;
         ttl
           ? await redis?.set(redisKey, json, ttl)
           : await redis?.set(redisKey, json);

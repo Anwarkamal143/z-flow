@@ -7,6 +7,7 @@ import {
 } from "@/utils/catch-errors";
 
 import { db } from "@/db";
+import { stringToNumber } from "@/utils";
 import {
   buildPaginationMetaCursor,
   buildPaginationMetaForOffset,
@@ -18,31 +19,31 @@ export type IPaginationOrder = "asc" | "desc";
 export type IPaginationModes = "cursor" | "offset";
 export type IPaginatedParams =
   | {
-      cursor: number | string | null;
+      cursor?: number | string | null;
       limit?: number | string | null;
-      mode: "cursor";
-      sort: IPaginationOrder;
+      mode?: "cursor";
+      sort?: IPaginationOrder;
     }
   | {
       page?: number | string | null;
       limit?: number | string | null;
-      mode: "offset";
-      sort: IPaginationOrder;
+      mode?: "offset";
+      sort?: IPaginationOrder;
     };
 type PaginationOffsetOptions<TTable extends AnyPgTable> = {
-  limit: number;
-  page: number;
-  where?: SQL<unknown>;
-  order?: "asc" | "desc";
+  limit?: number | string | null;
+  page?: number | string | null;
+  where?: (t: TTable) => SQL<unknown> | undefined;
+  sort?: IPaginationOrder;
   cursorColumn?: (tableCols: TTable) => AnyColumn;
 };
 type PaginationCursortOptions<TCursorValue, TTable extends AnyPgTable> = {
-  limit: number;
+  limit?: number | null | string;
   cursor?: TCursorValue;
   cursorColumn: (tableCols: TTable) => AnyColumn;
   direction?: "next" | "prev";
-  order?: "asc" | "desc";
-  where?: SQL<unknown>;
+  sort?: IPaginationOrder;
+  where?: (t: TTable) => SQL<unknown> | undefined;
 };
 
 // Update the queryTable function to be more specific about the return type
@@ -52,6 +53,14 @@ export class BaseService<
   TInsert extends Record<string, any>,
   TSelect
 > {
+  // ⭐ This is the type helper
+  public readonly _types!: {
+    PaginatedParams: IPaginatedParams & {
+      cursorColumn?: (t: TTable) => AnyColumn;
+      where?: (t: TTable) => SQL<unknown> | undefined;
+    };
+  };
+
   queryName: keyof typeof db.query;
   constructor(public table: TTable) {
     if (!table) {
@@ -74,17 +83,18 @@ export class BaseService<
   } {
     return dbb.query[key] as any; // We need to cast here because of Drizzle's complex types
   }
-  async create(values: TInsert) {
+  async create(values: TInsert[]) {
     try {
-      const [record] = await db.insert(this.table).values(values).returning();
-      if (!record) {
+      const records = await db.insert(this.table).values(values).returning();
+      if (records.length == 0) {
         return {
+          error: new BadRequestException("Record not created"),
           data: null,
-          error: new BadRequestException(`Record not created`),
+          status: HTTPSTATUS.BAD_REQUEST,
         };
       }
       return {
-        data: record as TSelect,
+        data: records as TSelect[],
         status: HTTPSTATUS.CREATED,
       };
     } catch (error) {
@@ -133,11 +143,11 @@ export class BaseService<
     }
   }
 
-  async findMany(where?: SQL<unknown>) {
+  async findMany(where?: (table: TTable) => SQL<unknown> | undefined) {
     try {
-      const records = await this.queryTable(db, this.queryName).findMany(
-        where ? { where } : {}
-      );
+      const records = await this.queryTable(db, this.queryName).findMany({
+        where: where?.(this.table),
+      });
       return {
         data: records,
         status: HTTPSTATUS.OK,
@@ -152,7 +162,7 @@ export class BaseService<
 
   async update<T = Partial<TInsert>>(
     where: (table: TTable) => SQL<unknown> | undefined,
-    values: T
+    values: T[]
   ) {
     try {
       const result = await db
@@ -160,6 +170,13 @@ export class BaseService<
         .set(values)
         .where(where(this.table))
         .returning();
+      if (result.length == 0) {
+        return {
+          error: new BadRequestException("Record not updated"),
+          data: null,
+          status: HTTPSTATUS.BAD_REQUEST,
+        };
+      }
       return {
         data: result,
         status: HTTPSTATUS.OK,
@@ -172,9 +189,19 @@ export class BaseService<
     }
   }
 
-  async delete(where: SQL<unknown>) {
+  async delete(where: (table: TTable) => SQL<unknown> | undefined) {
     try {
-      const result = await db.delete(this.table).where(where).returning();
+      const result = await db
+        .delete(this.table)
+        .where(where(this.table))
+        .returning();
+      if (result.length == 0) {
+        return {
+          error: new BadRequestException("Record not deleted"),
+          data: null,
+          status: HTTPSTATUS.BAD_REQUEST,
+        };
+      }
       return {
         data: result,
         status: HTTPSTATUS.OK,
@@ -192,12 +219,12 @@ export class BaseService<
    * Example: pass conflictTarget = ['user_id'], updateValues = { updated_at: new Date() }
    */
   async upsert(
-    values: TInsert,
+    values: TInsert[],
     conflictTarget: IndexColumn | IndexColumn[],
     updateValues: Partial<TInsert>
   ) {
     try {
-      const [record] = await db
+      const records = await db
         .insert(this.table)
         .values(values)
         .onConflictDoUpdate({
@@ -205,9 +232,15 @@ export class BaseService<
           set: updateValues,
         })
         .returning();
-
+      if (records.length == 0) {
+        return {
+          error: new BadRequestException("Operation failed"),
+          data: null,
+          status: HTTPSTATUS.BAD_REQUEST,
+        };
+      }
       return {
-        data: record,
+        data: records,
         status: HTTPSTATUS.OK,
       };
     } catch (error) {
@@ -227,14 +260,20 @@ export class BaseService<
     set: Partial<TTable["$inferInsert"]>
   ) {
     try {
-      const result = await db
+      const records = await db
         .update(this.table)
         .set(set)
         .where(where(this.table))
         .returning();
-
+      if (records.length == 0) {
+        return {
+          error: new BadRequestException("Record not deleted"),
+          data: null,
+          status: HTTPSTATUS.BAD_REQUEST,
+        };
+      }
       return {
-        data: result,
+        data: records,
         status: HTTPSTATUS.OK,
       };
     } catch (error) {
@@ -254,45 +293,62 @@ export class BaseService<
       where,
       page,
       cursorColumn = (table: any) => table.id as AnyColumn,
-      order = "asc",
+      sort = "asc",
     } = options;
-    if (!Number.isFinite(limit) || limit <= 0) {
+
+    // Convert values
+    const limitNum = limit != null ? stringToNumber(limit) : undefined;
+    const pageNum = page != null ? stringToNumber(page) : undefined;
+    const offset =
+      limitNum != undefined && pageNum != undefined
+        ? pageNum * limitNum
+        : undefined;
+    // Validation
+    if (
+      limitNum != undefined &&
+      (!Number.isFinite(limitNum) || limitNum <= 0)
+    ) {
       return {
         data: null,
         error: new BadRequestException("Limit must be greater than zero"),
       };
     }
-    if (!Number.isFinite(page) || page < 0) {
-      return {
-        data: null,
-        error: new BadRequestException(
-          "Page must be zero or a positive integer"
-        ),
-      };
-    }
+
     const cursorCol = cursorColumn(this.table);
     try {
-      const limitPlusOne = limit + 1;
-      const offset = page * limit;
+      const limitPlusOne = limitNum != undefined ? limitNum + 1 : undefined;
 
-      const result = await db
+      // const offset = page * limit;
+
+      const query = db
         .select()
         .from(this.table as AnyPgTable)
-        .where(where ?? sql`true`)
-        .orderBy(order === "asc" ? asc(cursorCol) : desc(cursorCol))
-        .limit(limitPlusOne)
-        .offset(offset);
-
-      const total = await db.$count(this.table, where || sql`true`);
-      const items = result.slice(0, limit);
-      const hasMore = result.length > limit;
+        .where(where?.(this.table) ?? sql`true`)
+        .orderBy(sort === "asc" ? asc(cursorCol) : desc(cursorCol));
+      // .limit(limitPlusOne)
+      // .offset(offset);
+      if (limitPlusOne) {
+        query.limit(limitPlusOne);
+      }
+      if (offset) {
+        query.offset(offset);
+      }
+      const result = await query;
+      const total = await db.$count(
+        this.table,
+        where?.(this.table) || sql`true`
+      );
+      const items = limitNum
+        ? (result.slice(0, limitNum) as TSelect[])
+        : result;
+      const hasMore = limitNum ? result.length > limitNum : false;
 
       return {
-        data: items,
+        data: items as TSelect[],
         pagination_meta: buildPaginationMetaForOffset({
-          limit,
+          limit: limitNum,
           total,
-          page,
+          page: pageNum,
           hasMore,
         }),
         status: HTTPSTATUS.OK,
@@ -317,18 +373,20 @@ export class BaseService<
       cursor,
       cursorColumn = (table: any) => table.id as AnyColumn,
       direction = "next",
-      order = "asc",
+      sort = "asc",
       where,
     } = options;
-    if (!Number.isFinite(limit) || limit <= 0) {
+    const limitNum = limit != null ? stringToNumber(limit) : undefined;
+
+    if (limitNum != null && (!Number.isFinite(limitNum) || limitNum <= 0)) {
       return {
         data: null,
         error: new BadRequestException("Limit must be greater than zero"),
       };
     }
     const cursorCol = cursorColumn(this.table);
-    const isAsc = order === "asc";
-    const limitPlusOne = limit + 1;
+    const isAsc = sort === "asc";
+    const limitPlusOne = limitNum != null ? limitNum + 1 : undefined;
     try {
       const comparator = cursor
         ? direction === "next"
@@ -342,25 +400,33 @@ export class BaseService<
 
       const whereCondition =
         where && comparator
-          ? sql`${comparator} AND ${where}`
-          : comparator || where;
+          ? sql`${comparator} AND ${where(this.table)}`
+          : comparator || where?.(this.table);
 
-      const result = await db
+      const query = db
         .select()
         .from(this.table as AnyPgTable)
         .where(whereCondition ?? sql`true`)
-        .orderBy(order === "asc" ? asc(cursorCol) : desc(cursorCol))
-        .limit(limitPlusOne);
+        .orderBy(sort === "asc" ? asc(cursorCol) : desc(cursorCol));
 
-      const total = await db.$count(this.table, where || sql`true`);
-      const items = result.slice(0, limit);
-      const hasMore = result.length > limit;
+      if (limitPlusOne != null) {
+        query.limit(limitPlusOne);
+      }
+      const result = await query;
+      const total = await db.$count(
+        this.table,
+        where?.(this.table) || sql`true`
+      );
+      const items = limitNum
+        ? (result.slice(0, limitNum) as TSelect[])
+        : result;
+      const hasMore = limitNum ? result.length > limitNum : false;
       return {
-        data: items,
+        data: items as TSelect[],
         pagination_meta: {
           ...buildPaginationMetaCursor({
             items,
-            limit,
+            limit: limitNum,
             total,
             cursor: cursor as string,
             hasMore,
