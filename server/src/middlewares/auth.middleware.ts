@@ -140,7 +140,7 @@ export class AuthMiddleware {
       }
 
       const user = (
-        await this.userService.getUserById(refreshPayload.data.user.id, true)
+        await this.userService.getUserById(refreshPayload.data.user.id)
       )?.data;
 
       if (!user) {

@@ -1,26 +1,21 @@
 import userController from "@/controllers/user.controller";
 import worklowController from "@/controllers/worklow.controller";
 import authMiddleware from "@/middlewares/auth.middleware";
+import { IPaginatedParams } from "@/services/base.service";
 import { FastifyInstance } from "fastify";
 
 export default async function workflowRoutes(fastify: FastifyInstance) {
   // Optional: apply middleware to all routes in this module
-  fastify.addHook("preHandler", authMiddleware.loggedInUser);
+  fastify.addHook("preHandler", authMiddleware.isAuthenticated);
 
-  // GET /user/me → current user
-  fastify.get("/", worklowController.create);
+  // POST / → create workflow
+  fastify.post("/", worklowController.create);
+  // GET / → findAll
+  fastify.get("/", userController.findAll);
 
-  // GET /user → findAll
-  fastify.get(
-    "/",
-    { preHandler: authMiddleware.isAuthenticated },
-    userController.findAll
-  );
+  fastify.get<{ Querystring: IPaginatedParams }>("/", worklowController.get);
 
-  // GET /user/:userId → findById
-  fastify.get<{ Params: { userId: string } }>(
-    "/:userId",
-    { preHandler: authMiddleware.isAuthenticated },
-    userController.findById
-  );
+  fastify.get("/:id", worklowController.getById);
+
+  fastify.delete("/:id", worklowController.deleteById);
 }

@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import pluralize from "pluralize";
 import { ulid } from "ulid";
 import z from "zod";
 export const stringToNumber = (
@@ -45,4 +46,11 @@ export function formatZodError(error: z.ZodError) {
     path: issue.path.join(".") || "(root)",
     message: issue.message,
   }));
+}
+
+export function getSingularPlural(name: string) {
+  const plural = pluralize.plural(name);
+  const singular = pluralize.singular(name);
+
+  return { singular, plural };
 }

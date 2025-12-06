@@ -4,8 +4,8 @@ import { subscriptionQueryOptions } from "./query-options";
 export const prefetchSubscriptions = async () => {
   const queryOptions = { ...subscriptionQueryOptions };
   const cookiesOptions = await getOptionsWithCookies(queryOptions?.options);
-  customerClient.prefetchGet({
-    ...subscriptionQueryOptions,
+  return customerClient.prefetchGet({
+    ...queryOptions,
 
     options: cookiesOptions,
   });

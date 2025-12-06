@@ -3,11 +3,10 @@ import { HTTPSTATUS } from "@/config/http.config";
 import {
   BadRequestException,
   InternalServerException,
-  NotFoundException,
 } from "@/utils/catch-errors";
 
 import { db } from "@/db";
-import { stringToNumber } from "@/utils";
+import { getSingularPlural, stringToNumber } from "@/utils";
 import {
   buildPaginationMetaCursor,
   buildPaginationMetaForOffset,
@@ -60,14 +59,30 @@ export class BaseService<
       where?: (t: TTable) => SQL<unknown> | undefined;
     };
   };
+  public _singular!: string;
+  public _plural!: string;
 
+  public set singular(name: string) {
+    this._singular = name;
+  }
+  public get singular() {
+    return this._singular;
+  }
+  public set plural(name: string) {
+    this._plural = name;
+  }
+  public get plural() {
+    return this._plural;
+  }
   queryName: keyof typeof db.query;
   constructor(public table: TTable) {
     if (!table) {
       throw new Error(`Provide a table`);
     }
     const config = getTableConfig(table);
-
+    const names = getSingularPlural(config.name);
+    this.singular = names.singular;
+    this.plural = names.plural;
     this.queryName = config.name as keyof typeof db.query;
   }
   queryTable<K extends keyof typeof db.query>(
@@ -83,18 +98,18 @@ export class BaseService<
   } {
     return dbb.query[key] as any; // We need to cast here because of Drizzle's complex types
   }
-  async create(values: TInsert[]) {
+  async create(value: TInsert) {
     try {
-      const records = await db.insert(this.table).values(values).returning();
-      if (records.length == 0) {
+      const [record] = await db.insert(this.table).values(value).returning();
+      if (!record) {
         return {
-          error: new BadRequestException("Record not created"),
+          error: new BadRequestException(`${this.singular} not created`),
           data: null,
           status: HTTPSTATUS.BAD_REQUEST,
         };
       }
       return {
-        data: records as TSelect[],
+        data: record as TSelect,
         status: HTTPSTATUS.CREATED,
       };
     } catch (error) {
@@ -108,6 +123,13 @@ export class BaseService<
   async createMany(values: TInsert[]) {
     try {
       const records = await db.insert(this.table).values(values).returning();
+      if (records.length == 0) {
+        return {
+          error: new BadRequestException(`${this.plural} not created`),
+          data: null,
+          status: HTTPSTATUS.BAD_REQUEST,
+        };
+      }
       return {
         data: records,
         status: HTTPSTATUS.CREATED,
@@ -125,12 +147,7 @@ export class BaseService<
       const record = await this.queryTable(db, this.queryName).findFirst({
         where: where(this.table),
       });
-      if (!record) {
-        return {
-          data: null,
-          error: new NotFoundException(`Record not found`),
-        };
-      }
+
       return {
         data: record,
         status: HTTPSTATUS.OK,
@@ -172,7 +189,9 @@ export class BaseService<
         .returning();
       if (result.length == 0) {
         return {
-          error: new BadRequestException("Record not updated"),
+          error: new BadRequestException(
+            `${values.length > 0 ? this.plural : this.singular} not updated`
+          ),
           data: null,
           status: HTTPSTATUS.BAD_REQUEST,
         };
@@ -197,7 +216,7 @@ export class BaseService<
         .returning();
       if (result.length == 0) {
         return {
-          error: new BadRequestException("Record not deleted"),
+          error: new BadRequestException(`${this.singular} not deleted`),
           data: null,
           status: HTTPSTATUS.BAD_REQUEST,
         };
@@ -267,7 +286,7 @@ export class BaseService<
         .returning();
       if (records.length == 0) {
         return {
-          error: new BadRequestException("Record not deleted"),
+          error: new BadRequestException(`${this.singular} not deleted`),
           data: null,
           status: HTTPSTATUS.BAD_REQUEST,
         };

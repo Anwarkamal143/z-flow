@@ -1,11 +1,16 @@
-import { HTTPSTATUS } from "@/config/http.config";
 import { and, eq } from "@/db";
 import { workflows } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
 import { IUpdateUser } from "@/schema/user";
-import { InsertWorkflows, SelectWorkflows } from "@/schema/workflow";
-import { stringToNumber } from "@/utils";
-import { BadRequestException, NotFoundException } from "@/utils/catch-errors";
+import {
+  InsertWorkflows,
+  InsertWorkflowsSchema,
+  SelectWorkflows,
+  UpdateWorkFlowNameSchema,
+  WorkflowByIdUserIdSchema,
+} from "@/schema/workflow";
+import { formatZodError } from "@/utils";
+import { BadRequestException, ValidationException } from "@/utils/catch-errors";
 import { cacheManager } from "@/utils/redis-cache/cache-manager";
 import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { BaseService } from "./base.service";
@@ -19,37 +24,22 @@ export class WorkflowService extends BaseService<
     super(workflows);
   }
   async listAllPaginatedWorkflows(params: typeof this._types.PaginatedParams) {
-    const { mode, limit, sort = "desc", ...rest } = params;
-    const limitNumber = stringToNumber(limit || "50") as number;
+    const { mode, sort = "desc", ...rest } = params;
     if (mode === "offset") {
-      const { page } = params;
-      const pageNumber = stringToNumber(page || "0") as number;
-      const res = await this.paginateOffset({
+      return await this.paginateOffset({
         ...rest,
-        limit: limitNumber,
-        page: pageNumber,
         sort,
         where: rest.where,
       });
-      return res;
     }
-    const { cursor } = params;
 
-    const resp = await this.paginateCursor({
+    return await this.paginateCursor({
       ...rest,
       where: rest.where,
-      cursor,
-      limit: limitNumber,
       sort,
       cursorColumn: params.cursorColumn
         ? params.cursorColumn
         : (table) => table.id,
-    });
-    return resp;
-  }
-  async softDeleteById(accountId: string) {
-    return this.softDelete((table) => eq(table.id, accountId), {
-      deleted_at: new Date(),
     });
   }
 
@@ -62,19 +52,7 @@ export class WorkflowService extends BaseService<
         }),
       };
     }
-    const { data: workflow } = await this.findOne((fields) =>
-      eq(fields.name, name)
-    );
-    if (!workflow) {
-      return {
-        data: null,
-        error: new NotFoundException("Workflow not found"),
-      };
-    }
-    return {
-      data: workflow,
-      status: HTTPSTATUS.OK,
-    };
+    return await this.findOne((fields) => eq(fields.name, name));
   }
 
   public async getById(id?: string, usecahce = false) {
@@ -87,11 +65,9 @@ export class WorkflowService extends BaseService<
         }),
       };
     }
-    const workflow = await drizzleCache.query(
+    return await drizzleCache.query(
       async () => {
-        const { data } = await this.findOne((fields) => eq(fields.id, id));
-
-        return data;
+        return await this.findOne((fields) => eq(fields.id, id));
       },
       {
         options: {
@@ -101,133 +77,109 @@ export class WorkflowService extends BaseService<
         },
       }
     );
-
-    // const { data: user } = await this.findOne((fields) => eq(fields.id, id));
-    if (!workflow) {
-      return {
-        data: null,
-        error: new NotFoundException("Workflow not found"),
-      };
-    }
-
-    return { data: workflow };
   }
-
-  public async deleteById(id?: string) {
-    if (!id) {
+  public async getByUserId(userId?: string) {
+    if (!userId) {
       return {
         data: null,
 
-        error: new BadRequestException("Workflow Id is required", {
+        error: new BadRequestException("User Id is required", {
           errorCode: ErrorCode.VALIDATION_ERROR,
         }),
       };
     }
-    const deletedWorkflow = await this.delete((fields) => eq(fields.id, id));
 
-    // const { data: user } = await this.findOne((fields) => eq(fields.id, id));
-    if (!deletedWorkflow.data) {
-      return {
-        data: null,
-        error: new NotFoundException("Workflow not found"),
-      };
-    }
-
-    return { data: deletedWorkflow.data };
+    return await this.findMany((fields) => eq(fields.userId, userId));
   }
   public async getByIdAndUserId(id?: string, userId?: string) {
-    if (!id) {
+    const parseResult = WorkflowByIdUserIdSchema.safeParse({
+      id,
+      userId,
+    });
+    if (!parseResult.success) {
       return {
         data: null,
-
-        error: new BadRequestException("Workflow Id is required", {
-          errorCode: ErrorCode.VALIDATION_ERROR,
-        }),
+        error: new ValidationException(
+          "Invalid input",
+          formatZodError(parseResult.error)
+        ),
       };
     }
-    if (!userId) {
-      return {
-        data: null,
-
-        error: new BadRequestException("User Id is required", {
-          errorCode: ErrorCode.VALIDATION_ERROR,
-        }),
-      };
-    }
-    const { data } = await this.findOne((fields) =>
-      and(eq(fields.id, id), eq(fields.userId, userId))
+    const parseData = parseResult.data;
+    return await this.findOne((fields) =>
+      and(eq(fields.id, parseData.id), eq(fields.userId, parseData.userId))
     );
-
-    if (!data) {
-      return {
-        data: null,
-        error: new NotFoundException("Workflow not found"),
-      };
-    }
-
-    return { data, error: null };
+  }
+  async softDeleteById(accountId: string) {
+    return this.softDelete((table) => eq(table.id, accountId), {
+      deleted_at: new Date(),
+    });
   }
 
-  public async createWorkflow(worflow: InsertWorkflows) {
-    const { data } = await this.create([worflow]);
-    if (!data) {
+  public async deleteByIdUserId(id?: string, userId?: string) {
+    const parseResult = WorkflowByIdUserIdSchema.safeParse({
+      id,
+      userId,
+    });
+    if (!parseResult.success) {
       return {
         data: null,
-        error: new BadRequestException("Workflow not created", {
-          errorCode: ErrorCode.BAD_REQUEST,
-        }),
+
+        error: new ValidationException(
+          "Invalid input",
+          formatZodError(parseResult.error)
+        ),
       };
     }
-    return {
-      data,
-      status: HTTPSTATUS.CREATED,
-    };
-  }
-
-  async updateWorkflowName(name: string, id: string) {
-    const { data, ...rest } = await this.update<IUpdateUser>(
-      (fields) => eq(fields.id, id),
-      [{ name }]
+    const data = parseResult.data;
+    return await this.delete((fields) =>
+      and(eq(fields.id, data.id), eq(fields.userId, data.userId))
     );
-    await cacheManager.remove(`workflows`);
-    return { ...rest, data };
   }
+
+  public async createWorkflow(workflow: InsertWorkflows) {
+    const parseResult = InsertWorkflowsSchema.safeParse(workflow);
+    if (!parseResult.success) {
+      return {
+        data: null,
+        error: new ValidationException(
+          "Invalid input",
+          formatZodError(parseResult.error)
+        ),
+      };
+    }
+    return await this.create(parseResult.data);
+  }
+
   async updateWorkflowNameByIdAndUserId(
-    name: string,
-    id: string,
-    userId: string
+    name: string = "",
+    id: string = "",
+    userId?: string
   ) {
-    if (!id) {
+    const parseResult = UpdateWorkFlowNameSchema.safeParse({
+      name,
+      id,
+      userId,
+    });
+
+    if (!parseResult.success) {
       return {
         data: null,
 
-        error: new BadRequestException("Workflow Id is required", {
-          errorCode: ErrorCode.VALIDATION_ERROR,
-        }),
+        error: new ValidationException(
+          "Invalid input",
+          formatZodError(parseResult.error)
+        ),
       };
     }
-    if (!userId) {
-      return {
-        data: null,
-
-        error: new BadRequestException("User Id is required", {
-          errorCode: ErrorCode.VALIDATION_ERROR,
-        }),
-      };
-    }
-    if (!name) {
-      return {
-        data: null,
-
-        error: new BadRequestException("Workflow name is required", {
-          errorCode: ErrorCode.VALIDATION_ERROR,
-        }),
-      };
-    }
-
+    const {
+      userId: uId,
+      id: workflowId,
+      name: workflowName,
+    } = parseResult.data;
     const { data, ...rest } = await this.update<IUpdateUser>(
-      (fields) => and(eq(fields.id, id), eq(fields.userId, userId)),
-      [{ name }]
+      (fields) => and(eq(fields.id, workflowId), eq(fields.userId, uId)),
+      [{ name: workflowName }]
     );
     await cacheManager.remove(`workflows`);
     return { ...rest, data };

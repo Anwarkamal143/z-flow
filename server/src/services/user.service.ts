@@ -6,7 +6,6 @@ import { InsertUser, IUpdateUser, SelectUser } from "@/schema/user";
 import {
   BadRequestException,
   InternalServerException,
-  NotFoundException,
 } from "@/utils/catch-errors";
 import { toUTC } from "@/utils/date-time";
 import { cacheManager } from "@/utils/redis-cache/cache-manager";
@@ -27,13 +26,9 @@ export class UserService extends BaseService<
 
   async listAllPaginatedUsers(params: typeof this._types.PaginatedParams = {}) {
     const { mode, sort = "desc", ...rest } = params;
-
     if (mode == "cursor") {
-      const { cursor } = params;
-
       const resp = await this.paginateCursor({
         ...rest,
-        cursor,
         sort,
         cursorColumn: (table) => table.id,
       });
@@ -59,35 +54,26 @@ export class UserService extends BaseService<
   }
 
   public async getUserByEmail(email: string, selectPassword = false) {
-    try {
-      if (!email) {
-        return {
-          data: null,
-          error: new BadRequestException("Email is required", {
-            errorCode: ErrorCode.VALIDATION_ERROR,
-          }),
-        };
-      }
-      const { data: user } = await this.findOne((fields) =>
-        eq(fields.email, email)
-      );
-      if (!user) {
-        return {
-          data: null,
-          error: new NotFoundException("User not found"),
-        };
-      }
-      return {
-        data: { ...user, password: selectPassword ? user.password : undefined },
-        status: HTTPSTATUS.OK,
-      };
-    } catch (e: any) {
-      console.error("[UserService:getUserById]", e?.message || e);
+    if (!email) {
       return {
         data: null,
-        error: new InternalServerException(),
+        error: new BadRequestException("Email is required", {
+          errorCode: ErrorCode.VALIDATION_ERROR,
+        }),
       };
     }
+    const response = await this.findOne((fields) => eq(fields.email, email));
+    const user = response.data;
+    if (user) {
+      return {
+        data: {
+          ...user,
+          password: selectPassword ? user.password : undefined,
+        },
+        status: HTTPSTATUS.OK,
+      };
+    }
+    return response;
   }
 
   public async getUserById(
@@ -104,33 +90,23 @@ export class UserService extends BaseService<
         }),
       };
     }
-    const user = await drizzleCache.query(
+    return await drizzleCache.query(
       async () => {
-        const { data } = await this.findOne((fields) => eq(fields.id, id));
-        if (data && excludePassword) {
-          const { password, ...restData } = data;
-          return restData;
+        const resOne = await this.findOne((fields) => eq(fields.id, id));
+        if (resOne.data && excludePassword) {
+          const { password, ...restData } = resOne.data;
+          return { ...resOne, data: restData };
         }
-        return data;
+        return resOne;
       },
       {
         options: { ttl: 600, useCache: usecahce, cacheKey: `users:${id}` },
       }
     );
-
-    // const { data: user } = await this.findOne((fields) => eq(fields.id, id));
-    if (!user) {
-      return {
-        data: null,
-        error: new NotFoundException("User not found"),
-      };
-    }
-
-    return { data: user };
   }
 
   public async createUser(userData: CreateUserInput) {
-    const { data } = await this.create([userData]);
+    const { data } = await this.create(userData);
     const user = data?.[0];
     if (!user) {
       return {

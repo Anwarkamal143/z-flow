@@ -1,11 +1,9 @@
 import { eq, UserAddressType } from "@/db";
 
-import { HTTPSTATUS } from "@/config/http.config";
 import { userAddresses } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
 import { InsertAddress, SelectAddress } from "@/schema/address";
-import { stringToNumber } from "@/utils";
-import { BadRequestException, NotFoundException } from "@/utils/catch-errors";
+import { BadRequestException } from "@/utils/catch-errors";
 import { BaseService } from "./base.service";
 
 export class AddressService extends BaseService<
@@ -39,24 +37,16 @@ export class AddressService extends BaseService<
   }
 
   async listPaginatedAddresses(params: typeof this._types.PaginatedParams) {
-    const { mode, limit, sort = "desc", ...rest } = params;
-    const limitNumber = stringToNumber(limit || "50") as number;
+    const { mode, sort = "desc", ...rest } = params;
     if (mode === "offset") {
-      const { page } = params;
-      const pageNumber = stringToNumber(page || "0") as number;
       return await this.paginateOffset({
         ...rest,
-        limit: limitNumber,
-        page: pageNumber,
         sort,
       });
     }
-    const { cursor } = params;
 
     return await this.paginateCursor({
       ...rest,
-      cursor,
-      limit: limitNumber,
       sort,
       cursorColumn: (table) => table.id,
     });
@@ -77,18 +67,10 @@ export class AddressService extends BaseService<
         data: null,
       };
     }
-    const { data, error, status } = await this.create([
-      {
-        ...address,
-        userId,
-      },
-    ]);
-
-    return {
-      data,
-      status,
-      error,
-    };
+    return await this.create({
+      ...address,
+      userId,
+    });
   }
 
   public async getAddressByUserId(userId: string) {
@@ -100,17 +82,7 @@ export class AddressService extends BaseService<
         }),
       };
     }
-    const { data } = await this.findOne((fields) => eq(fields.userId, userId));
-    if (!data) {
-      return {
-        data: null,
-        error: new NotFoundException("Address not found"),
-      };
-    }
-    return {
-      data,
-      status: HTTPSTATUS.OK,
-    };
+    return await this.findOne((fields) => eq(fields.userId, userId));
   }
 }
 export const addressService = new AddressService();

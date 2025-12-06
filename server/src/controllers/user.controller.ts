@@ -16,7 +16,7 @@ class UserController {
     const user = request.user;
     const accessToken = request.cookies?.[APP_CONFIG.COOKIE_NAME];
     const refreshToken = request.cookies?.[APP_CONFIG.REFRESH_COOKIE_NAME];
-    const { data } = await this.userService.getUserById(user?.id, true);
+    const { data } = await this.userService.getUserById(user?.id);
     if (!data) {
       resetCookies(reply);
     }

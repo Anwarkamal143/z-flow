@@ -146,7 +146,7 @@ export const cacheManager = {
 
       if (useCache) {
         const json =
-          typeof jsonResult != "string"
+          typeof jsonResult != "string" && jsonResult != null
             ? JSON.stringify(jsonResult)
             : jsonResult;
         ttl
