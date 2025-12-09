@@ -2,29 +2,20 @@ import { HTTPSTATUS } from "@/config/http.config";
 import { eq } from "@/db";
 import { InsertWorkflows, InsertWorkflowsSchema } from "@/schema/workflow";
 import { IPaginatedParams } from "@/services/base.service";
-import { WorkflowService } from "@/services/workflow.service";
+import { workflowService } from "@/services/workflow.service";
 import { formatZodError } from "@/utils";
 import { BadRequestException, ValidationException } from "@/utils/catch-errors";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { generateSlug } from "random-word-slugs";
 class WorkflowController {
-  private workflowService: WorkflowService;
-
-  constructor(workflowService: WorkflowService) {
-    this.workflowService = workflowService;
-  }
-
-  /**
-   * Generate a normal (non-stream) AI response
-   */
   public async create(
     req: FastifyRequest<{ Body: InsertWorkflows }>,
     rep: FastifyReply
   ) {
     const userId = req.user!.id;
     const workflow = req.body;
-    if (workflow.name) {
+    if (!workflow.name) {
       workflow.name = generateSlug();
     }
     workflow.userId = userId;
@@ -37,14 +28,14 @@ class WorkflowController {
       );
     }
 
-    const result = await this.workflowService.createWorkflow(parseResult.data);
+    const result = await workflowService.createWorkflow(parseResult.data);
 
     if (result.error) {
       throw result.error;
     }
 
     return SuccessResponse(rep, {
-      data: result.data?.[0],
+      data: result.data,
       statusCode: HTTPSTATUS.CREATED,
       message: "Workflow created",
     });
@@ -62,7 +53,7 @@ class WorkflowController {
     }
     const userId = req.user?.id;
     const updatedWorkFlow =
-      await this.workflowService.updateWorkflowNameByIdAndUserId(
+      await workflowService.updateWorkflowNameByIdAndUserId(
         req.body.name,
         req.params.id,
         userId
@@ -73,7 +64,7 @@ class WorkflowController {
 
     return SuccessResponse(rep, {
       message: "Workflow Name is updated",
-      data: updatedWorkFlow.data?.[0],
+      data: updatedWorkFlow.data,
     });
   }
   public async getById(
@@ -85,10 +76,7 @@ class WorkflowController {
     if (!(workflowId || "").trim()) {
       throw new BadRequestException("Id is required");
     }
-    const workflow = await this.workflowService.getByIdAndUserId(
-      workflowId,
-      userId
-    );
+    const workflow = await workflowService.getByIdAndUserId(workflowId, userId);
     if (workflow.error) {
       throw workflow.error;
     }
@@ -105,10 +93,7 @@ class WorkflowController {
     const workflowId = req.params.id;
     const userId = req.user?.id;
 
-    const workflow = await this.workflowService.deleteByIdUserId(
-      workflowId,
-      userId
-    );
+    const workflow = await workflowService.deleteByIdUserId(workflowId, userId);
     if (workflow.error) {
       throw workflow.error;
     }
@@ -118,14 +103,27 @@ class WorkflowController {
       data: workflow.data?.[0],
     });
   }
-  public async get(
+  public async deleteAll(req: FastifyRequest, _rep: FastifyReply) {
+    const userId = req.user?.id;
+
+    const workflow = await workflowService.deleteUserWorkFlows(userId);
+    if (workflow.error) {
+      throw workflow.error;
+    }
+
+    return SuccessResponse(_rep, {
+      message: "workflows deleted",
+      data: workflow.data,
+    });
+  }
+  public async getAll(
     req: FastifyRequest<{ Querystring: IPaginatedParams }>,
     _rep: FastifyReply
   ) {
     const userId = req.user!.id;
     const params = req.query;
     const { data, pagination_meta, error } =
-      await this.workflowService.listAllPaginatedWorkflows({
+      await workflowService.listAllPaginatedWorkflows({
         ...params,
         where: (t) => {
           return eq(t.userId, userId);
@@ -146,4 +144,4 @@ class WorkflowController {
 }
 
 // Export a singleton instance
-export default new WorkflowController(new WorkflowService());
+export default new WorkflowController();

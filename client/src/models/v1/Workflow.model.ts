@@ -1,10 +1,9 @@
 import { createCrudClient } from "@/queries/v1";
-import { IAppUser } from "@/types/user";
 import { Model } from ".";
 
-class WorkflowModel extends Model<IAppUser> {
+class WorkflowModel extends Model<IWorkflow> {
   constructor() {
-    super("/workflow", "public-1");
+    super("/workflows", "public-1");
   }
   // async requestCredit() {
   //   const res = await request("/add-beta-credits", {

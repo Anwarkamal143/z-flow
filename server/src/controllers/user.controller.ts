@@ -1,13 +1,13 @@
 import { APP_CONFIG } from "@/config/app.config";
 import { paginatedQuerySchema } from "@/schema/pagination";
-import { UserService } from "@/services/user.service";
+import { userService } from "@/services/user.service";
 import { BadRequestException, NotFoundException } from "@/utils/catch-errors";
 import { resetCookies } from "@/utils/cookie";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 class UserController {
-  constructor(private userService: UserService) {}
+  constructor() {}
 
   /**
    * GET /users/me
@@ -16,7 +16,7 @@ class UserController {
     const user = request.user;
     const accessToken = request.cookies?.[APP_CONFIG.COOKIE_NAME];
     const refreshToken = request.cookies?.[APP_CONFIG.REFRESH_COOKIE_NAME];
-    const { data } = await this.userService.getUserById(user?.id);
+    const { data } = await userService.getUserById(user?.id);
     if (!data) {
       resetCookies(reply);
     }
@@ -38,7 +38,7 @@ class UserController {
       throw new BadRequestException("User Id is required");
     }
 
-    const { data, error } = await this.userService.getUserById(id);
+    const { data, error } = await userService.getUserById(id);
 
     if (error) {
       throw new NotFoundException("User Not Found");
@@ -60,7 +60,7 @@ class UserController {
     }
 
     const { data, pagination_meta, error } =
-      await this.userService.listAllPaginatedUsers({
+      await userService.listAllPaginatedUsers({
         ...paginations.data,
       });
 
@@ -75,4 +75,4 @@ class UserController {
   };
 }
 
-export default new UserController(new UserService());
+export default new UserController();

@@ -4,6 +4,7 @@
    ============================= */
 
 import { getQueryClient } from "@/get-query-client";
+import { withErrorHandler } from "@/lib";
 import { IRequestOptions, Model } from "@/models";
 import {
   IApiResponse,
@@ -16,6 +17,7 @@ import {
 } from "@/types/Iquery";
 import {
   InfiniteData,
+  MutateOptions,
   QueryKey,
   UseInfiniteQueryOptions,
   UseMutationOptions,
@@ -35,7 +37,14 @@ import {
    Core Types
    ----------------------- */
 
-export type Id = string | number;
+type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never;
+
+// Extract the first parameter type from a hook function
+type ExtractHookOptions<T> = T extends (...args: any) => any
+  ? ExtractHookParams<T>[0]
+  : never;
+
+export type Id = string | number | undefined;
 export type SortOrder = "asc" | "desc";
 export type DefaultError = IResponseError<null>;
 export type ReturnModel<TEntity, Entity> = ReturnModelType<TEntity, Entity>;
@@ -413,7 +422,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       rest?.requestOptions
     );
 
-    const response = await model.get<T>(`${id}`, {
+    const response = await model.get<T>(id, {
       path: rest?.path,
       query: rest?.query, // Now query type matches params type
       requestOptions: mergedRequestOptions,
@@ -482,7 +491,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     );
 
     const response = await model.update<T>(
-      `/${id}`,
+      id || "",
       payload as Partial<TEntity>,
       {
         path: options?.path,
@@ -517,8 +526,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       { params: mergedParams },
       options?.requestOptions
     );
-
-    const response = await model.delete<T>(`/${id}`, {
+    const response = await model.delete<T>(id, {
       path: options?.path,
       query: options?.query, // Now query type matches params type
       requestOptions: mergedRequestOptions,
@@ -742,8 +750,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
   const useCreate = <Entity = TEntity, TVars = Partial<TEntity>>(
     callOptions?: MutationCallOptions<ReturnModel<TEntity, Entity>, TVars>
-  ) =>
-    useMutation({
+  ) => {
+    const params = mergeParams(callOptions?.params) as QueryParams<
+      ReturnModel<TEntity, Entity>
+    >;
+    const mutate = useMutation({
       mutationFn: (payload: TVars) =>
         createRaw({
           payload,
@@ -758,13 +769,19 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
         if (callOptions?.invalidateQueries) {
           callOptions.invalidateQueries.forEach(({ queryKey, exact }) => {
-            queryClient.invalidateQueries({ queryKey, exact });
+            queryClient.invalidateQueries({
+              queryKey: buildQueryKey(params.entity, ...(queryKey || [])),
+              exact,
+            });
           });
         }
 
         if (callOptions?.refetchQueries) {
           callOptions.refetchQueries.forEach(({ queryKey, exact }) => {
-            queryClient.refetchQueries({ queryKey, exact });
+            queryClient.refetchQueries({
+              queryKey: [params.entity, ...(queryKey || [])],
+              exact,
+            });
           });
         }
 
@@ -805,14 +822,34 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       },
       ...callOptions?.mutationOptions,
     });
+    const handleCreate = withErrorHandler(
+      async (
+        variables: TVars,
+        options?:
+          | MutateOptions<
+              IApiResponse<ReturnModelType<TEntity, Entity>>,
+              DefaultError,
+              TVars,
+              unknown
+            >
+          | undefined
+      ) => {
+        const res = await mutate.mutateAsync(variables, options);
+
+        return res;
+      }
+    );
+
+    return { ...mutate, handleCreate };
+  };
 
   const useUpdate = <Entity = TEntity, TVars = Partial<TEntity>>(
     callOptions?: MutationCallOptions<
       { id: Id; data: TEntity & IPartialIfExist<Entity> },
       { id: Id; data: TVars }
     >
-  ) =>
-    useMutation({
+  ) => {
+    const mutate = useMutation({
       mutationFn: ({ id, data }: { id: Id; data: TVars }) =>
         updateRaw({
           id,
@@ -855,8 +892,39 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       ...callOptions?.mutationOptions,
     });
 
-  const useDelete = (callOptions?: MutationCallOptions<Id, Id>) =>
-    useMutation({
+    const handleUpdate = withErrorHandler(
+      async (
+        variables: {
+          id: Id;
+          data: TVars;
+        },
+        options?:
+          | MutateOptions<
+              IApiResponse<{
+                id: Id;
+                data: TEntity & IPartialIfExist<Entity>;
+              }>,
+              DefaultError,
+              {
+                id: Id;
+                data: TVars;
+              },
+              unknown
+            >
+          | undefined
+      ) => {
+        const res = await mutate.mutateAsync(variables, options);
+
+        return res;
+      }
+    );
+    return { ...mutate, handleUpdate };
+  };
+
+  const useDelete = <Entity = TEntity>(
+    callOptions?: MutationCallOptions<Entity, Id>
+  ) => {
+    const mutate = useMutation({
       mutationFn: (id: Id) =>
         deleteRaw({
           id,
@@ -887,6 +955,24 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       },
       ...callOptions?.mutationOptions,
     });
+    const handleDelete = withErrorHandler(
+      async (data?: {
+        id?: Id;
+        options?: MutateOptions<
+          ApiHooksResp<Entity>,
+          DefaultError,
+          Id,
+          unknown
+        >;
+      }) => {
+        const res = await mutate.mutateAsync(data?.id, data?.options);
+
+        return res;
+      }
+    );
+
+    return { ...mutate, handleDelete };
+  };
 
   // ---------- Enhanced Cache Utilities ----------
 
@@ -1110,6 +1196,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   // ---------- Public API ----------
   const listInfiniteParamsOptions = {} as CursorPaginationParams<TEntity>;
   const listParamsOptions = {} as OffsetPaginationParams<TEntity>;
+  const listOptions: ExtractHookOptions<typeof useList> = {};
+  const listInfiniteOptions: ExtractHookOptions<typeof useInfiniteList> = {};
+  const createOptions: ExtractHookOptions<
+    typeof useCreate<TEntity, Partial<TEntity>>
+  > = {};
+  const deleteOptions: ExtractHookOptions<typeof useDelete<TEntity>> = {};
 
   return {
     // Raw methods
@@ -1153,6 +1245,10 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
     // types options
     listParamsOptions,
+    listOptions,
     listInfiniteParamsOptions,
+    listInfiniteOptions,
+    createOptions,
+    deleteOptions,
   };
 }

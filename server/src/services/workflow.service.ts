@@ -23,7 +23,9 @@ export class WorkflowService extends BaseService<
   constructor() {
     super(workflows);
   }
-  async listAllPaginatedWorkflows(params: typeof this._types.PaginatedParams) {
+  async listAllPaginatedWorkflows(
+    params: typeof this._types.PaginatedParams = {}
+  ) {
     const { mode, sort = "desc", ...rest } = params;
     if (mode === "offset") {
       return await this.paginateOffset({
@@ -136,6 +138,18 @@ export class WorkflowService extends BaseService<
       and(eq(fields.id, data.id), eq(fields.userId, data.userId))
     );
   }
+  public async deleteUserWorkFlows(userId?: string) {
+    if (!userId) {
+      return {
+        data: null,
+
+        error: new BadRequestException("User Id is required", {
+          errorCode: ErrorCode.VALIDATION_ERROR,
+        }),
+      };
+    }
+    return await this.delete((fields) => eq(fields.userId, userId));
+  }
 
   public async createWorkflow(workflow: InsertWorkflows) {
     const parseResult = InsertWorkflowsSchema.safeParse(workflow);
@@ -182,7 +196,7 @@ export class WorkflowService extends BaseService<
       [{ name: workflowName }]
     );
     await cacheManager.remove(`workflows`);
-    return { ...rest, data };
+    return { ...rest, data: data?.[0] };
   }
 }
 export const workflowService = new WorkflowService();

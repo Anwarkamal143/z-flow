@@ -4,8 +4,8 @@ import { logger } from "@/config/logger";
 import { AccountType, Provider, UserStatus } from "@/db";
 import { ErrorCode } from "@/enums/error-code.enum";
 import { IRegisterUser, RegisterUserSchema } from "@/schema/auth";
-import { AccountService } from "@/services/accounts.service";
-import { UserService } from "@/services/user.service";
+import { accountService } from "@/services/accounts.service";
+import { userService } from "@/services/user.service";
 import { compareValue, hashValue } from "@/utils/bcrypt";
 import {
   BadRequestException,
@@ -19,11 +19,6 @@ import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 export class AuthController {
-  constructor(
-    public accountService: AccountService,
-    public userService: UserService
-  ) {}
-
   public signUp = async (
     req: FastifyRequest<{ Body: IRegisterUser }>,
     rep: FastifyReply
@@ -38,7 +33,7 @@ export class AuthController {
         });
       }
 
-      const { data: existingUser } = await this.userService.getUserByEmail(
+      const { data: existingUser } = await userService.getUserByEmail(
         result.data.email
       );
       if (existingUser) {
@@ -48,7 +43,7 @@ export class AuthController {
       }
 
       const hashedPassword = await hashValue(pas);
-      const { data: user } = await this.userService.createUser({
+      const { data: user } = await userService.createUser({
         email,
         password: hashedPassword,
         name: name?.toLowerCase() as string,
@@ -59,7 +54,7 @@ export class AuthController {
           errorCode: ErrorCode.BAD_REQUEST,
         });
 
-      await this.accountService.createAccount(user.id);
+      await accountService.createAccount(user.id);
       const { accessToken, refreshToken } = await setCookies(rep, {
         id: user.id,
         providerType: Provider.email,
@@ -85,7 +80,7 @@ export class AuthController {
   ) => {
     try {
       const { email, password } = req.body;
-      const { data: user } = await this.userService.getUserByEmail(email, true);
+      const { data: user } = await userService.getUserByEmail(email, true);
       if (!user || !user.password) {
         throw new BadRequestException("Invalid credentials");
       }
@@ -163,7 +158,7 @@ export class AuthController {
         });
       }
 
-      const user = await this.userService.getUserById(userData.id);
+      const user = await userService.getUserById(userData.id);
       if (!user?.data?.id) {
         resetCookies(rep);
         await deleteRefreshTokenWithJTI(jti);
@@ -195,4 +190,4 @@ export class AuthController {
   };
 }
 
-export default new AuthController(new AccountService(), new UserService());
+export default new AuthController();

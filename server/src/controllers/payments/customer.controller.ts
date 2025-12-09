@@ -11,10 +11,7 @@ import { Polar } from "@polar-sh/sdk";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 class CustomerController {
-  /**
-   *
-   */
-  constructor() {}
+
   public async createPolarCustomer(
     req: FastifyRequest<{ Body: Parameters<Polar["customers"]["create"]>[0] }>,
     rep: FastifyReply

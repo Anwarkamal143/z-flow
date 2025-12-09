@@ -46,6 +46,7 @@ export function buildPaginationMetaForOffset({
   page?: number;
   hasMore: boolean;
 }): IPaginationMeta {
+  // Page starts from 1
   return {
     hasMore,
     totalRecords: total,
@@ -53,9 +54,9 @@ export function buildPaginationMetaForOffset({
 
     limit,
     totalPages: calculateTotalPages(total, limit),
-    isFirst: page === 0,
+    isFirst: page === 1,
     current: page,
     next: hasMore && page != null ? page + 1 : undefined,
-    previous: page != null && page > 0 ? page - 1 : undefined,
+    previous: page != null && page > 1 ? page - 1 : undefined,
   };
 }

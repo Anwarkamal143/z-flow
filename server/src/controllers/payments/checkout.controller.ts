@@ -4,10 +4,6 @@ import { BadRequestException, NotFoundException } from "@/utils/catch-errors";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 class CheckoutController {
-  /**
-   *
-   */
-  constructor() {}
   public async getCustomerCheckout(
     req: FastifyRequest<{ Querystring: { products: string } }>,
     rep: FastifyReply
