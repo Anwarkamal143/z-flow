@@ -60,7 +60,7 @@ export function buildApp() {
   fastify.register(cors, CORS_OPTIONS);
   fastify.register(rateLimit, {
     max: 100,
-    timeWindow: "5 minute",
+    timeWindow: "2 minute",
   });
   fastify.register(fastifyFormbody);
   fastify.register(errorPlugin);

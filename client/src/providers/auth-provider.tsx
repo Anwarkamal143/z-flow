@@ -1,5 +1,5 @@
 "use client";
-import { PageLoader } from "@/components/loaders";
+import { Loader } from "@/components/loaders";
 import { Role } from "@/config/enums";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 
@@ -12,7 +12,7 @@ function AuthGuard({
 }) {
   const { loading, user } = useAuthGuard(roles);
 
-  if (loading) return <PageLoader />;
+  if (loading) return <Loader size="lg" full />;
 
   if (!user) return null; // redirect already handled
 

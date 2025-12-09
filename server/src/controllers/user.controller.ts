@@ -7,8 +7,6 @@ import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 class UserController {
-  constructor() {}
-
   /**
    * GET /users/me
    */

@@ -1,14 +1,15 @@
 import "server-only";
 //
-import { API_BASE_URL, COOKIE_NAME, REFRESH_COOKIE_NAME } from "@/config";
+import {
+  API_BASE_URL,
+  COOKIE_NAME,
+  REFRESH_COOKIE_NAME,
+  REFRESH_QUERY_KEY,
+} from "@/config";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import {
-  getCookieAsString,
-  stringifyCookies,
-  TokenService,
-} from "./server-utils";
+import { redirect, RedirectType } from "next/navigation";
+import { getCookieAsString, TokenService } from "./server-utils";
 
 export const getAuthCookiesValues = (cookies: ReadonlyRequestCookies) => {
   return {
@@ -16,8 +17,8 @@ export const getAuthCookiesValues = (cookies: ReadonlyRequestCookies) => {
     refreshToken: cookies.get(REFRESH_COOKIE_NAME)?.value,
   };
 };
-
 export const authSession = async (
+  searchParams?: Record<string, any>,
   isRedirect = true
 ): Promise<null | {
   accessToken: string | undefined;
@@ -36,18 +37,35 @@ export const authSession = async (
       cookie: await getCookieAsString(),
     };
   }
+  // if want to refresh directly from server remove this and the condition above check for REFRESH_QUERY_KEY which returns null
+  if (searchParams?.[REFRESH_QUERY_KEY] == "true") {
+    return null;
+  }
   if (res.isExpired) {
-    const resp = await refreshTokens(tokens.refreshToken as string);
-    if (resp) {
-      return {
-        ...resp,
-        user: TokenService.decodeToken(resp.accessToken),
-        cookie: await stringifyCookies({
-          [COOKIE_NAME]: resp.accessToken,
-          [REFRESH_COOKIE_NAME]: resp.refreshToken,
-        }),
-      };
+    delete searchParams?.[REFRESH_QUERY_KEY];
+    let sParams =
+      searchParams != null ? new URLSearchParams(searchParams).toString() : "";
+
+    if (sParams) {
+      sParams = `?${sParams}&${REFRESH_QUERY_KEY}=true`;
+    } else {
+      sParams = `?${REFRESH_QUERY_KEY}=true`;
     }
+    redirect(`${sParams}`, RedirectType.replace);
+
+    //                  untill down here and uncomment the code down here
+
+    // const resp = await refreshTokens(tokens.refreshToken as string);
+    // if (resp) {
+    // return {
+    //   ...resp,
+    //   user: TokenService.decodeToken(resp.accessToken),
+    //   cookie: await stringifyCookies({
+    //     [COOKIE_NAME]: resp.accessToken,
+    //     [REFRESH_COOKIE_NAME]: resp.refreshToken,
+    //   }),
+    // };
+    // }
   }
   if (isRedirect) {
     return redirect("/login");

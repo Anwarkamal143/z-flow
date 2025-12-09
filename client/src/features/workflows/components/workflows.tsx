@@ -1,6 +1,7 @@
 "use client";
 
 import ButtonLoader from "@/components/ButtonLoader";
+import { useRouter } from "next/navigation";
 import { useCreateWorkflow, useDeleteWorkflows } from "../api";
 import { useSuspenseGetAllWorkflows } from "../api/query-hooks";
 
@@ -16,6 +17,7 @@ const Workflows = (props: Props) => {
   console.log(isLoading, "isLoading");
   const { handleCreate } = useCreateWorkflow();
   const { handleDelete } = useDeleteWorkflows();
+  const router = useRouter();
 
   return (
     <div>
@@ -49,6 +51,22 @@ const Workflows = (props: Props) => {
           }}
         >
           Next Page ({data?.pagination_meta.next})
+        </ButtonLoader>
+        <ButtonLoader
+          onClick={() => {
+            // setPage(data?.pagination_meta.next as number);
+            router.push("/server?server=true");
+          }}
+        >
+          Server
+        </ButtonLoader>
+        <ButtonLoader
+          onClick={() => {
+            // setPage(data?.pagination_meta.next as number);
+            router.push("/workflows?server=true");
+          }}
+        >
+          workflows
         </ButtonLoader>
       </div>
       {JSON.stringify(data, null, 2)}

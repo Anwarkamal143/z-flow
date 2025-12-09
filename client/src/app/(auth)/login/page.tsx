@@ -1,4 +1,4 @@
-import { PageLoader } from "@/components/loaders";
+import PageLoader from "@/components/loaders";
 import SignInScreen from "@/features/auth/components/sign-in";
 import { Suspense } from "react";
 

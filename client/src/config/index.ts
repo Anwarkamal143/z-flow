@@ -1,5 +1,3 @@
-import { stringToNumber } from "@/lib";
-
 export const DB_URL = process.env.DATABASE_URL as string;
 export const DOMAIN = process.env.NEXT_PUBLIC_APP_URL;
 export const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -24,17 +22,5 @@ export const SITE_URLS = {
   LOGIN: "/login",
   SIGN_UP: "/sign-up",
 };
-export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "15m";
 
-export const JWT_REFRESH_EXPIRES_IN =
-  process.env.JWT_REFRESH_EXPIRES_IN || "7d";
-export const JWT_COOKIE_EXPIRES_IN =
-  stringToNumber(process.env.JWT_COOKIE_EXPIRES_IN) || "7d";
-
-export const REDIS_HOST = process.env.REDIS_HOST;
-export const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
-export const REDIS_TLS = process.env.REDIS_TLS === "true" || false;
-export const REDIS_USER = process.env.REDIS_USER || "default";
-export const REDIS_PORT = stringToNumber(process.env.REDIS_PORT!) || 6379;
-export const REDIS_PATH = process.env.REDIS_PATH;
-export const REDIS_PREFIX = process.env.REDIS_PREFIX || "x";
+export const REFRESH_QUERY_KEY = "refreshing_tokens";
