@@ -1,6 +1,6 @@
-import { JWT_REFRESH_SECRET, JWT_SECRET } from "@/config";
 import "server-only";
 //
+import { JWT_REFRESH_SECRET, JWT_SECRET } from "@/config";
 import { RequestOptions } from "@/queries/v1";
 import { JWTPayload, jwtVerify } from "jose";
 import { cookies } from "next/headers";
@@ -85,4 +85,26 @@ export const getOptionsWithCookies = async (options: RequestOptions = {}) => {
       },
     },
   } satisfies RequestOptions;
+};
+export async function stringifyCookies(tokens?: Record<string, any>) {
+  const cookieStore = await cookies();
+  if (!tokens) {
+    return cookieStore.toString();
+  }
+  const newCookies = cookieStore.getAll().map((m) => {
+    if (m.name == tokens[m.name]) {
+      return { ...m, value: tokens[m.name] };
+    }
+    return m;
+  });
+  let newCookieString = "";
+  newCookies.forEach((ck, index) => {
+    newCookieString += `${ck.name}=${ck.value}${
+      index != newCookies.length - 1 ? "; " : ""
+    }`;
+  });
+  return newCookieString;
+}
+export const getCookieAsString = async () => {
+  return (await cookies()).toString();
 };

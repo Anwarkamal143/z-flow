@@ -1,4 +1,3 @@
-import userController from "@/controllers/user.controller";
 import worklowController from "@/controllers/worklow.controller";
 import authMiddleware from "@/middlewares/auth.middleware";
 import { IPaginatedParams } from "@/services/base.service";
@@ -10,10 +9,9 @@ export default async function workflowRoutes(fastify: FastifyInstance) {
 
   // POST / → create workflow
   fastify.post("/", worklowController.create);
-  // GET / → findAll
-  fastify.get("/", userController.findAll);
-
-  fastify.get<{ Querystring: IPaginatedParams }>("/", worklowController.get);
+  // GET / → get
+  fastify.get<{ Querystring: IPaginatedParams }>("/", worklowController.getAll);
+  fastify.delete("/", worklowController.deleteAll);
 
   fastify.get("/:id", worklowController.getById);
 

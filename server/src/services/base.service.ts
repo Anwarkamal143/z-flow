@@ -214,13 +214,13 @@ export class BaseService<
         .delete(this.table)
         .where(where(this.table))
         .returning();
-      if (result.length == 0) {
-        return {
-          error: new BadRequestException(`${this.singular} not deleted`),
-          data: null,
-          status: HTTPSTATUS.BAD_REQUEST,
-        };
-      }
+      // if (result.length == 0) {
+      //   return {
+      //     error: new BadRequestException(`${this.singular} not deleted`),
+      //     data: null,
+      //     status: HTTPSTATUS.BAD_REQUEST,
+      //   };
+      // }
       return {
         data: result,
         status: HTTPSTATUS.OK,
@@ -314,13 +314,15 @@ export class BaseService<
       cursorColumn = (table: any) => table.id as AnyColumn,
       sort = "asc",
     } = options;
-
+    // Page starts from 1
     // Convert values
     const limitNum = limit != null ? stringToNumber(limit) : undefined;
     const pageNum = page != null ? stringToNumber(page) : undefined;
     const offset =
       limitNum != undefined && pageNum != undefined
-        ? pageNum * limitNum
+        ? pageNum == 0
+          ? 0
+          : (pageNum - 1) * limitNum
         : undefined;
     // Validation
     if (

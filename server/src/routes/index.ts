@@ -10,6 +10,7 @@ import inngestRoutes from "./v1/inngest.route";
 import paymentRoutes from "./v1/payments";
 import socialRoutes from "./v1/social.route";
 import userRoutes from "./v1/user.route";
+import workflowRoutes from "./v1/workflow.route";
 
 async function v1RoutesV1(fastify: FastifyInstance) {
   // Health check
@@ -26,6 +27,7 @@ async function v1RoutesV1(fastify: FastifyInstance) {
       instance.register(inngestRoutes, { prefix: "/inngest" });
       instance.register(aiRoutes, { prefix: "/ai" });
       instance.register(paymentRoutes, { prefix: "/payments" });
+      instance.register(workflowRoutes, { prefix: "/workflows" });
       // healthcheck
 
       // simple ready check

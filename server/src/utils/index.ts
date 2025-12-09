@@ -54,3 +54,5 @@ export function getSingularPlural(name: string) {
 
   return { singular, plural };
 }
+export const sleep = (ms: number = 5000): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));

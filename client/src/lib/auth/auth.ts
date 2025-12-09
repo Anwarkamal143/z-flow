@@ -4,7 +4,11 @@ import { API_BASE_URL, COOKIE_NAME, REFRESH_COOKIE_NAME } from "@/config";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { TokenService } from "./server-utils";
+import {
+  getCookieAsString,
+  stringifyCookies,
+  TokenService,
+} from "./server-utils";
 
 export const getAuthCookiesValues = (cookies: ReadonlyRequestCookies) => {
   return {
@@ -12,23 +16,37 @@ export const getAuthCookiesValues = (cookies: ReadonlyRequestCookies) => {
     refreshToken: cookies.get(REFRESH_COOKIE_NAME)?.value,
   };
 };
+
 export const authSession = async (
   isRedirect = true
 ): Promise<null | {
   accessToken: string | undefined;
   refreshToken: string | undefined;
   user: IServerCookieType;
+  cookie: string;
 }> => {
   const cookieStore = await cookies();
   const tokens = getAuthCookiesValues(cookieStore);
   const res = await TokenService.verify(tokens.accessToken);
+
   if (res.data) {
-    return { user: res.data.user, ...tokens };
+    return {
+      user: res.data.user,
+      ...tokens,
+      cookie: await getCookieAsString(),
+    };
   }
   if (res.isExpired) {
     const resp = await refreshTokens(tokens.refreshToken as string);
     if (resp) {
-      return { ...resp, user: TokenService.decodeToken(resp.accessToken) };
+      return {
+        ...resp,
+        user: TokenService.decodeToken(resp.accessToken),
+        cookie: await stringifyCookies({
+          [COOKIE_NAME]: resp.accessToken,
+          [REFRESH_COOKIE_NAME]: resp.refreshToken,
+        }),
+      };
     }
   }
   if (isRedirect) {

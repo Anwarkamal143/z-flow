@@ -4,6 +4,19 @@ import { IApiResponse, IBIfNotA } from "@/types/Iquery";
 import qs from "query-string";
 
 export type IRequestOptions = IAxiosRequest;
+
+export const getSlug = (slug?: string | number) => {
+  if (slug == null) {
+    return "";
+  }
+  if (typeof slug == "string" && slug.trim() == "") {
+    return "";
+  }
+  if (typeof slug == "number" && Number.isNaN(slug)) {
+    return "";
+  }
+  return `/${slug}`;
+};
 class Model<
   EntityType = any,
   QueryParams extends Record<string, any> = Record<string, any>
@@ -38,7 +51,7 @@ class Model<
   }
 
   async get<ReturnType = EntityType>(
-    slug: string | number,
+    slug?: string | number,
     options?: {
       query?: QueryParams;
       path?: string;
@@ -46,9 +59,9 @@ class Model<
     }
   ) {
     const queryString = options?.query ? `?${qs.stringify(options.query)}` : "";
-    const path = `${options?.path ? `/${options.path}` : ""}${
-      slug ? `/${slug}` : ""
-    }${queryString}`;
+    const path = `${options?.path ? `/${options.path}` : ""}${getSlug(
+      slug
+    )}${queryString}`;
     return this.sendRequest<ReturnType>(
       path,
       "GET",
@@ -107,9 +120,9 @@ class Model<
     }
   ) {
     const queryString = options?.query ? `?${qs.stringify(options.query)}` : "";
-    const path = `${
-      options?.path ? `/${options.path}` : ""
-    }/${slug}${queryString}`;
+    const path = `${options?.path ? `/${options.path}` : ""}${getSlug(
+      slug
+    )}${queryString}`;
     return this.sendRequest<ReturnType>(
       path,
       "PUT",
@@ -119,7 +132,7 @@ class Model<
   }
 
   async delete<ReturnType = EntityType | void>(
-    slug: string | number,
+    slug?: string | number,
     options?: {
       query?: QueryParams;
       path?: string;
@@ -127,9 +140,9 @@ class Model<
     }
   ) {
     const queryString = options?.query ? `?${qs.stringify(options.query)}` : "";
-    const path = `${
-      options?.path ? `/${options.path}` : ""
-    }/${slug}${queryString}`;
+    const path = `${options?.path ? `/${options.path}` : ""}${getSlug(
+      slug
+    )}${queryString}`;
     return this.sendRequest<ReturnType>(
       path,
       "DELETE",

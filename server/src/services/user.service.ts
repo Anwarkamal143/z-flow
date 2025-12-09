@@ -9,7 +9,6 @@ import {
 } from "@/utils/catch-errors";
 import { toUTC } from "@/utils/date-time";
 import { cacheManager } from "@/utils/redis-cache/cache-manager";
-import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { AccountService } from "./accounts.service";
 import { BaseService } from "./base.service";
 type CreateUserInput = Pick<SelectUser, "email" | "name"> &
@@ -76,11 +75,7 @@ export class UserService extends BaseService<
     return response;
   }
 
-  public async getUserById(
-    id?: string,
-    usecahce = false,
-    excludePassword = true
-  ) {
+  public async getUserById(id?: string, excludePassword = true) {
     if (!id) {
       return {
         data: null,
@@ -90,24 +85,17 @@ export class UserService extends BaseService<
         }),
       };
     }
-    return await drizzleCache.query(
-      async () => {
-        const resOne = await this.findOne((fields) => eq(fields.id, id));
-        if (resOne.data && excludePassword) {
-          const { password, ...restData } = resOne.data;
-          return { ...resOne, data: restData };
-        }
-        return resOne;
-      },
-      {
-        options: { ttl: 600, useCache: usecahce, cacheKey: `users:${id}` },
-      }
-    );
+
+    const resOne = await this.findOne((fields) => eq(fields.id, id));
+    if (resOne.data && excludePassword) {
+      const { password, ...restData } = resOne.data;
+      return { ...resOne, data: restData };
+    }
+    return resOne;
   }
 
   public async createUser(userData: CreateUserInput) {
-    const { data } = await this.create(userData);
-    const user = data?.[0];
+    const { data: user } = await this.create(userData);
     if (!user) {
       return {
         data: null,

@@ -1,14 +1,8 @@
-import { AIService } from "@/services/ai.service";
+import { aiService } from "@/services/ai.service";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 class AIController {
-  private ai: AIService;
-
-  constructor(ai: AIService) {
-    this.ai = ai;
-  }
-
   /**
    * Generate a normal (non-stream) AI response
    */
@@ -20,7 +14,7 @@ class AIController {
         return rep.status(400).send({ error: "Prompt is required" });
       }
 
-      const result = await this.ai.generate(prompt);
+      const result = await aiService.generate(prompt);
 
       // return rep.status(200).send({
       //   ok: true,
@@ -50,7 +44,7 @@ class AIController {
         return rep.status(400).send({ error: "Prompt is required" });
       }
 
-      const stream = await this.ai.generateStream(prompt);
+      const stream = await aiService.generateStream(prompt);
 
       // Prepare SSE
       rep.raw.writeHead(200, {
@@ -72,4 +66,4 @@ class AIController {
 }
 
 // Export a singleton instance
-export default new AIController(new AIService());
+export default new AIController();

@@ -1,7 +1,7 @@
 import { APP_CONFIG, ENVIRONMENTS } from "@/config/app.config";
 import { HTTPSTATUS } from "@/config/http.config";
 import { AccountType, Provider } from "@/db";
-import { UserService } from "@/services/user.service";
+import { userService } from "@/services/user.service";
 import { getArcticeMethods, googleAuth } from "@/utils/auth";
 import { InternalServerException } from "@/utils/catch-errors";
 import { setCookies } from "@/utils/cookie";
@@ -21,7 +21,7 @@ const Google_Cookies_options = {
 };
 
 class SocialAuthController {
-  constructor(public userService: UserService) {}
+  constructor() {}
 
   public googleSignAuth = async (_req: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -86,10 +86,10 @@ class SocialAuthController {
       const googleUser = decodeIdToken(tokens.idToken()) as IGoogleUser;
 
       const { data: existingAccount } =
-        await this.userService.getAccountByGoogleIdUseCase(googleUser.sub);
+        await userService.getAccountByGoogleIdUseCase(googleUser.sub);
 
       if (existingAccount) {
-        const { data: user } = await this.userService.getUserById(
+        const { data: user } = await userService.getUserById(
           existingAccount.userId
         );
         const { jti, refreshToken } = await this.setCallbackCookie(reply, {
@@ -102,7 +102,7 @@ class SocialAuthController {
         return reply.redirect(APP_CONFIG.APP_URL);
       }
 
-      const { data: user } = await this.userService.createGoogleUserUseCase(
+      const { data: user } = await userService.createGoogleUserUseCase(
         googleUser
       );
 
@@ -136,4 +136,4 @@ class SocialAuthController {
   };
 }
 
-export default new SocialAuthController(new UserService());
+export default new SocialAuthController();

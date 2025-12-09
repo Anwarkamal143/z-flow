@@ -1,4 +1,4 @@
-import { authSession } from "@/lib/auth";
+import { authSession } from "@/lib/auth/auth";
 
 type IPageProps = {
   params: Promise<{ workflowId: string }>;

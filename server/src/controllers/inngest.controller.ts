@@ -1,20 +1,14 @@
 import { EVENT_NAMES } from "@/app_inngest/types";
-import { InngestService } from "@/services/inngest.service";
+import { inngestService } from "@/services/inngest.service";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 class InngestController {
-  private inngest: InngestService;
-
-  constructor(inngest: InngestService) {
-    this.inngest = inngest;
-  }
-
   /**
    * Sends a demo event "demo/event.sent"
    */
   public async sendDemo(_req: FastifyRequest, rep: FastifyReply) {
     try {
-      await this.inngest.send({
+      await inngestService.send({
         name: EVENT_NAMES.DEMO_SENT,
         data: {
           message: "Hello from server with resolve 2",
@@ -30,4 +24,4 @@ class InngestController {
 }
 
 // Export a singleton instance for route registration
-export default new InngestController(new InngestService());
+export default new InngestController();

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getQueryClient } from "@/get-query-client";
+import { RequestOptions } from "@/queries/v1";
 import { resetAllStores } from "@/store/useGlobalStore";
 import { IResponseError } from "@/types/Iquery";
 import { decodeJwt } from "jose";
@@ -212,3 +213,41 @@ export const openWindow = (
 ) => {
   window.open(url, target, "noopener,noreferrer");
 };
+
+export const optionsWithCookies = async (
+  options: RequestOptions = {},
+  cookies?: string
+) => {
+  const newOptions = { ...(options || {}) };
+  if (!cookies) {
+    return newOptions;
+  }
+  return {
+    ...newOptions,
+    requestOptions: {
+      ...(newOptions.requestOptions || {}),
+      headers: {
+        ...(newOptions.requestOptions?.headers || {}),
+        cookie: cookies,
+      },
+    },
+  } satisfies RequestOptions;
+};
+export function getValidNumber(value: unknown): null | number {
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === "number") {
+    const isNumber = !Number.isNaN(value) && Number.isFinite(value);
+    return isNumber ? value : null;
+  }
+
+  if (typeof value === "string") {
+    if (value.trim() === "") return null;
+
+    const n = Number(value);
+    const isNumber = !Number.isNaN(n) && Number.isFinite(n);
+    return isNumber ? n : null;
+  }
+
+  return null;
+}
