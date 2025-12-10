@@ -4,7 +4,7 @@ import { getQueryClient } from "@/get-query-client";
 
 import { Toaster } from "@/components/ui/sonner";
 // import useRefreshToken from "@/hooks/useRefreshToken";
-import TokenManager from "@/components/TokenManager";
+import TokenManager from "@/components/token-manager";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import AppWrapper from "./app-wrapper";
@@ -17,7 +17,7 @@ import AppWrapper from "./app-wrapper";
 // };
 
 export default function QueryProvider({
-  children
+  children,
 }: {
   children: React.ReactNode;
 }) {

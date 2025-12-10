@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { GoogleIcon } from "@/assets/icons";
-import SeparatorText from "@/components/SeparatorText";
+import SeparatorText from "@/components/separator-text";
 import { Button } from "@/components/ui/button";
 import {
   Card,

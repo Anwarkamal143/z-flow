@@ -1,6 +1,6 @@
 "use client";
 
-import ButtonLoader from "@/components/ButtonLoader";
+import ButtonLoader from "@/components/button-loader";
 import Dataloader from "@/components/loaders";
 import { useCursorGetAllUsers } from "@/features/user/api/hooks";
 

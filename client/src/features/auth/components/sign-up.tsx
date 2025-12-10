@@ -3,7 +3,7 @@ import Form from "@/components/form/Form";
 import { FormInput } from "@/components/form/Input";
 import useZodForm from "@/hooks/useZodForm";
 
-import ButtonLoader from "@/components/ButtonLoader";
+import ButtonLoader from "@/components/button-loader";
 import { useRequireUnAuthClient } from "@/hooks/useAuthGuard";
 import { useStoreAuthActions } from "@/store/userAuthStore";
 import { IUser } from "@/types/user";

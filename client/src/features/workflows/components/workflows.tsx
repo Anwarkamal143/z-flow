@@ -1,6 +1,6 @@
 "use client";
 
-import ButtonLoader from "@/components/ButtonLoader";
+import ButtonLoader from "@/components/button-loader";
 import { EntityContainer, EntityHeader } from "@/components/entity-components";
 import useUpgradeModal from "@/hooks/use-upgrade-modal";
 import { useRouter } from "next/navigation";

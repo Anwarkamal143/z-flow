@@ -1,6 +1,6 @@
 "use client";
 import { useSignOut } from "@/features/auth/api";
-import ButtonLoader from "./ButtonLoader";
+import ButtonLoader from "./button-loader";
 
 type Props = {};
 

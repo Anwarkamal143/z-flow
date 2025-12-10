@@ -1,6 +1,6 @@
 import { PlusIcon } from "@/assets/icons";
 import Link from "next/link";
-import ButtonLoader from "./ButtonLoader";
+import ButtonLoader from "./button-loader";
 
 type EntityHeaderProps = {
   title: string;

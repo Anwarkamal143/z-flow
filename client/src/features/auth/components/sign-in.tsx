@@ -1,7 +1,7 @@
 "use client";
 
 import { EmailIcon, EyeIcon, EyeOffIcon } from "@/assets/icons";
-import ButtonLoader from "@/components/ButtonLoader";
+import ButtonLoader from "@/components/button-loader";
 import Form from "@/components/form/Form";
 import FormInput from "@/components/form/Input";
 import { useRequireUnAuthClient } from "@/hooks/useAuthGuard";
