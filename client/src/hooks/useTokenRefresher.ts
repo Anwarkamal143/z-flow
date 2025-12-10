@@ -27,7 +27,7 @@ export function useTokenRefresher() {
         return false;
       }
       const now = Date.now() / 1000;
-      return decoded.exp! < now;
+      return decoded?.exp != null && decoded.exp < now;
     } catch (e) {
       return true;
     }
@@ -39,6 +39,7 @@ export function useTokenRefresher() {
         clearInterval(intervalRef.current!);
         return;
       }
+      authStoreActions.setIsTokensRefreshing(true);
       const resp = await getRefreshTokens(refreshToken);
       if (resp) {
         authStoreActions.setTokens({
@@ -54,6 +55,8 @@ export function useTokenRefresher() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       await signOut();
       console.log("Token refresh failed:", err);
+    } finally {
+      authStoreActions.setIsTokensRefreshing(false);
     }
   }
   function removeRefreshFlag() {
@@ -67,7 +70,6 @@ export function useTokenRefresher() {
   useEffect(() => {
     // From server component set this key to true
     if (searchParams.get(REFRESH_QUERY_KEY) == "true") {
-      authStoreActions.setIsTokensRefreshing(true);
       refreshTokens(() => {
         // setRefreshQueryValue(null);
         // router.refresh();
@@ -91,7 +93,7 @@ export function useTokenRefresher() {
 
       if (isExpired(accessToken)) {
         console.log("🔄 Access token expired → refreshing…");
-        // await refreshTokens();
+        await refreshTokens();
       }
     }, 30_000); // check every 30 sec
 
