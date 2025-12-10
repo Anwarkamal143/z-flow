@@ -179,8 +179,9 @@ export class BaseService<
 
   async update<T = Partial<TInsert>>(
     where: (table: TTable) => SQL<unknown> | undefined,
-    values: T[]
+    values: T
   ) {
+    console.log(values, "update");
     try {
       const result = await db
         .update(this.table)
@@ -189,9 +190,7 @@ export class BaseService<
         .returning();
       if (result.length == 0) {
         return {
-          error: new BadRequestException(
-            `${values.length > 0 ? this.plural : this.singular} not updated`
-          ),
+          error: new BadRequestException(`${this.singular} not updated`),
           data: null,
           status: HTTPSTATUS.BAD_REQUEST,
         };

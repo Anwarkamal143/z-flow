@@ -75,8 +75,8 @@ export const withErrorHandler = <TArgs extends any[], TResponse>(
         return {
           ...data,
           statusText,
-          result: data?.status,
-          status: status,
+          // result: data?.status,
+          status,
           message: data?.message || message,
           success: false,
         };

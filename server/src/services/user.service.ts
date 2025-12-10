@@ -154,10 +154,10 @@ export class UserService extends BaseService<
     const { password, ...userData } = updateData;
     const { data, ...rest } = await this.update<IUpdateUser>(
       (fields) => eq(fields.id, userId),
-      [userData]
+      userData
     );
     await cacheManager.remove(`users`);
-    return { ...rest, data };
+    return { ...rest, data: data?.[0] };
   }
 }
 export const userService = new UserService();

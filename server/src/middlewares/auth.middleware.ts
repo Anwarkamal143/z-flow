@@ -4,7 +4,7 @@ import { ErrorCode } from "@/enums/error-code.enum";
 import { resetCookies, setCookies } from "@/utils/cookie";
 
 import { Role } from "@/db";
-import { UserService } from "@/services/user.service";
+import { userService } from "@/services/user.service";
 import {
   UnauthenticatedException,
   UnauthorizedException,
@@ -27,8 +27,6 @@ export const getRequestTokens = (request: FastifyRequest) => ({
 });
 
 export class AuthMiddleware {
-  constructor(public userService: UserService) {}
-
   // --------- AUTH REQUIRED ----------
   isAuthenticated = async (req: FastifyRequest, reply: FastifyReply) => {
     const { accessToken, refreshToken } = getRequestTokens(req);
@@ -139,9 +137,8 @@ export class AuthMiddleware {
         });
       }
 
-      const user = (
-        await this.userService.getUserById(refreshPayload.data.user.id)
-      )?.data;
+      const user = (await userService.getUserById(refreshPayload.data.user.id))
+        ?.data;
 
       if (!user) {
         resetCookies(reply);
@@ -177,4 +174,4 @@ export class AuthMiddleware {
   };
 }
 
-export default new AuthMiddleware(new UserService());
+export default new AuthMiddleware();

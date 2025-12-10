@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   InternalServerException,
 } from "@/utils/catch-errors";
 import { Polar } from "@polar-sh/sdk";
@@ -125,7 +126,7 @@ export class CustomerService extends PolarService {
         customer.activeSubscriptions?.length == 0
       ) {
         return {
-          error: new BadRequestException("Active subscription required."),
+          error: new ForbiddenException("Active subscription required."),
           data: null,
         };
       }
