@@ -214,7 +214,7 @@ export const openWindow = (
   window.open(url, target, "noopener,noreferrer");
 };
 
-export const optionsWithCookies = async (
+export const optionsWithCookies = (
   options: RequestOptions = {},
   cookies?: string
 ) => {

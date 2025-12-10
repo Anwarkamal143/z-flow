@@ -1001,14 +1001,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
   // ---------- Enhanced Prefetch Methods ----------
 
-  const prefetchList = async <Entity = TEntity>(
+  const prefetchList = <Entity = TEntity>(
     callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>, false>
   ) => {
     const params = mergeParams(callOptions?.params) as OffsetPaginationParams<
       ReturnModel<TEntity, Entity>
     >;
 
-    await queryClient.prefetchQuery({
+    queryClient.prefetchQuery({
       queryKey: buildQueryKey(
         params.entity,
         "list",
@@ -1034,14 +1034,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     });
   };
 
-  const prefetchGet = async <Entity = TEntity>(
+  const prefetchGet = <Entity = TEntity>(
     callOptions: SingleQueryOptions<TEntity, Entity, false> & { id?: Id }
   ) => {
     const params = mergeParams(callOptions?.params) as QueryParams<
       ReturnModel<TEntity, Entity>
     >;
 
-    await queryClient.prefetchQuery({
+    queryClient.prefetchQuery({
       queryKey: buildQueryKey(
         params.entity,
         "get",
@@ -1067,14 +1067,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     });
   };
 
-  const prefetchInfiniteList = async <Entity = TEntity>(
+  const prefetchInfiniteList = <Entity = TEntity>(
     callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>
   ) => {
     const params = mergeParams(callOptions?.params) as CursorPaginationParams<
       ReturnModel<TEntity, Entity>
     >;
 
-    await queryClient.prefetchInfiniteQuery({
+    queryClient.prefetchInfiniteQuery({
       queryKey: buildQueryKey(
         params.entity,
         "infinite-list",
@@ -1096,7 +1096,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     });
   };
 
-  const prefetchGetMany = async <Entity = TEntity>(
+  const prefetchGetMany = <Entity = TEntity>(
     callOptions: MultiQueryOptions<TEntity, Entity, false> & { ids: Id[] }
   ) => {
     const params = mergeParams(callOptions.params) as QueryParams<
@@ -1104,7 +1104,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     >;
     const { ids = [] } = callOptions || {};
 
-    const prefetchPromises = ids.map((id) =>
+    ids.forEach((id) =>
       queryClient.prefetchQuery({
         queryKey: buildQueryKey(
           params.entity,
@@ -1128,10 +1128,34 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       })
     );
 
-    await Promise.all(prefetchPromises);
+    // const prefetchPromises = ids.map((id) =>
+    //   queryClient.prefetchQuery({
+    //     queryKey: buildQueryKey(
+    //       params.entity,
+    //       "get",
+    //       id,
+    //       ...(callOptions.queryKey || [])
+    //     ),
+    //     queryFn: async ({ signal }) => {
+    //       const response = await getRaw<ReturnModel<TEntity, Entity>>({
+    //         id,
+    //         params,
+    //         ...(callOptions?.options || {}),
+    //         requestOptions: {
+    //           ...(callOptions?.options?.requestOptions || {}),
+    //           signal,
+    //         },
+    //       });
+    //       return response;
+    //     },
+    //     ...(callOptions.queryOptions || {}),
+    //   })
+    // );
+
+    // await Promise.all(prefetchPromises);
   };
 
-  const prefetchAll = async <Entity = TEntity>(options?: {
+  const prefetchAll = <Entity = TEntity>(options?: {
     list?: OffsetCallOptions<ReturnModel<TEntity, Entity>, false>;
     items?: Array<{
       id: Id;
@@ -1139,25 +1163,39 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     }>;
     infiniteList?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>;
   }) => {
-    const promises = [];
-
     if (options?.list) {
-      promises.push(prefetchList(options.list));
+      prefetchList(options.list);
     }
 
     if (options?.items) {
-      promises.push(
-        ...options?.items.map((item) =>
-          prefetchGet({ ...item.options, id: item.id })
-        )
+      options?.items.forEach((item) =>
+        prefetchGet({ ...item.options, id: item.id })
       );
     }
 
     if (options?.infiniteList) {
-      promises.push(prefetchInfiniteList(options.infiniteList));
+      prefetchInfiniteList(options.infiniteList);
     }
 
-    await Promise.all(promises);
+    // const promises = [];
+
+    // if (options?.list) {
+    //   promises.push(prefetchList(options.list));
+    // }
+
+    // if (options?.items) {
+    //   promises.push(
+    //     ...options?.items.map((item) =>
+    //       prefetchGet({ ...item.options, id: item.id })
+    //     )
+    //   );
+    // }
+
+    // if (options?.infiniteList) {
+    //   promises.push(prefetchInfiniteList(options.infiniteList));
+    // }
+
+    // await Promise.all(promises);
   };
 
   // ---------- Query Hook Convenience Methods ----------
