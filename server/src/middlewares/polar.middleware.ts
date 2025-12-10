@@ -1,9 +1,9 @@
 import { APP_CONFIG } from "@/config/app.config";
-import { AddressService } from "@/services/address.service";
+import { addressService } from "@/services/address.service";
 import { customerService } from "@/services/payments/customer.service";
-import { UserService } from "@/services/user.service";
+import { userService } from "@/services/user.service";
 import {
-  BadRequestException,
+  ForbiddenException,
   NotFoundException,
   UnauthenticatedException,
 } from "@/utils/catch-errors";
@@ -11,11 +11,6 @@ import { FastifyReply, FastifyRequest } from "fastify";
 // Helpers
 
 export class PolarMiddleware {
-  constructor(
-    private userService: UserService,
-    private addressService: AddressService
-  ) {}
-
   // --------- AUTH REQUIRED ----------
   checkAndCreatePolarCustomer = async (
     request: FastifyRequest,
@@ -26,15 +21,13 @@ export class PolarMiddleware {
       // throw new UnauthorizedException("Not authenticated");
       return rep.status(302).redirect(APP_CONFIG.APP_URL + "/login");
     }
-    const { data } = await this.userService.getUserById(user.id);
+    const { data } = await userService.getUserById(user.id);
     if (!data) {
       return rep.status(302).redirect(APP_CONFIG.APP_URL + "/login");
       // throw new NotFoundException("User not found");
     }
     if (!data?.polar_customer_id) {
-      const billingAddress = await this.addressService.getAddressByUserId(
-        user.id
-      );
+      const billingAddress = await addressService.getAddressByUserId(user.id);
 
       const polarCustomer =
         await customerService.createPolarCustomerWithExternalId(
@@ -49,7 +42,7 @@ export class PolarMiddleware {
         throw polarCustomer.error;
       }
       // Update user with new Polar Customer ID
-      await this.userService.updateUser(user.id, {
+      await userService.updateUser(user.id, {
         polar_customer_id: polarCustomer.data.id,
       });
       request.customer = polarCustomer.data;
@@ -58,6 +51,7 @@ export class PolarMiddleware {
     const polarCustomer = await customerService.getPolarCustomerByExternalId(
       user.id
     );
+    console.log(polarCustomer, "polar customer");
     if (polarCustomer.error) {
       throw polarCustomer.error;
     }
@@ -68,13 +62,13 @@ export class PolarMiddleware {
     if (!user?.id) {
       throw new UnauthenticatedException("User Not Found");
     }
-    const { data } = await this.userService.getUserById(user.id);
+    const { data } = await userService.getUserById(user.id);
 
     if (!data) {
       throw new NotFoundException("User not found");
     }
     if (!data.polar_customer_id) {
-      throw new NotFoundException("User don't have any subscription");
+      throw new ForbiddenException("User don't have any subscription");
     }
 
     const polarCustomer =
@@ -82,10 +76,10 @@ export class PolarMiddleware {
         data.polar_customer_id
       );
     if (polarCustomer.error) {
-      throw new BadRequestException("Active subscription required");
+      throw new ForbiddenException("Active subscription required");
     }
     request.customer = polarCustomer.data;
   };
 }
 
-export default new PolarMiddleware(new UserService(), new AddressService());
+export default new PolarMiddleware();

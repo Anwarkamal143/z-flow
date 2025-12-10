@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { StatusCodeNumbers } from "@/lib/errorCodes";
-import { CustomResponse } from "@/lib/requestBackup";
+import { ErrorCode } from "@/lib/error-code.enum";
+import { CustomResponse } from "@/lib/request";
 type IPartialIfExist<T> = T extends never ? never : Partial<T>;
 type IPartialIfExistElseUnknown<T> = T extends never ? unknown : Partial<T>;
 type IBIfNotA<A, B> = A extends never ? B : A;
@@ -28,8 +28,9 @@ type ICommon<T> = {
   data?: T;
   extra?: T | any;
   success?: true | false;
-  status: StatusCodeNumbers;
+  status: number;
   time: number;
+  errorCode?: keyof typeof ErrorCode;
 };
 type IApiResponse<T> = ICommon<T> & {
   cursor?: { [key: string]: string } | string | number;
@@ -49,7 +50,7 @@ type IPaginatedReturnType<T> = {
 };
 type IResponseError<T = never> = Omit<
   CustomResponse,
-  "data" | "errorHandled" | "headers" | "request"
+  "errorHandled" | "headers" | "request"
 > & {
   data: ICommon<T>;
 };

@@ -13,7 +13,7 @@ export type ErrorMetadata = Record<string, unknown> & {
 };
 
 export default class AppError extends Error {
-  public readonly status: string;
+  // public readonly status: string;
   public readonly isOperational: boolean;
   public readonly category: ErrorCategory;
   public readonly timestamp: Date;
@@ -36,7 +36,7 @@ export default class AppError extends Error {
 
     // Standard properties
     this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
+    // this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
     this.errorCode = errorCode;
     this.timestamp = new Date();
     this.cause = options.cause as any;
@@ -62,7 +62,7 @@ export default class AppError extends Error {
 
     if (
       [
-        ErrorCode.AUTH_UNAUTHENTICATED,
+        ErrorCode.AUTH_UNAUTHORIZED,
         ErrorCode.AUTH_INVALID_TOKEN,
         ErrorCode.ACCESS_UNAUTHORIZED,
       ].includes(this.errorCode)
@@ -75,7 +75,7 @@ export default class AppError extends Error {
 
   public toJSON() {
     return {
-      status: this.status,
+      // status: this.status,
       statusCode: this.statusCode,
       errorCode: this.errorCode,
       message: this.message,

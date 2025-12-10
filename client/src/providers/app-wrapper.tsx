@@ -43,7 +43,6 @@ const AppWrapper = ({ children }: IAppWrapper) => {
       accessToken: undefined,
       refreshToken: undefined,
     });
-    return () => {};
   }, [isFirstTimeLoading]);
   const isLoading = isFirstTimeLoading || isAuthenticating;
   if (isLoading) {

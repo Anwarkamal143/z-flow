@@ -1,5 +1,5 @@
 import SignOutBtn from "@/components/sign-out";
-import { authSession } from "@/lib/auth";
+import { authSession } from "@/lib/auth/auth";
 import { Activity } from "react";
 
 export default async function Home() {
@@ -7,7 +7,6 @@ export default async function Home() {
 
   return (
     <div>
-      {res?.user.id}
       <Activity mode={res != null ? "visible" : "hidden"}>
         <SignOutBtn />
       </Activity>

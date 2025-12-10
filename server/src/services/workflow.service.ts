@@ -193,7 +193,7 @@ export class WorkflowService extends BaseService<
     } = parseResult.data;
     const { data, ...rest } = await this.update<IUpdateUser>(
       (fields) => and(eq(fields.id, workflowId), eq(fields.userId, uId)),
-      [{ name: workflowName }]
+      { name: workflowName }
     );
     await cacheManager.remove(`workflows`);
     return { ...rest, data: data?.[0] };

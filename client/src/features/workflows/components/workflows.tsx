@@ -1,7 +1,10 @@
 "use client";
 
 import ButtonLoader from "@/components/ButtonLoader";
+import { EntityContainer, EntityHeader } from "@/components/entity-components";
+import useUpgradeModal from "@/hooks/use-upgrade-modal";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useCreateWorkflow, useDeleteWorkflows } from "../api";
 import { useSuspenseGetAllWorkflows } from "../api/query-hooks";
 
@@ -14,21 +17,12 @@ const Workflows = (props: Props) => {
         limit: 4,
       },
     });
-  console.log(isLoading, "isLoading");
-  const { handleCreate } = useCreateWorkflow();
   const { handleDelete } = useDeleteWorkflows();
   const router = useRouter();
 
   return (
-    <div>
+    <div className="flex-1 flex-col justify-center items-center">
       <div className="flex gap-x-3 justify-center">
-        <ButtonLoader
-          onClick={async () => {
-            await handleCreate({});
-          }}
-        >
-          Create workflow
-        </ButtonLoader>
         <ButtonLoader
           onClick={async () => {
             await handleDelete();
@@ -75,3 +69,49 @@ const Workflows = (props: Props) => {
 };
 
 export default Workflows;
+
+export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
+  const { handleCreate, isPending } = useCreateWorkflow();
+  const { handleError, ConfirmModal } = useUpgradeModal();
+  const router = useRouter();
+
+  return (
+    <>
+      <ConfirmModal />
+      <EntityHeader
+        title="Workflows"
+        description="Create and manage your workflows"
+        onNew={async () => {
+          const resp = await handleCreate({});
+          console.log(resp, "resp");
+          if (resp?.data?.id) {
+            toast.success("Workflow created");
+            return router.push(`/workflows/${resp?.data?.id}`);
+          }
+          toast.error(resp.message || "Failed to create workflow");
+          const res = await handleError(resp.errorCode);
+        }}
+        newButtonLabel="New workflow"
+        disabled={disabled}
+        isCreating={isPending}
+      />
+    </>
+  );
+};
+export const WorkflowsContainer = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return (
+    <>
+      <EntityContainer
+        header={<WorkflowsHeader />}
+        search={<></>}
+        pagination={<></>}
+      >
+        {children}
+      </EntityContainer>
+    </>
+  );
+};

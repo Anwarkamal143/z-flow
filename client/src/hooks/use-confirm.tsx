@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { JSX, ReactNode, useState } from "react";
 
@@ -44,16 +45,18 @@ const useConfirm = (
 
   const ConfirmDialog = () => {
     return (
-      <Dialog open={promise != null}>
+      <Dialog open={promise != null} onOpenChange={handleCancel}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{message}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="pt-2">
-            <Button onClick={handleCancel} variant={"outline"}>
-              Cancel
-            </Button>
+            <DialogClose asChild>
+              <Button onClick={handleCancel} variant={"outline"}>
+                Cancel
+              </Button>
+            </DialogClose>
             <Button onClick={handleConfirm}>Confirm</Button>
           </DialogFooter>
         </DialogContent>
