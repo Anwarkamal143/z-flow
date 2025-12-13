@@ -13,7 +13,7 @@ import { AccountService } from "./accounts.service";
 import { BaseService } from "./base.service";
 type CreateUserInput = Pick<SelectUser, "email" | "name"> &
   Partial<Omit<SelectUser, "email" | "name">>;
-
+export type UsersPaginationConfig = typeof userService._types.PaginationsConfig;
 export class UserService extends BaseService<
   typeof users,
   InsertUser,
@@ -43,6 +43,30 @@ export class UserService extends BaseService<
     });
     if (res.data) {
       res.data = res.data.map((r) => ({ ...r, password: null }));
+    }
+    return res;
+  }
+  async listAllPaginatedUsersV2(params: UsersPaginationConfig) {
+    const { mode } = params;
+    if (mode == "cursor") {
+      const resp = await this.paginationCursorRecords({
+        ...params,
+      });
+
+      if (resp.data?.items) {
+        resp.data.items = resp.data.items?.map((r) => ({
+          ...r,
+          password: null,
+        }));
+      }
+      return resp;
+    }
+
+    const res = await this.paginationOffsetRecords({
+      ...params,
+    });
+    if (res.data?.items) {
+      res.data.items = res.data.items.map((r) => ({ ...r, password: null }));
     }
     return res;
   }

@@ -1,8 +1,9 @@
 import { HTTPSTATUS } from "@/config/http.config";
-import { eq } from "@/db";
 import { InsertWorkflows, InsertWorkflowsSchema } from "@/schema/workflow";
-import { IPaginatedParams } from "@/services/base.service";
-import { workflowService } from "@/services/workflow.service";
+import {
+  WorkflowPaginationConfig,
+  workflowService,
+} from "@/services/workflow.service";
 import { formatZodError } from "@/utils";
 import { BadRequestException, ValidationException } from "@/utils/catch-errors";
 import { SuccessResponse } from "@/utils/requestResponse";
@@ -116,29 +117,33 @@ class WorkflowController {
       data: workflow.data,
     });
   }
+
   public async getAll(
-    req: FastifyRequest<{ Querystring: IPaginatedParams }>,
+    req: FastifyRequest<{
+      Querystring: WorkflowPaginationConfig;
+    }>,
     _rep: FastifyReply
   ) {
     const userId = req.user!.id;
-    const params = req.query;
-    const { data, pagination_meta, error } =
-      await workflowService.listAllPaginatedWorkflows({
-        ...params,
-        where: (t) => {
-          return eq(t.userId, userId);
-        },
-        cursorColumn: (tableCols) => {
-          return tableCols.userId;
-        },
-      });
-    if (error) {
-      throw error;
-    }
 
+    const validationResult = workflowService.validatePagination(req.query);
+    if (validationResult.error) {
+      throw validationResult.error;
+    }
+    const config = validationResult.data;
+    const result = await workflowService.listAllPaginatedWorkflowsV2({
+      ...config,
+      filters: [
+        ...(config.filters || []),
+        { column: "userId", operator: "eq", value: userId },
+      ],
+    });
+    if (result.error) {
+      throw result.error;
+    }
     return SuccessResponse(_rep, {
       message: "workflows found",
-      data: { data, pagination_meta },
+      data: result.data,
     });
   }
 }

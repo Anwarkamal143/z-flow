@@ -1,18 +1,31 @@
+import { CursorPaginationConfig } from "./pagination/types";
 // services/base.service.ts
 import { HTTPSTATUS } from "@/config/http.config";
 import {
   BadRequestException,
   InternalServerException,
+  ValidationException,
 } from "@/utils/catch-errors";
 
 import { db } from "@/db";
-import { getSingularPlural, stringToNumber } from "@/utils";
+import { UnionIfBPresent } from "@/types/api";
+import { formatZodError, getSingularPlural, stringToNumber } from "@/utils";
 import {
-  buildPaginationMetaCursor,
   buildPaginationMetaForOffset,
+  buildSimplePaginationMetaCursor,
 } from "@/utils/api";
-import { AnyColumn, asc, desc, SQL, sql } from "drizzle-orm";
+import { AnyColumn, asc, desc, getTableColumns, SQL, sql } from "drizzle-orm";
 import { AnyPgTable, getTableConfig, IndexColumn } from "drizzle-orm/pg-core";
+import {
+  OffsetPaginationConfig,
+  paginateCursor,
+  paginateOffset,
+} from "./pagination";
+import {
+  cursorPaginationConfigSchema,
+  offsetPaginationConfigSchema,
+  PaginationsConfig,
+} from "./pagination/types";
 
 export type IPaginationOrder = "asc" | "desc";
 export type IPaginationModes = "cursor" | "offset";
@@ -50,7 +63,8 @@ type PaginationCursortOptions<TCursorValue, TTable extends AnyPgTable> = {
 export class BaseService<
   TTable extends AnyPgTable,
   TInsert extends Record<string, any>,
-  TSelect
+  TSelect,
+  TUpdate = Partial<TInsert> // Add update type
 > {
   // ⭐ This is the type helper
   public readonly _types!: {
@@ -58,7 +72,11 @@ export class BaseService<
       cursorColumn?: (t: TTable) => AnyColumn;
       where?: (t: TTable) => SQL<unknown> | undefined;
     };
+    OffsetPaginationConfig: OffsetPaginationConfig<TTable>;
+    CursorPaginationConfig: CursorPaginationConfig<TTable>;
+    PaginationsConfig: PaginationsConfig<TTable>;
   };
+  public readonly columns = getTableColumns(this.table);
   public _singular!: string;
   public _plural!: string;
 
@@ -177,7 +195,7 @@ export class BaseService<
     }
   }
 
-  async update<T = Partial<TInsert>>(
+  async update<T = TUpdate>(
     where: (table: TTable) => SQL<unknown> | undefined,
     values: T
   ) {
@@ -411,11 +429,11 @@ export class BaseService<
       const comparator = cursor
         ? direction === "next"
           ? isAsc
-            ? sql`${cursorCol} > ${cursor}`
-            : sql`${cursorCol} < ${cursor}`
+            ? sql`${cursorCol} > ${sql.param(cursor)}`
+            : sql`${cursorCol} < ${sql.param(cursor)}`
           : isAsc
-          ? sql`${cursorCol} < ${cursor}`
-          : sql`${cursorCol} > ${cursor}`
+          ? sql`${cursorCol} < ${sql.param(cursor)}`
+          : sql`${cursorCol} > ${sql.param(cursor)}`
         : undefined;
 
       const whereCondition =
@@ -444,7 +462,7 @@ export class BaseService<
       return {
         data: items as TSelect[],
         pagination_meta: {
-          ...buildPaginationMetaCursor({
+          ...buildSimplePaginationMetaCursor({
             items,
             limit: limitNum,
             total,
@@ -462,5 +480,165 @@ export class BaseService<
         error: new InternalServerException(),
       };
     }
+  }
+
+  /*******************************************************Advanced pagination ****************************************************** */
+  async paginationOffsetRecords(props: OffsetPaginationConfig<TTable>) {
+    const parseResult = this.validateOffsetPagination(props);
+    if (parseResult.error) {
+      return parseResult;
+    }
+    const result = await paginateOffset(db, this.table, parseResult.data);
+
+    return result;
+  }
+  async paginationCursorRecords(props: CursorPaginationConfig<TTable>) {
+    const parseResult = this.validateCursorPagination(props);
+    if (parseResult.error) {
+      return parseResult;
+    }
+    const result = await paginateCursor(db, this.table, parseResult.data);
+
+    return result;
+  }
+
+  validatePagination<T = any>(
+    props: PaginationsConfig<UnionIfBPresent<TTable, T>>
+  ):
+    | { data: PaginationsConfig<UnionIfBPresent<TTable, T>>; error: null }
+    | { error: ValidationException; data: null } {
+    if (props.mode == "cursor") {
+      const resp = this.validateCursorPagination(props);
+      if (resp.data) {
+        return {
+          data: resp.data as PaginationsConfig<UnionIfBPresent<TTable, T>> & {
+            mode: "cursor";
+          },
+          error: null,
+        };
+      }
+      return resp;
+    }
+    const resp = this.validateOffsetPagination(
+      props as OffsetPaginationConfig<TTable>
+    );
+    if (resp.data) {
+      return {
+        data: resp.data as PaginationsConfig<UnionIfBPresent<TTable, T>> & {
+          mode: "offset";
+        },
+        error: null,
+      };
+    }
+    return resp;
+  }
+  validateOffsetPagination(params: OffsetPaginationConfig<TTable>) {
+    if (params.includeTotal) {
+      params.includeTotal =
+        typeof params.includeTotal == "string"
+          ? params.includeTotal == "true"
+          : params.includeTotal;
+    }
+    const config = offsetPaginationConfigSchema.safeParse({
+      page: stringToNumber(params.page) || 1,
+      limit: stringToNumber(params.limit),
+      filters: this.validateFilterColumnsColumns(
+        this.parseIfExistAndString(params.filters)
+      ),
+      search: this.validateSearchColumnsColumns(
+        this.parseIfExistAndString(params.search)
+      ),
+      sorts: this.validateFilterColumnsColumns(
+        this.parseIfExistAndString(params.sorts)
+      ),
+      includeTotal: params.includeTotal,
+    });
+    if (!config.success) {
+      return {
+        error: new ValidationException(
+          "Pagination Invalid params",
+          formatZodError(config.error)
+        ),
+        data: null,
+      };
+    }
+    return {
+      data: { ...config.data, mode: "offset" as IPaginationModes },
+      error: null,
+    };
+  }
+  validateCursorPagination(props: CursorPaginationConfig<TTable>) {
+    if (props.includeTotal) {
+      props.includeTotal =
+        typeof props.includeTotal == "string"
+          ? props.includeTotal == "true"
+          : props.includeTotal;
+    }
+    const config = cursorPaginationConfigSchema.safeParse({
+      cursor: (props.cursor as string) || null,
+      limit: stringToNumber(props.limit),
+      cursorColumn: (props.cursorColumn ||
+        "id") as keyof TTable["$inferSelect"],
+      cursorDirection: (props.cursorDirection as string) || "forward",
+      filters: this.validateFilterColumnsColumns(
+        this.parseIfExistAndString(props.filters)
+      ),
+      search: this.validateSearchColumnsColumns(
+        this.parseIfExistAndString(props.search)
+      ),
+      sorts: this.validateFilterColumnsColumns(
+        this.parseIfExistAndString(props.sorts)
+      ),
+      includeTotal: props.includeTotal,
+    });
+    if (!config.success) {
+      return {
+        error: new ValidationException(
+          "Pagination Invalid params",
+          formatZodError(config.error)
+        ),
+        data: null,
+      };
+    }
+    return {
+      data: { ...config.data, mode: "cursor" as IPaginationModes },
+      error: null,
+    };
+  }
+  validateFilterColumnsColumns<T extends { column: string }>(
+    columns?: T[]
+  ): T[] | undefined {
+    if (columns == null) {
+      return undefined;
+    }
+    const tableColumns = Object.keys(getTableColumns(this.table));
+
+    return columns?.filter((col) => tableColumns.includes(col.column));
+  }
+  validateSearchColumnsColumns<T extends { columns: string[] }>(
+    search?: T
+  ): T | undefined {
+    if (search == null || !search?.columns?.length) {
+      return undefined;
+    }
+    const tableColumns = Object.keys(getTableColumns(this.table));
+
+    return {
+      ...search,
+      columns: search?.columns?.filter((col) => tableColumns.includes(col)),
+    };
+  }
+  parseIfExistAndString(value: any) {
+    if (value == null) {
+      return undefined;
+    }
+    if (typeof value == "object") {
+      return value;
+    }
+    if (typeof value == "string" && value.trim() == "") {
+      return undefined;
+    }
+
+    return JSON.parse(value);
   }
 }

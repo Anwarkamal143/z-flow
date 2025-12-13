@@ -1,11 +1,9 @@
 import { useCreateWorkflow, useDeleteWorkflows } from "./mutation-hooks";
-import { prefetchWorkflows } from "./prefetch";
-import { useGetAllWorkflows, useSuspenseGetAllWorkflows } from "./query-hooks";
+import { useGetAllWorkflows, useSuspenseWorkflows } from "./query-hooks";
 
 export {
-  prefetchWorkflows,
   useCreateWorkflow,
   useDeleteWorkflows,
   useGetAllWorkflows,
-  useSuspenseGetAllWorkflows,
+  useSuspenseWorkflows,
 };

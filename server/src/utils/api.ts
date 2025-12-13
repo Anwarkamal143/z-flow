@@ -1,4 +1,4 @@
-import { IPaginationMeta } from "@/types/api";
+import { IPaginationMeta } from "@/services/pagination/types";
 
 export function calculateTotalPages(total: number = 0, limit?: number): number {
   if (total > 0) {
@@ -6,7 +6,7 @@ export function calculateTotalPages(total: number = 0, limit?: number): number {
   }
   return 0;
 }
-export function buildPaginationMetaCursor({
+export function buildSimplePaginationMetaCursor({
   items,
   limit,
   total,
@@ -33,6 +33,33 @@ export function buildPaginationMetaCursor({
     totalPages: calculateTotalPages(total, limit),
     isFirst: cursor == null,
     current: cursor,
+  };
+}
+export function buildPaginationMetaCursor({
+  limit,
+  total,
+  cursor,
+  hasMore,
+  next,
+  previous,
+}: {
+  limit?: number;
+  total: number;
+  cursor: number | string;
+  hasMore: boolean;
+  next?: string;
+  previous?: string | null;
+}): IPaginationMeta {
+  return {
+    hasMore,
+    totalRecords: total,
+    isLast: !hasMore,
+    next: next,
+    limit,
+    totalPages: calculateTotalPages(total, limit),
+    isFirst: cursor == null,
+    current: cursor,
+    previous,
   };
 }
 export function buildPaginationMetaForOffset({
