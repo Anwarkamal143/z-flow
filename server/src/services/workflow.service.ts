@@ -14,6 +14,8 @@ import { BadRequestException, ValidationException } from "@/utils/catch-errors";
 import { cacheManager } from "@/utils/redis-cache/cache-manager";
 import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { BaseService } from "./base.service";
+export type WorkflowPaginationConfig =
+  typeof workflowService._types.PaginationsConfig;
 
 export class WorkflowService extends BaseService<
   typeof workflows,
@@ -43,6 +45,15 @@ export class WorkflowService extends BaseService<
         ? params.cursorColumn
         : (table) => table.id,
     });
+  }
+  async listAllPaginatedWorkflowsV2(params: WorkflowPaginationConfig) {
+    const { mode } = params;
+    if (mode == "offset") {
+      return await this.paginationOffsetRecords({
+        ...params,
+      });
+    }
+    return this.paginationCursorRecords(params);
   }
 
   public async getByName(name: string) {

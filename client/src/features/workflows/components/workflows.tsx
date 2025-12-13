@@ -6,22 +6,20 @@ import useUpgradeModal from "@/hooks/use-upgrade-modal";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCreateWorkflow, useDeleteWorkflows } from "../api";
-import { useSuspenseGetAllWorkflows } from "../api/query-hooks";
+import { useSuspenseWorkflows } from "../api/query-hooks";
 
 type Props = {};
 
 const Workflows = (props: Props) => {
-  const { data, isLoading, error, isError, fetchPreviousPage, fetchNextPage } =
-    useSuspenseGetAllWorkflows({
-      params: {
-        limit: 4,
-      },
+  const { data, page, pagination_meta, setPage, setSearch, isLoading } =
+    useSuspenseWorkflows({
+      params: {},
     });
+  console.log(isLoading, "isLoading");
   const { handleDelete } = useDeleteWorkflows();
   const router = useRouter();
-
   return (
-    <div className="flex-1 flex-col justify-center items-center">
+    <div className="">
       <div className="flex gap-x-3 justify-center">
         <ButtonLoader
           onClick={async () => {
@@ -30,22 +28,7 @@ const Workflows = (props: Props) => {
         >
           Delete workflows
         </ButtonLoader>
-        <ButtonLoader
-          disabled={!data?.pagination_meta.previous}
-          onClick={() => {
-            fetchPreviousPage();
-          }}
-        >
-          Previous Page ({data?.pagination_meta.previous})
-        </ButtonLoader>
-        <ButtonLoader
-          onClick={() => {
-            // setPage(data?.pagination_meta.next as number);
-            fetchNextPage();
-          }}
-        >
-          Next Page ({data?.pagination_meta.next})
-        </ButtonLoader>
+
         <ButtonLoader
           onClick={() => {
             // setPage(data?.pagination_meta.next as number);
@@ -57,13 +40,54 @@ const Workflows = (props: Props) => {
         <ButtonLoader
           onClick={() => {
             // setPage(data?.pagination_meta.next as number);
+            setSearch({
+              columns: ["name"],
+              mode: "all",
+              term: "abundant",
+            });
+          }}
+        >
+          Search
+        </ButtonLoader>
+        <ButtonLoader
+          onClick={() => {
+            // setPage(data?.pagination_meta.next as number);
+            setSearch(null);
+          }}
+        >
+          Clear Search
+        </ButtonLoader>
+        <ButtonLoader
+          onClick={() => {
+            // setPage(data?.pagination_meta.next as number);
+            if (pagination_meta.next) {
+              setPage(pagination_meta.next as number);
+            }
+          }}
+        >
+          Fetch Next
+        </ButtonLoader>
+        <ButtonLoader
+          onClick={() => {
+            if (pagination_meta.previous) {
+              setPage(pagination_meta.previous as number);
+            }
+          }}
+        >
+          Fetch Previous
+        </ButtonLoader>
+        <ButtonLoader
+          onClick={() => {
             router.push("/workflows?server=true");
           }}
         >
           workflows
         </ButtonLoader>
       </div>
-      {JSON.stringify(data, null, 2)}
+      {JSON.stringify(data?.items, null, 2)}
+      <br />
+      <br />
+      {JSON.stringify(data?.pagination_meta, null, 2)}
     </div>
   );
 };

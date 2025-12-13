@@ -1,6 +1,5 @@
 import { APP_CONFIG } from "@/config/app.config";
-import { paginatedQuerySchema } from "@/schema/pagination";
-import { userService } from "@/services/user.service";
+import { userService, UsersPaginationConfig } from "@/services/user.service";
 import { BadRequestException, NotFoundException } from "@/utils/catch-errors";
 import { resetCookies } from "@/utils/cookie";
 import { SuccessResponse } from "@/utils/requestResponse";
@@ -51,24 +50,24 @@ class UserController {
   /**
    * GET /users
    */
-  public findAll = async (request: FastifyRequest, reply: FastifyReply) => {
-    const paginations = paginatedQuerySchema.safeParse(request.query);
-    if (!paginations.success) {
-      throw new BadRequestException("Invalid pagination parameters");
+  public findAll = async (
+    req: FastifyRequest<{ Querystring: UsersPaginationConfig }>,
+    reply: FastifyReply
+  ) => {
+    const validationResult = userService.validatePagination(req.query);
+    if (validationResult.error) {
+      throw validationResult.error;
     }
-
-    const { data, pagination_meta, error } =
-      await userService.listAllPaginatedUsers({
-        ...paginations.data,
-      });
-
-    if (error) {
-      throw new NotFoundException("User Not Found");
+    const config = validationResult.data;
+    const result = await userService.listAllPaginatedUsersV2({
+      ...config,
+    });
+    if (result.error) {
+      throw result.error;
     }
-
     return SuccessResponse(reply, {
-      data: { pagination_meta, data },
-      message: "Users Data",
+      message: "users found",
+      data: result.data,
     });
   };
 }

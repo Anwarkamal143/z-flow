@@ -1,7 +1,8 @@
 "use client";
 
 import { getValidNumber } from "@/lib";
-import { Dispatch, SetStateAction, useState } from "react";
+import { IPaginationMeta } from "@/types/Iquery";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 export const useListHook = <
   Client extends Record<string, any>,
@@ -11,30 +12,38 @@ export const useListHook = <
   props?: Options
 ): ReturnType<Client["useList"]> & {
   page: number;
-  setPage: Dispatch<SetStateAction<number>>;
+  params: Client["listParamsOptions"];
+  setParams: Dispatch<SetStateAction<Client["listParamsOptions"]>>;
   fetchNextPage: (page?: number | string) => number | null;
   fetchPreviousPage: (page?: number | string) => number | null;
   fetchCurrentPage: (page?: number | string) => number | null;
 } => {
   const initialPage = getValidNumber(props?.params?.page) ?? 1;
-  const [page, setPage] = useState(initialPage);
+  const [params, setParams] = useState({
+    ...(props?.params || {}),
+    page: initialPage,
+  });
 
   const data = client.useList({
     ...(props || {}),
-    params: { ...(props?.params || {}), page },
+    params,
   });
+  useEffect(() => {
+    setParams(props?.params);
 
+    return () => {};
+  }, [props?.params]);
   const pagination = data?.data?.pagination_meta;
 
   // ---- NEXT PAGE ----
-  function fetchNextPage(p = page) {
+  function fetchNextPage(p = (params.page = 1)) {
     const current = getValidNumber(p);
     if (current == null) return null;
 
     if (current >= pagination.totalPages) return null;
 
     const next = current + 1;
-    setPage(next);
+    setParams({ ...params, page: next });
     return next;
   }
 
@@ -45,26 +54,27 @@ export const useListHook = <
 
     if (current < 1 || current > pagination.totalPages) return null;
 
-    setPage(current);
+    setParams({ ...params, page: current });
     return current;
   }
 
   // ---- PREVIOUS PAGE ----
-  function fetchPreviousPage(p = page) {
+  function fetchPreviousPage(p = (params.page = 1)) {
     const current = getValidNumber(p);
     if (current == null) return null;
 
     if (current <= 1) return null;
 
     const prev = current - 1;
-    setPage(prev);
+    setParams({ ...params, page: prev });
     return prev;
   }
 
   return {
     ...data,
-    page,
-    setPage,
+    page: params.page,
+    params,
+    setParams,
     fetchNextPage,
     fetchPreviousPage,
     fetchCurrentPage,
@@ -78,30 +88,40 @@ export const useSuspenseListHook = <
   props?: Options
 ): ReturnType<Client["useSuspenseList"]> & {
   page: number;
-  setPage: Dispatch<SetStateAction<number>>;
+  params: Client["listParamsOptions"];
+  setParams: Dispatch<SetStateAction<Client["listParamsOptions"]>>;
   fetchNextPage: (page?: number | string) => number | null;
   fetchPreviousPage: (page?: number | string) => number | null;
   fetchCurrentPage: (page?: number | string) => number | null;
+  pagination_meta: IPaginationMeta;
 } => {
   const initialPage = getValidNumber(props?.params?.page) ?? 1;
-  const [page, setPage] = useState(initialPage);
+  const [params, setParams] = useState({
+    ...(props?.params || {}),
+    page: initialPage,
+  });
 
   const data = client.useSuspenseList({
     ...(props || {}),
-    params: { ...(props?.params || {}), page },
+    params,
   });
+  useEffect(() => {
+    setParams(props?.params);
+
+    return () => {};
+  }, [props?.params]);
 
   const pagination = data?.data?.pagination_meta;
 
   // ---- NEXT PAGE ----
-  function fetchNextPage(p = page) {
+  function fetchNextPage(p = params.page || 1) {
     const current = getValidNumber(p);
     if (current == null) return null;
 
     if (current >= pagination.totalPages) return null;
 
     const next = current + 1;
-    setPage(next);
+    setParams((p: any) => ({ ...p, page: next }));
     return next;
   }
 
@@ -112,28 +132,31 @@ export const useSuspenseListHook = <
 
     if (current < 1 || current > pagination.totalPages) return null;
 
-    setPage(current);
+    setParams((p: any) => ({ ...p, page: current }));
     return current;
   }
 
   // ---- PREVIOUS PAGE ----
-  function fetchPreviousPage(p = page) {
+  function fetchPreviousPage(p = params.page || 1) {
     const current = getValidNumber(p);
     if (current == null) return null;
 
     if (current <= 1) return null;
 
     const prev = current - 1;
-    setPage(prev);
+    setParams((p: any) => ({ ...p, page: prev }));
+
     return prev;
   }
 
   return {
     ...data,
-    page,
-    setPage,
+    params,
+    page: params.page,
+    setParams,
     fetchNextPage,
     fetchPreviousPage,
     fetchCurrentPage,
+    pagination_meta: pagination,
   };
 };

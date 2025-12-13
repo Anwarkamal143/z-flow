@@ -1,22 +1,32 @@
 import Dataloader from "@/components/loaders";
 import { HydrateClient } from "@/components/server";
 import { REFRESH_QUERY_KEY } from "@/config";
-import { prefetchWorkflows } from "@/features/workflows/api";
 import Workflows, {
   WorkflowsContainer,
 } from "@/features/workflows/components/workflows";
+import { prefetchServerWorkflows } from "@/features/workflows/server/prefetch";
 import { authSession } from "@/lib/auth/auth";
+import { parseServerPaginationParams } from "@/queries/pagination/server/offset-pagination-params";
+import { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-type Props = any;
+type Props = {
+  searchParams: Promise<SearchParams>;
+};
 
 const WorkFlowPage = async (props: Props) => {
   const params = await props.searchParams;
+
   const resp = await authSession(params);
   if (params?.[REFRESH_QUERY_KEY]) {
     return <Dataloader />;
   }
-  void prefetchWorkflows(resp?.cookie);
+
+  void prefetchServerWorkflows(resp?.cookie, {
+    params: {
+      ...parseServerPaginationParams(params),
+    },
+  });
 
   return (
     <WorkflowsContainer>

@@ -214,8 +214,8 @@ export const openWindow = (
   window.open(url, target, "noopener,noreferrer");
 };
 
-export const optionsWithCookies = (
-  options: RequestOptions = {},
+export const optionsWithCookies = <T>(
+  options: RequestOptions<T> = {},
   cookies?: string
 ) => {
   const newOptions = { ...(options || {}) };
@@ -231,7 +231,7 @@ export const optionsWithCookies = (
         cookie: cookies,
       },
     },
-  } satisfies RequestOptions;
+  } satisfies RequestOptions<T>;
 };
 export function getValidNumber(value: unknown): null | number {
   if (value === null || value === undefined) return null;

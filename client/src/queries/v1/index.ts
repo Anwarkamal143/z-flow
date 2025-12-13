@@ -36,7 +36,26 @@ import {
 /* -----------------------
    Core Types
    ----------------------- */
+const filterOperatorList = [
+  "eq",
+  "neq",
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+  "like",
+  "ilike",
+  "in",
+  "notIn",
+  "isNull",
+  "isNotNull",
+  "between",
+  "notBetween",
+] as const;
 
+export const FilterOperatorEnum = Object.fromEntries(
+  filterOperatorList.map((op) => [op, op])
+) as { [K in (typeof filterOperatorList)[number]]: K };
 type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never;
 
 // Extract the first parameter type from a hook function
@@ -50,35 +69,68 @@ export type DefaultError = IResponseError<null>;
 export type ReturnModel<TEntity, Entity> = ReturnModelType<TEntity, Entity>;
 export type ApiHooksResp<T> = IApiResponseHooks<T>;
 
-/* -----------------------
-   Parameter Types
-   ----------------------- */
-
 export type BaseParams = {
   entity?: string;
   [key: string]: any;
 };
+/* -----------------------
+   Parameter Types
+   ----------------------- */
 
-export type OffsetPaginationParams<T = Record<string, any>> = BaseParams & {
-  page?: number;
-  limit?: number;
-  sort?: SortOrder;
-  sortBy?: keyof T;
-  mode?: "offset";
-} & Partial<Record<keyof T, any>>;
+//  new Types
+export type SortDirection = "asc" | "desc";
 
-export type CursorPaginationParams<T = Record<string, any>> = BaseParams & {
-  cursor?: string;
-  limit?: number;
-  sort?: SortOrder;
-  sortBy?: keyof T;
-  mode?: "cursor";
-} & Partial<Record<keyof T, any>>;
+// Filter operators
+export type FilterOperator =
+  (typeof FilterOperatorEnum)[keyof typeof FilterOperatorEnum];
 
-export type QueryParams<T = Record<string, any>> =
-  | OffsetPaginationParams<T>
-  | CursorPaginationParams<T>;
+export interface FilterCondition<T = Record<string, any>> {
+  column: keyof T;
+  operator: FilterOperator;
+  value: any;
+}
 
+export interface SortConfig<T = Record<string, any>> {
+  column: keyof T;
+  direction: SortDirection;
+  nulls?: "first" | "last";
+}
+
+export interface SearchConfig<T = Record<string, any>> {
+  columns: (keyof T)[];
+  term: string;
+  mode?: "any" | "all" | "phrase";
+}
+
+// Pagination base config
+export type BasePaginationConfig<T = Record<string, any>> = BaseParams & {
+  filters?: FilterCondition<T>[] | null;
+  search?: SearchConfig<T> | null;
+  sorts?: SortConfig<T>[] | null;
+  includeTotal?: boolean;
+};
+
+// Offset pagination config
+export type OffsetPaginationConfig<T = Record<string, any>> =
+  BasePaginationConfig<T> & {
+    page?: number;
+    limit?: number;
+  };
+
+// Cursor pagination config
+export type CursorPaginationConfig<T = Record<string, any>> =
+  BasePaginationConfig<T> & {
+    cursor?: string | number | null;
+    limit?: number;
+    // cursorColumn: keyof T;
+    cursorDirection?: "forward" | "backward";
+  };
+export type QueryParams<T = Record<string, any>> = BasePaginationConfig<T> &
+  (
+    | (CursorPaginationConfig<T> & { mode: "cursor" })
+    | (OffsetPaginationConfig<T> & { mode: "offset" })
+    | { mode?: undefined }
+  );
 /* -----------------------
 Request Options
 ----------------------- */
@@ -102,14 +154,14 @@ export type CallOptions<T = Record<string, any>> = {
    Response Types
    ----------------------- */
 
-export type ListData<T> = { data: T; pagination_meta: IPaginationMeta };
+export type ListData<T> = { items: T; pagination_meta: IPaginationMeta };
 export type InfiniteListData<T> = InfiniteData<ListData<T>, unknown>;
 
 export type ListReturnType<T> = {
   pagination_meta: IPaginationMeta | undefined;
-  data: T;
+  items: T;
   pageParams: unknown[];
-  pages: { data: T; pagination_meta: IPaginationMeta }[];
+  pages: { items: T; pagination_meta: IPaginationMeta }[];
 };
 
 /* -----------------------
@@ -168,7 +220,7 @@ export type CursorCallOptions<
   S extends boolean = false,
   ErrorT = DefaultError
 > = {
-  params?: CursorPaginationParams<T>;
+  params?: CursorPaginationConfig<T>;
   onSuccess?: (data: ListReturnType<T[]>) => void;
 } & ListCallOptions<T, S, ErrorT>;
 
@@ -177,7 +229,7 @@ export type OffsetCallOptions<
   S extends boolean = false,
   ErrorT = DefaultError
 > = CommonListOptions<T, S, ErrorT> & {
-  params?: OffsetPaginationParams<T>;
+  params?: OffsetPaginationConfig<T>;
   onSuccess?: (data: IPaginatedReturnType<T[]>) => void;
 };
 
@@ -379,10 +431,22 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     params?: QueryParams<ReturnModel<TEntity, T>>;
     onSuccess?: (data: IPaginatedReturnType<ReturnModel<TEntity, T>[]>) => void;
   }): Promise<IPaginatedReturnType<ReturnModel<TEntity, T>[]>> => {
-    const { isEnabled, ...mergedParams } =
+    const { isEnabled, sorts, search, filters, ...mergedParams } =
       mergeParams<ReturnModel<TEntity, T>>(params);
+    const sortKeys = sorts && sorts.length ? JSON.stringify(sorts) : null;
+    const filterKeys =
+      filters && filters.length ? JSON.stringify(filters) : null;
+    const searchKeys =
+      search && search?.columns?.length ? JSON.stringify(search) : null;
     const mergedRequestOptions = mergeRequestOptions(
-      { params: mergedParams },
+      {
+        params: {
+          ...mergedParams,
+          sorts: sortKeys,
+          filters: filterKeys,
+          search: searchKeys,
+        },
+      },
       options?.requestOptions
     );
 
@@ -413,12 +477,22 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     // options?: RequestOptions<T>; // Generic options
     onSuccess?: (data: T) => void;
   }) => {
-    const { isEnabled, ...mergedParams } = mergeParams<T>(
-      params,
-      rest?.requestOptions?.params
-    );
+    const { isEnabled, sorts, filters, search, ...mergedParams } =
+      mergeParams<T>(params, rest?.requestOptions?.params);
+    const sortKeys = sorts && sorts.length ? JSON.stringify(sorts) : null;
+    const filterKeys =
+      filters && filters.length ? JSON.stringify(filters) : null;
+    const searchKeys =
+      search && search?.columns?.length ? JSON.stringify(search) : null;
     const mergedRequestOptions = mergeRequestOptions(
-      { params: mergedParams },
+      {
+        params: {
+          ...mergedParams,
+          sorts: sortKeys,
+          filters: filterKeys,
+          search: searchKeys,
+        },
+      },
       rest?.requestOptions
     );
 
@@ -556,10 +630,19 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>, S>,
     isSuspense: S = false as S
   ) => {
-    const params = mergeParams(callOptions?.params) as OffsetPaginationParams<
+    const params = mergeParams(callOptions?.params) as OffsetPaginationConfig<
       ReturnModel<TEntity, Entity>
     >;
-    const { sort, sortBy } = params;
+    const sortKeys =
+      params.sorts && params.sorts.length ? JSON.stringify(params.sorts) : null;
+    const filterKeys =
+      params.filters && params.filters.length
+        ? JSON.stringify(params.filters)
+        : null;
+    const searchKeys =
+      params.search && params.search?.columns?.length
+        ? JSON.stringify(params.search)
+        : null;
     const { isEnabled = true } = callOptions || {};
     const useHook = createQueryHook(isSuspense);
 
@@ -569,13 +652,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         "list",
         params.limit,
         params.page,
-        sort,
-        sortBy,
-        ...(callOptions?.queryKey || [])
+        ...(callOptions?.queryKey || []),
+        sortKeys,
+        filterKeys,
+        searchKeys
       ),
       queryFn: async ({ signal }) => {
         const response = await listRaw<Entity>({
-          params: { mode: "offset", ...params },
+          params: { ...params, mode: "offset" },
           ...callOptions?.options,
           requestOptions: {
             ...(callOptions?.options?.requestOptions || {}),
@@ -594,15 +678,24 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>, S>,
     isSuspense: S = false as S
   ) => {
-    const params = mergeParams(callOptions?.params) as CursorPaginationParams<
+    const params = mergeParams(callOptions?.params) as CursorPaginationConfig<
       ReturnModel<TEntity, Entity>
     >;
     const { isEnabled = true } = callOptions || {};
-
+    const sortKeys =
+      params.sorts && params.sorts.length ? JSON.stringify(params.sorts) : null;
+    const filterKeys =
+      params.filters && params.filters.length
+        ? JSON.stringify(params.filters)
+        : null;
+    const searchKeys =
+      params.search && params.search?.columns?.length
+        ? JSON.stringify(params.search)
+        : null;
     const useHook = createInfiniteQueryHook(isSuspense);
 
     const select = (data: InfiniteListData<ReturnModel<TEntity, Entity>[]>) => {
-      const items = data.pages.flatMap((page) => page.data || []);
+      const items = data.pages.flatMap((page) => page.items || []);
       const paginationMeta =
         data.pages.length > 0
           ? data.pages[data.pages.length - 1].pagination_meta
@@ -610,7 +703,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
       const result: ListReturnType<ReturnModel<TEntity, Entity>[]> = {
         pagination_meta: paginationMeta,
-        data: items,
+        items,
         pageParams: data.pageParams,
         pages: data.pages as any,
       };
@@ -625,14 +718,15 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         "infinite-list",
         params.limit,
         params.cursor,
-        params.sort,
-        params.sortBy,
-        ...(callOptions?.queryKey || [])
+        ...(callOptions?.queryKey || []),
+        sortKeys,
+        filterKeys,
+        searchKeys
       ),
       queryFn: async ({ pageParam }) => {
         const cursorParams = pageParam ? { cursor: pageParam as string } : {};
         return await listRaw<Entity>({
-          params: { mode: "cursor", ...params, ...cursorParams },
+          params: { ...params, ...cursorParams, mode: "cursor" },
           ...(callOptions?.options || {}),
         });
       },
@@ -656,7 +750,17 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     >;
     const { isEnabled = true } = callOptions || {};
 
-    const { sort, entity, sortBy } = params;
+    const { entity } = params;
+    const sortKeys =
+      params.sorts && params.sorts.length ? JSON.stringify(params.sorts) : null;
+    const filterKeys =
+      params.filters && params.filters.length
+        ? JSON.stringify(params.filters)
+        : null;
+    const searchKeys =
+      params.search && params.search?.columns?.length
+        ? JSON.stringify(params.search)
+        : null;
     const { id } = { ...params, ...callOptions };
     const useHook = createQueryHook(isSuspense);
     const queryoptions = filterSuspenseOptions<
@@ -667,9 +771,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         entity,
         "get",
         id,
-        sort,
-        sortBy,
-        ...(callOptions?.queryKey || [])
+
+        ...(callOptions?.queryKey || []),
+        sortKeys,
+        filterKeys,
+        searchKeys
       ),
       queryFn: async ({ signal }) => {
         // if (id == null) throw new Error("ID is required for useGet");
@@ -1004,23 +1110,34 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const prefetchList = <Entity = TEntity>(
     callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>, false>
   ) => {
-    const params = mergeParams(callOptions?.params) as OffsetPaginationParams<
+    const params = mergeParams(callOptions?.params) as OffsetPaginationConfig<
       ReturnModel<TEntity, Entity>
     >;
-
+    const sortKeys =
+      params.sorts && params.sorts.length ? JSON.stringify(params.sorts) : null;
+    const filterKeys =
+      params.filters && params.filters.length
+        ? JSON.stringify(params.filters)
+        : null;
+    const searchKeys =
+      params.search && params.search?.columns?.length
+        ? JSON.stringify(params.search)
+        : null;
     queryClient.prefetchQuery({
       queryKey: buildQueryKey(
         params.entity,
         "list",
         params.limit,
         params.page,
-        params.sort,
-        params.sortBy,
-        ...(callOptions?.queryKey || [])
+
+        ...(callOptions?.queryKey || []),
+        sortKeys,
+        filterKeys,
+        searchKeys
       ),
       queryFn: async ({ signal }) => {
         const response = await listRaw<Entity>({
-          params: { mode: "offset", ...params },
+          params: { ...params, mode: "offset" },
           ...(callOptions?.options || {}),
           requestOptions: {
             ...(callOptions?.options?.requestOptions || {}),
@@ -1040,15 +1157,26 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     const params = mergeParams(callOptions?.params) as QueryParams<
       ReturnModel<TEntity, Entity>
     >;
-
+    const sortKeys =
+      params.sorts && params.sorts.length ? JSON.stringify(params.sorts) : null;
+    const filterKeys =
+      params.filters && params.filters.length
+        ? JSON.stringify(params.filters)
+        : null;
+    const searchKeys =
+      params.search && params.search?.columns?.length
+        ? JSON.stringify(params.search)
+        : null;
     queryClient.prefetchQuery({
       queryKey: buildQueryKey(
         params.entity,
         "get",
         callOptions.id,
-        params.sort,
-        params.sortBy,
-        ...(callOptions.queryKey || [])
+
+        ...(callOptions.queryKey || []),
+        sortKeys,
+        filterKeys,
+        searchKeys
       ),
       queryFn: async ({ signal }) => {
         const response = await getRaw<ReturnModel<TEntity, Entity>>({
@@ -1070,24 +1198,34 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const prefetchInfiniteList = <Entity = TEntity>(
     callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>
   ) => {
-    const params = mergeParams(callOptions?.params) as CursorPaginationParams<
+    const params = mergeParams(callOptions?.params) as CursorPaginationConfig<
       ReturnModel<TEntity, Entity>
     >;
-
+    const sortKeys =
+      params.sorts && params.sorts.length ? JSON.stringify(params.sorts) : null;
+    const filterKeys =
+      params.filters && params.filters.length
+        ? JSON.stringify(params.filters)
+        : null;
+    const searchKeys =
+      params.search && params.search?.columns?.length
+        ? JSON.stringify(params.search)
+        : null;
     queryClient.prefetchInfiniteQuery({
       queryKey: buildQueryKey(
         params.entity,
         "infinite-list",
         params.limit,
         params.cursor,
-        params.sort,
-        params.sortBy,
-        ...(callOptions?.queryKey || [])
+        ...(callOptions?.queryKey || []),
+        sortKeys,
+        filterKeys,
+        searchKeys
       ),
       queryFn: async ({ pageParam }) => {
         const cursorParams = pageParam ? { cursor: pageParam as string } : {};
         return await listRaw<Entity>({
-          params: { mode: "cursor", ...params, ...cursorParams },
+          params: { ...params, ...cursorParams, mode: "cursor" },
           ...(callOptions?.options || {}),
         });
       },
@@ -1232,14 +1370,15 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   ) => useGetEntities(opts);
 
   // ---------- Public API ----------
-  const listInfiniteParamsOptions = {} as CursorPaginationParams<TEntity>;
-  const listParamsOptions = {} as OffsetPaginationParams<TEntity>;
+  const listInfiniteParamsOptions = {} as CursorPaginationConfig<TEntity>;
+  const listParamsOptions = {} as OffsetPaginationConfig<TEntity>;
   const listOptions: ExtractHookOptions<typeof useList> = {};
   const listInfiniteOptions: ExtractHookOptions<typeof useInfiniteList> = {};
   const createOptions: ExtractHookOptions<
     typeof useCreate<TEntity, Partial<TEntity>>
   > = {};
   const deleteOptions: ExtractHookOptions<typeof useDelete<TEntity>> = {};
+  const Entity: Partial<TEntity> = {};
 
   return {
     // Raw methods
@@ -1288,5 +1427,6 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     listInfiniteOptions,
     createOptions,
     deleteOptions,
+    Entity,
   };
 }

@@ -3,7 +3,7 @@ import pluralize from "pluralize";
 import { ulid } from "ulid";
 import z from "zod";
 export const stringToNumber = (
-  strNumber?: string | number
+  strNumber?: string | number | null
 ): number | undefined => {
   if (strNumber === null || strNumber === undefined) return undefined;
 

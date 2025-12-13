@@ -19,7 +19,7 @@ type IPaginationMeta = {
   totalRecords: number;
   totalPages: number;
   limit: number;
-  direction?: "next" | "prev";
+  direction?: "forward" | "backward" | null;
   hasMore?: boolean;
 };
 
@@ -45,7 +45,7 @@ type IApiResponseHooks<T> = Omit<ICommon<T>, "status" | "time" | "message"> & {
   [key: string]: unknown;
 };
 type IPaginatedReturnType<T> = {
-  data: T;
+  items: T;
   pagination_meta: IPaginationMeta;
 };
 type IResponseError<T = never> = Omit<
