@@ -79,7 +79,6 @@ export type BaseParams = {
 
 //  new Types
 export type SortDirection = "asc" | "desc";
-export type IPaginationModes = "cursor" | "offset";
 
 // Filter operators
 export type FilterOperator =

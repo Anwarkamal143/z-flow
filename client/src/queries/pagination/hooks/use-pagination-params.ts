@@ -213,6 +213,7 @@ const uesPaginationParams = <T extends Record<string, any>>(
     sorts,
     search,
     includeTotal,
+    mode: "cursor",
   };
 
   /* ------------------------------
@@ -225,6 +226,7 @@ const uesPaginationParams = <T extends Record<string, any>>(
     sorts,
     search,
     includeTotal,
+    mode: "offset",
   };
 
   /* ------------------------------
@@ -319,51 +321,58 @@ const uesPaginationParams = <T extends Record<string, any>>(
     setFilters,
     validateParams,
   };
+  const cursorResp = {
+    ...common,
+    mode: "cursor" as const,
+    cursor: cursor as string | number | null,
+    cursorDirection: cursorDirection as "forward" | "backward",
+    params: cursorParams,
+    setCursor,
+    setCursorDirection,
+    setParams: setCursorParams,
+    resetParams: resetCursorParams,
+  };
+  const offsetResp = {
+    ...common,
+    mode: "offset" as const,
+    page: page,
+    params: offsetParams,
+    setPage,
+    setParams: setOffsetParams,
+    resetParams: resetOffsetParams,
+  };
+  return {
+    ...common,
+    cursorConfig: cursorResp,
+    offsetConfig: offsetResp,
+    mode: paginationType,
+  };
 
-  if (isCursor) {
-    return {
-      ...common,
-      type: "cursor" as const,
-      cursor: cursor as string | number | null,
-      cursorDirection: cursorDirection as "forward" | "backward",
-      params: cursorParams,
-      setCursor,
-      setCursorDirection,
-      setParams: setCursorParams,
-      resetParams: resetCursorParams,
-    };
-  } else
-    return {
-      ...common,
-      type: "offset" as const,
-      page: page,
-      params: offsetParams,
-      setPage,
-      setParams: setOffsetParams,
-      resetParams: resetOffsetParams,
-    };
+  // if (isCursor) {
+  //   return { ...cursorResp, offsetConfig: offsetResp };
+  // } else return { ...offsetResp, cursorConfig: cursorResp };
 };
 
-// export default uesPaginationParams;
+export default uesPaginationParams;
 // Offset-specific hook
 export function useOffsetPagination<T extends Record<string, any>>() {
   const result = uesPaginationParams<T>("offset");
 
   // Type guard to ensure it's offset
-  if (result.type !== "offset") {
-    throw new Error("Expected offset pagination");
-  }
+  // if (result.mode != "offset") {
+  //   throw new Error("Expected offset pagination");
+  // }
 
-  return result;
+  return result.offsetConfig;
 }
 
 // Cursor-specific hook
 export function useCursorPagination<T extends Record<string, any>>() {
   const result = uesPaginationParams<T>("cursor");
 
-  if (result.type !== "cursor") {
-    throw new Error("Expected cursor pagination");
-  }
+  // if (result.mode != "cursor") {
+  //   throw new Error("Expected cursor pagination");
+  // }
 
-  return result;
+  return result.cursorConfig;
 }

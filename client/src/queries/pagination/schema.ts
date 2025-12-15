@@ -76,6 +76,15 @@ export const cursorDirectionSchema = z
   .catch(null)
   .default(null)
   .describe("The cursor Direction for pagination");
+export const paginationMode = z
+  .union([z.enum(["cursor", "offset"]), z.string().trim().min(6), z.null()])
+  .transform((val) => {
+    if (val == null) return null;
+    return ["cursor", "offset"].includes(val) ? val : null;
+  })
+  .catch(null)
+  .default(null)
+  .describe("The Pagination mode");
 
 export const limitSchema = z
   .union([z.string().transform((val) => parseInt(val, 10)), z.number().int()])
@@ -173,5 +182,6 @@ export const createPaginationParams = <T extends Record<string, any>>() => {
     includeTotalSchema: includeTotalCountSchema,
     cursorSchema,
     cursorDirectionSchema,
+    paginationMode,
   };
 };

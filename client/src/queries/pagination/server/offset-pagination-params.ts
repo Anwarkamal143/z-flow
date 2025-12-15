@@ -18,6 +18,7 @@ export function parseServerPaginationParams<T extends Record<string, any>>(
     includeTotalSchema,
     cursorSchema,
     cursorDirectionSchema,
+    paginationMode,
   } = createPaginationParams<T>();
 
   // const page =
@@ -33,11 +34,16 @@ export function parseServerPaginationParams<T extends Record<string, any>>(
   let page;
   let limit;
   let includeTotal;
+  let mode;
 
   /****Cursor based */
   let cursor;
   let cursorDirection;
 
+  if (searchParams.mode) {
+    const pageResult = paginationMode.safeParse(searchParams.mode);
+    if (pageResult.success) mode = pageResult.data;
+  }
   if (searchParams.cursorDirection) {
     const pageResult = cursorDirectionSchema.safeParse(
       searchParams.cursorDirection
@@ -47,10 +53,12 @@ export function parseServerPaginationParams<T extends Record<string, any>>(
   if (searchParams.cursor) {
     const pageResult = cursorSchema.safeParse(searchParams.cursor);
     if (pageResult.success) cursor = pageResult.data;
+    mode = mode || paginationMode.parse("cursor");
   }
   if (searchParams.page) {
     const pageResult = pageSchema.safeParse(searchParams.page);
     if (pageResult.success) page = pageResult.data;
+    mode = mode || paginationMode.parse("offset");
   }
 
   if (searchParams.limit) {

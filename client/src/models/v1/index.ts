@@ -8,3 +8,10 @@ export {
   type IUserHooksOptionsTypes,
   type IUserHooksTypes,
 } from "./User.model";
+export {
+  workflowClient,
+  default as workflowModelInstance,
+  type WorkFlowClient,
+  type WorkFlowClientEntity,
+  type WorkflowClientListOptions,
+} from "./Workflow.model";

@@ -20,3 +20,6 @@ export default workflowModel;
 export const workflowClient = createCrudClient(workflowModel, {
   defaultParams: { entity: "workflow" },
 });
+export type WorkFlowClient = typeof workflowClient;
+export type WorkFlowClientEntity = typeof workflowClient.Entity;
+export type WorkflowClientListOptions = typeof workflowClient.listOptions;
