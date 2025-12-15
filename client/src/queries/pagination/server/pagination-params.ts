@@ -1,4 +1,5 @@
 // lib/server/parse-pagination-params.ts
+import { PAGINATION } from "@/config/constants";
 import { SearchParams } from "nuqs/server";
 import "server-only";
 import { createPaginationParams } from "../schema";
@@ -31,9 +32,9 @@ export function parseServerPaginationParams<T extends Record<string, any>>(
   let filters;
   let sorts;
   let search;
-  let page;
-  let limit;
-  let includeTotal;
+  let page = PAGINATION.DEFAULT_PAGE;
+  let limit: number | null = PAGINATION.DEFAULT_PAGE_SIZE;
+  let includeTotal = false;
   let mode;
 
   /****Cursor based */

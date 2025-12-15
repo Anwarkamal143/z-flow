@@ -225,12 +225,19 @@ export type CursorCallOptions<
   onSuccess?: (data: ListReturnType<T[]>) => void;
 } & ListCallOptions<T, S, ErrorT>;
 
-export type OffsetCallOptions<
+export type IListCallOptions<
   T,
   S extends boolean = false,
+  Mode extends IPaginationModes | undefined = undefined,
   ErrorT = DefaultError
 > = CommonListOptions<T, S, ErrorT> & {
-  params?: OffsetPaginationConfig<T>;
+  mode?: Mode;
+
+  params?: Mode extends "offset"
+    ? OffsetPaginationConfig<T>
+    : Mode extends "cursor"
+    ? CursorPaginationConfig<T>
+    : QueryParams<T>;
   onSuccess?: (data: IPaginatedReturnType<T[]>) => void;
 };
 
@@ -321,14 +328,14 @@ export type CrudFactoryOptions<
   defaultParams?: TParams & { entity: Prefix };
 };
 
-export type PrefetchOptions<TEntity, Entity> = {
-  list?: OffsetCallOptions<ReturnModel<TEntity, Entity>[], false>;
-  items?: Array<{
-    id: Id;
-    options?: SingleQueryOptions<TEntity, Entity, false>;
-  }>;
-  infiniteList?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>;
-};
+// export type PrefetchOptions<Mode extends IPaginationModes, TEntity, Entity> = {
+//   list?: IListCallOptions<ReturnModel<TEntity, Entity>[], false, Mode>;
+//   items?: Array<{
+//     id: Id;
+//     options?: SingleQueryOptions<TEntity, Entity, false>;
+//   }>;
+//   infiniteList?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>;
+// };
 
 /* -----------------------
    Enhanced Utility Functions
@@ -627,8 +634,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
   // ---------- List Hooks ----------
 
-  const useListEntities = <Entity = TEntity, S extends boolean = false>(
-    callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>, S>,
+  const useListEntities = <
+    Entity = TEntity,
+    S extends boolean = false,
+    Mode extends IPaginationModes | undefined = undefined
+  >(
+    callOptions?: IListCallOptions<ReturnModel<TEntity, Entity>, S, Mode>,
     isSuspense: S = false as S
   ) => {
     const params = mergeParams(callOptions?.params) as OffsetPaginationConfig<
@@ -1109,7 +1120,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   // ---------- Enhanced Prefetch Methods ----------
 
   const prefetchList = <Entity = TEntity>(
-    callOptions?: OffsetCallOptions<ReturnModel<TEntity, Entity>, false>
+    callOptions?: IListCallOptions<ReturnModel<TEntity, Entity>, false>
   ) => {
     const params = mergeParams(callOptions?.params) as OffsetPaginationConfig<
       ReturnModel<TEntity, Entity>
@@ -1295,7 +1306,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   };
 
   const prefetchAll = <Entity = TEntity>(options?: {
-    list?: OffsetCallOptions<ReturnModel<TEntity, Entity>, false>;
+    list?: IListCallOptions<ReturnModel<TEntity, Entity>, false>;
     items?: Array<{
       id: Id;
       options?: SingleQueryOptions<TEntity, Entity, false>;
@@ -1339,12 +1350,18 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
   // ---------- Query Hook Convenience Methods ----------
 
-  const useSuspenseList = <Entity = TEntity>(
-    opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>, true>
+  const useSuspenseList = <
+    Entity = TEntity,
+    Mode extends IPaginationModes | undefined = undefined
+  >(
+    opts?: IListCallOptions<ReturnModel<TEntity, Entity>, true, Mode>
   ) => useListEntities(opts, true);
 
-  const useList = <Entity = TEntity>(
-    opts?: OffsetCallOptions<ReturnModel<TEntity, Entity>>
+  const useList = <
+    Entity = TEntity,
+    Mode extends IPaginationModes | undefined = undefined
+  >(
+    opts?: IListCallOptions<ReturnModel<TEntity, Entity>, false, Mode>
   ) => useListEntities(opts);
   const useSuspenseInfiniteList = <Entity = TEntity>(
     opts?: CursorCallOptions<ReturnModel<TEntity, Entity>, true>
@@ -1373,7 +1390,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   // ---------- Public API ----------
   const listInfiniteParamsOptions = {} as CursorPaginationConfig<TEntity>;
   const listParamsOptions = {} as OffsetPaginationConfig<TEntity>;
-  const listOptions: ExtractHookOptions<typeof useList> = {};
+  const listOptions: IListCallOptions<TEntity> = {};
   const listInfiniteOptions: ExtractHookOptions<typeof useInfiniteList> = {};
   const createOptions: ExtractHookOptions<
     typeof useCreate<TEntity, Partial<TEntity>>

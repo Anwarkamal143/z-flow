@@ -87,7 +87,11 @@ export const paginationMode = z
   .describe("The Pagination mode");
 
 export const limitSchema = z
-  .union([z.string().transform((val) => parseInt(val, 10)), z.number().int()])
+  .union([
+    z.string().transform((val) => parseInt(val, 10)),
+    z.number().int(),
+    z.null(),
+  ])
   .pipe(
     z
       .number()
@@ -95,6 +99,7 @@ export const limitSchema = z
       .positive()
       .min(PAGINATION.MIN_PAGE_SIZE)
       .max(PAGINATION.MAX_PAGE_SIZE)
+      .nullable()
   )
   .catch(PAGINATION.DEFAULT_PAGE_SIZE)
 

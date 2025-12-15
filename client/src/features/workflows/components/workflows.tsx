@@ -11,9 +11,9 @@ import { useSuspenseWorkflows } from "../api/query-hooks";
 type Props = {};
 
 const Workflows = (props: Props) => {
-  const { data, page, pagination_meta, setPage, setSearch, isLoading } =
+  const { data, pagination_meta, setSearch, isLoading, setPage } =
     useSuspenseWorkflows({
-      params: {},
+      mode: "offset",
     });
   console.log(isLoading, "isLoading");
   const { handleDelete } = useDeleteWorkflows();

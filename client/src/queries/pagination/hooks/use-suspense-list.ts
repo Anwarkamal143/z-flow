@@ -1,6 +1,3 @@
-// hooks/useOffsetPaginationList.ts
-"use client";
-
 import { getValidNumber } from "@/lib";
 import { IListCallOptions, IPaginationModes } from "@/queries/v1";
 import { IPaginationMeta } from "@/types/Iquery";
@@ -9,339 +6,37 @@ import uesPaginationParams, {
   useCursorPagination,
   useOffsetPagination,
 } from "./use-pagination-params";
-export type IuseOffSetPaginationType<
+
+export type IuseSuspenseOffSetPaginationType<
   Client extends Record<string, any>,
   Entity extends Record<string, any> = Record<string, any>
-> = ReturnType<Client["useList"]> & {
+> = ReturnType<Client["useSuspenseList"]> & {
   pagination_meta: IPaginationMeta;
 } & ReturnType<typeof useOffsetPagination<Entity>>;
 
-export type IuseCursorPaginationType<
+export type IuseSuspenseCursorPaginationType<
   Client extends Record<string, any>,
   Entity extends Record<string, any> = Record<string, any>
-> = ReturnType<Client["useList"]> & {
+> = ReturnType<Client["useSuspenseList"]> & {
   pagination_meta: IPaginationMeta;
 } & ReturnType<typeof useCursorPagination<Entity>>;
-export function useOffsetPaginationList<
-  Client extends Record<string, any>,
-  Options extends IListCallOptions<Client["Entity"], false, "offset">,
-  Entity extends Record<string, any> = Client["Entity"]
->(client: Client, props?: Options): IuseOffSetPaginationType<Client, Entity> {
-  // Use the URL-based pagination params
-  const {
-    params: urlParams,
-    page,
-    limit,
-    filters,
-    sorts,
-    search,
-    includeTotal,
-    setIncludeTotal,
-    setPage,
-    setLimit,
-    setFilters,
-    setSorts,
-    setSearch,
-    setParams: setUrlParams,
-    resetParams,
-    validateParams,
-  } = useOffsetPagination<Entity>();
 
-  // Transform URL params to match your API's expected format
-  const apiParams = useMemo(() => {
-    return {
-      page,
-      limit,
-      filters,
-      sorts,
-      search,
-      includeTotal,
-      // Add any other params from props
-      ...props?.params,
-    };
-  }, [page, limit, filters, sorts, search, includeTotal, props?.params]);
-
-  // Use your existing list hook with the transformed params
-  const data = client.useList({
-    ...(props || {}),
-    params: apiParams,
-  });
-
-  const pagination = data?.data?.pagination_meta;
-  function getURLUpdatedValues(params: Partial<typeof apiParams>) {
-    const update: any = {};
-    if (params) {
-      if (params.page != null) update.page = params.page;
-      if (params.limit != null) update.limit = params.limit;
-      if (params.filters != null) update.filters = params.filters;
-      if (params.sorts != null) update.sorts = params.sorts;
-      if (params.search != null) update.search = params.search;
-      if (params.includeTotal != null)
-        update.includeTotal = params.includeTotal;
-    }
-    return update;
-  }
-  // Sync URL params when props change (for initial load)
-  useEffect(() => {
-    if (props?.params) {
-      const update = getURLUpdatedValues(props.params);
-
-      if (Object.keys(update).length > 0) {
-        setUrlParams(update);
-      }
-    }
-  }, [props?.params, setUrlParams]);
-
-  // Navigation functions
-  const fetchNextPage = (p = page) => {
-    const current = getValidNumber(p);
-    if (current == null || !pagination) return null;
-
-    if (current >= pagination.totalPages) return null;
-
-    const next = current + 1;
-    setPage(next);
-    return next;
-  };
-
-  const fetchCurrentPage = (p?: number | string) => {
-    const current = getValidNumber(p);
-    if (current == null || !pagination) return null;
-
-    if (current < 1 || current > pagination.totalPages) return null;
-
-    setPage(current);
-    return current;
-  };
-
-  const fetchPreviousPage = (p = page) => {
-    const current = getValidNumber(p);
-    if (current == null || !pagination) return null;
-
-    if (current <= 1) return null;
-
-    const prev = current - 1;
-    setPage(prev);
-    return prev;
-  };
-
-  // Combined setParams that updates both URL and local state
-  const setParams = (update: Partial<typeof apiParams>) => {
-    const urlUpdate = getURLUpdatedValues(update);
-
-    setUrlParams(urlUpdate);
-  };
-
-  return {
-    // Data from your existing hook
-    ...data,
-
-    // URL-based pagination state
-    urlParams,
-    page,
-    limit,
-    filters,
-    sorts,
-    search,
-    includeTotal,
-
-    // API params
-    params: apiParams,
-
-    // Navigation
-    fetchNextPage,
-    fetchPreviousPage,
-    fetchCurrentPage,
-
-    // Setters
-    setPage,
-    setLimit,
-    setFilters,
-    setSorts,
-    setSearch,
-    setIncludeTotal,
-    setParams,
-
-    // Validation and reset
-    validateParams,
-    resetParams,
-
-    // Pagination metadata
-    pagination_meta: pagination,
-  };
-}
-export function useCursorPaginationList<
-  Client extends Record<string, any>,
-  Options extends IListCallOptions<Client["Entity"], false, "cursor">,
-  Entity extends Record<string, any> = Client["Entity"]
->(client: Client, props?: Options): IuseCursorPaginationType<Client, Entity> {
-  // Use the URL-based pagination params
-  const {
-    params: urlParams,
-    cursor,
-    cursorDirection,
-    limit,
-    filters,
-    sorts,
-    search,
-    includeTotal,
-    setIncludeTotal,
-    setCursor,
-    setCursorDirection,
-    setLimit,
-    setFilters,
-    setSorts,
-    setSearch,
-    setParams: setUrlParams,
-    resetParams,
-    validateParams,
-  } = useCursorPagination<Entity>();
-
-  // Transform URL params to match your API's expected format
-  const apiParams = useMemo(() => {
-    return {
-      cursor,
-      cursorDirection,
-      limit,
-      filters,
-      sorts,
-      search,
-      includeTotal,
-      // Add any other params from props
-      ...props?.params,
-    };
-  }, [
-    cursor,
-    cursorDirection,
-    limit,
-    filters,
-    sorts,
-    search,
-    includeTotal,
-    props?.params,
-  ]);
-
-  // Use your existing list hook with the transformed params
-  const data = client.useList({
-    ...(props || {}),
-    params: apiParams,
-  });
-
-  const pagination = data?.data?.pagination_meta;
-  function getURLUpdatedValues(params: Partial<typeof apiParams>) {
-    const update: any = {};
-    if (params) {
-      if (params.cursor != null) update.cursor = params.cursor;
-      if (params.cursorDirection != null)
-        update.cursorDirection = params.cursorDirection;
-      if (params.limit != null) update.limit = params.limit;
-      if (params.filters != null) update.filters = params.filters;
-      if (params.sorts != null) update.sorts = params.sorts;
-      if (params.search != null) update.search = params.search;
-      if (params.includeTotal != null)
-        update.includeTotal = params.includeTotal;
-    }
-    return update;
-  }
-  // Sync URL params when props change (for initial load)
-  useEffect(() => {
-    if (props?.params) {
-      const update = getURLUpdatedValues(props.params);
-
-      if (Object.keys(update).length > 0) {
-        setUrlParams(update);
-      }
-    }
-  }, [props?.params, setUrlParams]);
-
-  // Navigation functions
-  const fetchNext = () => {
-    if (pagination.next) {
-      setCursor(pagination.next);
-      return pagination.next;
-    }
-  };
-
-  const fetchCurrent = (p?: number | string) => {
-    if (p != null) {
-      setCursor(p);
-      return p;
-    }
-  };
-
-  const fetchPrevious = () => {
-    if (pagination.previous) {
-      setCursor(pagination.previous);
-      return pagination.previous;
-    }
-  };
-
-  // Combined setParams that updates both URL and local state
-  const setParams = (update: Partial<typeof apiParams>) => {
-    const urlUpdate = getURLUpdatedValues(update);
-
-    setUrlParams(urlUpdate);
-  };
-
-  return {
-    // Data from your existing hook
-    ...data,
-
-    // URL-based pagination state
-    urlParams,
-    cursor,
-    cursorDirection,
-    limit,
-    filters,
-    sorts,
-    search,
-    includeTotal,
-
-    // API params
-    params: apiParams,
-
-    // Navigation
-    fetchCurrent,
-    fetchNext,
-    fetchPrevious,
-
-    // Setters
-    setCursor,
-    setLimit,
-    setCursorDirection,
-    setFilters,
-    setSorts,
-    setSearch,
-    setIncludeTotal,
-    setParams,
-
-    // Validation and reset
-    validateParams,
-    resetParams,
-
-    // Pagination metadata
-    pagination_meta: pagination,
-  };
-}
-
-/*****************************************Combine Use list for both cursor and offset ***********************************/
-
-export function useListPagination<
+export function useSuspensePagination<
   Client extends Record<string, any>,
   // Options extends Client["listOptions"],
   Mode extends IPaginationModes,
-  Options extends IListCallOptions<Client["Entity"], false, Mode>,
+  Options extends IListCallOptions<Client["Entity"], true, Mode>,
   Entity extends Record<string, any> = Client["Entity"]
 >(
   client: Client,
   props?: Options & { mode?: Mode }
 ): Mode extends "cursor"
-  ? IuseCursorPaginationType<Client, Entity>
+  ? IuseSuspenseCursorPaginationType<Client, Entity>
   : Mode extends "offset"
-  ? IuseOffSetPaginationType<Client, Entity>
+  ? IuseSuspenseOffSetPaginationType<Client, Entity>
   :
-      | IuseCursorPaginationType<Client, Entity>
-      | IuseOffSetPaginationType<Client, Entity> {
+      | IuseSuspenseCursorPaginationType<Client, Entity>
+      | IuseSuspenseOffSetPaginationType<Client, Entity> {
   const {
     limit,
     filters,
@@ -358,6 +53,7 @@ export function useListPagination<
     offsetConfig,
     mode,
   } = uesPaginationParams<Entity>(props?.mode);
+  console.log("Mode", mode);
   const isOffset = mode == "offset";
   const apiOffsetParams = useMemo(() => {
     return {
@@ -402,7 +98,7 @@ export function useListPagination<
     props?.params,
   ]);
   // Use your existing suspense list hook
-  const data = client.useList({
+  const data = client.useSuspenseList({
     ...(props || {}),
     params: isOffset ? apiOffsetParams : apiCursorParams,
   });
@@ -547,6 +243,321 @@ export function useListPagination<
     // Validation and reset
     validateParams,
     resetParams: isOffset ? offsetConfig.resetParams : cursorConfig.resetParams,
+
+    // Pagination metadata
+    pagination_meta: pagination,
+  };
+}
+
+/******************** useSuspnse offset and Cursor hooks **************************** */
+export function useSuspnseOffsetPagination<
+  Client extends Record<string, any>,
+  Options extends IListCallOptions<Client["Entity"], false, "offset">,
+  Entity extends Record<string, any> = Client["Entity"]
+>(
+  client: Client,
+  props?: Options
+): ReturnType<Client["useSuspenseList"]> &
+  ReturnType<typeof useOffsetPagination<Entity>> & {
+    pagination_meta: IPaginationMeta;
+  } {
+  // Use the URL-based pagination params
+  const {
+    params: urlParams,
+    page,
+    limit,
+    filters,
+    sorts,
+    search,
+    includeTotal,
+    setIncludeTotal,
+    setPage,
+    setLimit,
+    setFilters,
+    setSorts,
+    setSearch,
+    setParams: setUrlParams,
+    resetParams,
+    validateParams,
+  } = useOffsetPagination<Entity>();
+
+  // Transform URL params to match your API's expected format
+  const apiParams = useMemo(() => {
+    return {
+      page,
+      limit,
+      filters,
+      sorts,
+      search,
+      includeTotal,
+      // Add any other params from props
+      ...props?.params,
+    };
+  }, [page, limit, filters, sorts, search, includeTotal, props?.params]);
+
+  // Use your existing list hook with the transformed params
+  const data = client.useSuspenseList({
+    ...(props || {}),
+    params: apiParams,
+  });
+
+  const pagination = data?.data?.pagination_meta;
+  function getURLUpdatedValues(params: Partial<typeof apiParams>) {
+    const update: any = {};
+    if (params) {
+      if (params.page != null) update.page = params.page;
+      if (params.limit != null) update.limit = params.limit;
+      if (params.filters != null) update.filters = params.filters;
+      if (params.sorts != null) update.sorts = params.sorts;
+      if (params.search != null) update.search = params.search;
+      if (params.includeTotal != null)
+        update.includeTotal = params.includeTotal;
+    }
+    return update;
+  }
+  // Sync URL params when props change (for initial load)
+  useEffect(() => {
+    if (props?.params) {
+      const update = getURLUpdatedValues(props.params);
+
+      if (Object.keys(update).length > 0) {
+        setUrlParams(update);
+      }
+    }
+  }, [props?.params, setUrlParams]);
+
+  // Navigation functions
+  const fetchNextPage = (p = page) => {
+    const current = getValidNumber(p);
+    if (current == null || !pagination) return null;
+
+    if (current >= pagination.totalPages) return null;
+
+    const next = current + 1;
+    setPage(next);
+    return next;
+  };
+
+  const fetchCurrentPage = (p?: number | string) => {
+    const current = getValidNumber(p);
+    if (current == null || !pagination) return null;
+
+    if (current < 1 || current > pagination.totalPages) return null;
+
+    setPage(current);
+    return current;
+  };
+
+  const fetchPreviousPage = (p = page) => {
+    const current = getValidNumber(p);
+    if (current == null || !pagination) return null;
+
+    if (current <= 1) return null;
+
+    const prev = current - 1;
+    setPage(prev);
+    return prev;
+  };
+
+  // Combined setParams that updates both URL and local state
+  const setParams = (update: Partial<typeof apiParams>) => {
+    const urlUpdate = getURLUpdatedValues(update);
+
+    setUrlParams(urlUpdate);
+  };
+
+  return {
+    // Data from your existing hook
+    ...data,
+
+    // URL-based pagination state
+    urlParams,
+    page,
+    limit,
+    filters,
+    sorts,
+    search,
+    includeTotal,
+
+    // API params
+    params: apiParams,
+
+    // Navigation
+    fetchNextPage,
+    fetchPreviousPage,
+    fetchCurrentPage,
+
+    // Setters
+    setPage,
+    setLimit,
+    setFilters,
+    setSorts,
+    setSearch,
+    setIncludeTotal,
+    setParams,
+
+    // Validation and reset
+    validateParams,
+    resetParams,
+
+    // Pagination metadata
+    pagination_meta: pagination,
+  };
+}
+export function useSuspenseCursorPagination<
+  Client extends Record<string, any>,
+  Options extends IListCallOptions<Client["Entity"], false, "cursor">,
+  Entity extends Record<string, any> = Client["Entity"]
+>(
+  client: Client,
+  props?: Options
+): ReturnType<Client["useSuspenseList"]> &
+  ReturnType<typeof useCursorPagination<Entity>> & {
+    pagination_meta: IPaginationMeta;
+  } {
+  // Use the URL-based pagination params
+  const {
+    params: urlParams,
+    cursor,
+    cursorDirection,
+    limit,
+    filters,
+    sorts,
+    search,
+    includeTotal,
+    setIncludeTotal,
+    setCursor,
+    setCursorDirection,
+    setLimit,
+    setFilters,
+    setSorts,
+    setSearch,
+    setParams: setUrlParams,
+    resetParams,
+    validateParams,
+  } = useCursorPagination<Entity>();
+
+  // Transform URL params to match your API's expected format
+  const apiParams = useMemo(() => {
+    return {
+      cursor,
+      cursorDirection,
+      limit,
+      filters,
+      sorts,
+      search,
+      includeTotal,
+      // Add any other params from props
+      ...props?.params,
+    };
+  }, [
+    cursor,
+    cursorDirection,
+    limit,
+    filters,
+    sorts,
+    search,
+    includeTotal,
+    props?.params,
+  ]);
+
+  // Use your existing list hook with the transformed params
+  const data = client.useSuspenseList({
+    ...(props || {}),
+    params: apiParams,
+  });
+
+  const pagination = data?.data?.pagination_meta;
+  function getURLUpdatedValues(params: Partial<typeof apiParams>) {
+    const update: any = {};
+    if (params) {
+      if (params.cursor != null) update.cursor = params.cursor;
+      if (params.cursorDirection != null)
+        update.cursorDirection = params.cursorDirection;
+      if (params.limit != null) update.limit = params.limit;
+      if (params.filters != null) update.filters = params.filters;
+      if (params.sorts != null) update.sorts = params.sorts;
+      if (params.search != null) update.search = params.search;
+      if (params.includeTotal != null)
+        update.includeTotal = params.includeTotal;
+    }
+    return update;
+  }
+  // Sync URL params when props change (for initial load)
+  useEffect(() => {
+    if (props?.params) {
+      const update = getURLUpdatedValues(props.params);
+
+      if (Object.keys(update).length > 0) {
+        setUrlParams(update);
+      }
+    }
+  }, [props?.params, setUrlParams]);
+
+  // Navigation functions
+  const fetchNext = () => {
+    if (pagination.next) {
+      setCursor(pagination.next);
+      return pagination.next;
+    }
+  };
+
+  const fetchCurrent = (p?: number | string) => {
+    if (p != null) {
+      setCursor(p);
+      return p;
+    }
+  };
+
+  const fetchPrevious = () => {
+    if (pagination.previous) {
+      setCursor(pagination.previous);
+      return pagination.previous;
+    }
+  };
+
+  // Combined setParams that updates both URL and local state
+  const setParams = (update: Partial<typeof apiParams>) => {
+    const urlUpdate = getURLUpdatedValues(update);
+
+    setUrlParams(urlUpdate);
+  };
+
+  return {
+    // Data from your existing hook
+    ...data,
+
+    // URL-based pagination state
+    urlParams,
+    cursor,
+    cursorDirection,
+    limit,
+    filters,
+    sorts,
+    search,
+    includeTotal,
+
+    // API params
+    params: apiParams,
+
+    // Navigation
+    fetchCurrent,
+    fetchNext,
+    fetchPrevious,
+
+    // Setters
+    setCursor,
+    setLimit,
+    setCursorDirection,
+    setFilters,
+    setSorts,
+    setSearch,
+    setIncludeTotal,
+    setParams,
+
+    // Validation and reset
+    validateParams,
+    resetParams,
 
     // Pagination metadata
     pagination_meta: pagination,

@@ -1,9 +1,9 @@
 import { useCreateWorkflow, useDeleteWorkflows } from "./mutation-hooks";
-import { useGetAllWorkflows, useSuspenseWorkflows } from "./query-hooks";
+import { useOffsetGetAllWorkflows, useSuspenseWorkflows } from "./query-hooks";
 
 export {
   useCreateWorkflow,
   useDeleteWorkflows,
-  useGetAllWorkflows,
+  useOffsetGetAllWorkflows,
   useSuspenseWorkflows,
 };

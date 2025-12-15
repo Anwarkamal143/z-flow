@@ -120,7 +120,7 @@ const uesPaginationParams = <T extends Record<string, any>>(
         history: "push",
         clearOnDefault: true,
       })
-      .withDefault(limitSchema.parse(PAGINATION.DEFAULT_PAGE_SIZE))
+      .withDefault(limitSchema.parse(PAGINATION.DEFAULT_PAGE_SIZE) as number)
   );
 
   /* ------------------------------

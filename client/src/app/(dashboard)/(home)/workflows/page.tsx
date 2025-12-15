@@ -6,7 +6,7 @@ import Workflows, {
 } from "@/features/workflows/components/workflows";
 import { prefetchServerWorkflows } from "@/features/workflows/server/prefetch";
 import { authSession } from "@/lib/auth/auth";
-import { parseServerPaginationParams } from "@/queries/pagination/server/offset-pagination-params";
+import { parseServerPaginationParams } from "@/queries/pagination/server/pagination-params";
 import { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
