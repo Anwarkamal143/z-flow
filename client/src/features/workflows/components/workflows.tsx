@@ -1,8 +1,14 @@
 "use client";
 
 import ButtonLoader from "@/components/button-loader";
-import { EntityContainer, EntityHeader } from "@/components/entity-components";
+import {
+  EntityContainer,
+  EntityHeader,
+  EntitySearch,
+} from "@/components/entity-components";
+import useEntitySearch from "@/hooks/use-entity-search";
 import useUpgradeModal from "@/hooks/use-upgrade-modal";
+import { useOffsetPaginationParams } from "@/queries/pagination/hooks/use-pagination-params";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCreateWorkflow, useDeleteWorkflows } from "../api";
@@ -11,11 +17,9 @@ import { useSuspenseWorkflows } from "../api/query-hooks";
 type Props = {};
 
 const Workflows = (props: Props) => {
-  const { data, pagination_meta, setSearch, isLoading, setPage } =
-    useSuspenseWorkflows({
-      mode: "offset",
-    });
-  console.log(isLoading, "isLoading");
+  const { data, pagination_meta, setSearch, isLoading } = useSuspenseWorkflows({
+    mode: "offset",
+  });
   const { handleDelete } = useDeleteWorkflows();
   const router = useRouter();
   return (
@@ -57,25 +61,7 @@ const Workflows = (props: Props) => {
         >
           Clear Search
         </ButtonLoader>
-        <ButtonLoader
-          onClick={() => {
-            // setPage(data?.pagination_meta.next as number);
-            if (pagination_meta.next) {
-              setPage(pagination_meta.next as number);
-            }
-          }}
-        >
-          Fetch Next
-        </ButtonLoader>
-        <ButtonLoader
-          onClick={() => {
-            if (pagination_meta.previous) {
-              setPage(pagination_meta.previous as number);
-            }
-          }}
-        >
-          Fetch Previous
-        </ButtonLoader>
+
         <ButtonLoader
           onClick={() => {
             router.push("/workflows?server=true");
@@ -94,6 +80,33 @@ const Workflows = (props: Props) => {
 
 export default Workflows;
 
+export const WorkflowSearch = () => {
+  const { setParams: setUrlParams, params } =
+    useOffsetPaginationParams<IWorkflow>();
+  const { searchValue, onSearchChange } = useEntitySearch({
+    setParams(params) {
+      setUrlParams({
+        search: searchValue,
+
+        page: params.page,
+      });
+    },
+    params: {
+      page: params.page as unknown as number,
+      search: (params.search || "") as string,
+    },
+  });
+  return (
+    <EntitySearch
+      placeholder="Search workflows"
+      value={searchValue || ""}
+      onChange={(e) => {
+        onSearchChange(e);
+      }}
+    />
+  );
+};
+
 export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
   const { handleCreate, isPending } = useCreateWorkflow();
   const { handleError, ConfirmModal } = useUpgradeModal();
@@ -107,7 +120,6 @@ export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
         description="Create and manage your workflows"
         onNew={async () => {
           const resp = await handleCreate({});
-          console.log(resp, "resp");
           if (resp?.data?.id) {
             toast.success("Workflow created");
             return router.push(`/workflows/${resp?.data?.id}`);
@@ -131,7 +143,7 @@ export const WorkflowsContainer = ({
     <>
       <EntityContainer
         header={<WorkflowsHeader />}
-        search={<></>}
+        search={<WorkflowSearch />}
         pagination={<></>}
       >
         {children}

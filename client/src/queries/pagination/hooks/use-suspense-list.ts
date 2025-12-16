@@ -1,10 +1,10 @@
 import { getValidNumber } from "@/lib";
-import { IListCallOptions, IPaginationModes } from "@/queries/v1";
+import { IListCallOptions, IPaginationModes } from "@/queries/v1/types";
 import { IPaginationMeta } from "@/types/Iquery";
 import { useEffect, useMemo } from "react";
 import uesPaginationParams, {
-  useCursorPagination,
-  useOffsetPagination,
+  useCursorPaginationParams,
+  useOffsetPaginationParams,
 } from "./use-pagination-params";
 
 export type IuseSuspenseOffSetPaginationType<
@@ -12,14 +12,14 @@ export type IuseSuspenseOffSetPaginationType<
   Entity extends Record<string, any> = Record<string, any>
 > = ReturnType<Client["useSuspenseList"]> & {
   pagination_meta: IPaginationMeta;
-} & ReturnType<typeof useOffsetPagination<Entity>>;
+} & ReturnType<typeof useOffsetPaginationParams<Entity>>;
 
 export type IuseSuspenseCursorPaginationType<
   Client extends Record<string, any>,
   Entity extends Record<string, any> = Record<string, any>
 > = ReturnType<Client["useSuspenseList"]> & {
   pagination_meta: IPaginationMeta;
-} & ReturnType<typeof useCursorPagination<Entity>>;
+} & ReturnType<typeof useCursorPaginationParams<Entity>>;
 
 export function useSuspensePagination<
   Client extends Record<string, any>,
@@ -53,7 +53,6 @@ export function useSuspensePagination<
     offsetConfig,
     mode,
   } = uesPaginationParams<Entity>(props?.mode);
-  console.log("Mode", mode);
   const isOffset = mode == "offset";
   const apiOffsetParams = useMemo(() => {
     return {
@@ -258,7 +257,7 @@ export function useSuspnseOffsetPagination<
   client: Client,
   props?: Options
 ): ReturnType<Client["useSuspenseList"]> &
-  ReturnType<typeof useOffsetPagination<Entity>> & {
+  ReturnType<typeof useOffsetPaginationParams<Entity>> & {
     pagination_meta: IPaginationMeta;
   } {
   // Use the URL-based pagination params
@@ -279,7 +278,7 @@ export function useSuspnseOffsetPagination<
     setParams: setUrlParams,
     resetParams,
     validateParams,
-  } = useOffsetPagination<Entity>();
+  } = useOffsetPaginationParams<Entity>();
 
   // Transform URL params to match your API's expected format
   const apiParams = useMemo(() => {
@@ -412,7 +411,7 @@ export function useSuspenseCursorPagination<
   client: Client,
   props?: Options
 ): ReturnType<Client["useSuspenseList"]> &
-  ReturnType<typeof useCursorPagination<Entity>> & {
+  ReturnType<typeof useCursorPaginationParams<Entity>> & {
     pagination_meta: IPaginationMeta;
   } {
   // Use the URL-based pagination params
@@ -435,7 +434,7 @@ export function useSuspenseCursorPagination<
     setParams: setUrlParams,
     resetParams,
     validateParams,
-  } = useCursorPagination<Entity>();
+  } = useCursorPaginationParams<Entity>();
 
   // Transform URL params to match your API's expected format
   const apiParams = useMemo(() => {

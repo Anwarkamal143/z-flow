@@ -16,6 +16,8 @@ import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { BaseService } from "./base.service";
 export type WorkflowPaginationConfig =
   typeof workflowService._types.PaginationsConfig;
+export type WorkflowSimplePaginationConfig =
+  typeof workflowService._types.PaginatedParams;
 
 export class WorkflowService extends BaseService<
   typeof workflows,
@@ -25,9 +27,7 @@ export class WorkflowService extends BaseService<
   constructor() {
     super(workflows);
   }
-  async listAllPaginatedWorkflows(
-    params: typeof this._types.PaginatedParams = {}
-  ) {
+  async listAllPaginatedWorkflows(params: WorkflowSimplePaginationConfig = {}) {
     const { mode, sort = "desc", ...rest } = params;
     if (mode === "offset") {
       return await this.paginateOffset({

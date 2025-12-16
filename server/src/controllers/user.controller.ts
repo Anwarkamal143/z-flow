@@ -54,13 +54,13 @@ class UserController {
     req: FastifyRequest<{ Querystring: UsersPaginationConfig }>,
     reply: FastifyReply
   ) => {
-    const validationResult = userService.validatePagination(req.query);
-    if (validationResult.error) {
-      throw validationResult.error;
-    }
-    const config = validationResult.data;
+    const validationResult = userService.validateQuery(req.query, {
+      search: "name",
+      sort: "id",
+    });
+
     const result = await userService.listAllPaginatedUsersV2({
-      ...config,
+      ...validationResult,
     });
     if (result.error) {
       throw result.error;

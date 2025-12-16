@@ -6,22 +6,22 @@ import { IListCallOptions, IPaginationModes } from "@/queries/v1";
 import { IPaginationMeta } from "@/types/Iquery";
 import { useEffect, useMemo } from "react";
 import uesPaginationParams, {
-  useCursorPagination,
-  useOffsetPagination,
+  useCursorPaginationParams,
+  useOffsetPaginationParams,
 } from "./use-pagination-params";
 export type IuseOffSetPaginationType<
   Client extends Record<string, any>,
   Entity extends Record<string, any> = Record<string, any>
 > = ReturnType<Client["useList"]> & {
   pagination_meta: IPaginationMeta;
-} & ReturnType<typeof useOffsetPagination<Entity>>;
+} & ReturnType<typeof useOffsetPaginationParams<Entity>>;
 
 export type IuseCursorPaginationType<
   Client extends Record<string, any>,
   Entity extends Record<string, any> = Record<string, any>
 > = ReturnType<Client["useList"]> & {
   pagination_meta: IPaginationMeta;
-} & ReturnType<typeof useCursorPagination<Entity>>;
+} & ReturnType<typeof useCursorPaginationParams<Entity>>;
 export function useOffsetPaginationList<
   Client extends Record<string, any>,
   Options extends IListCallOptions<Client["Entity"], false, "offset">,
@@ -45,7 +45,7 @@ export function useOffsetPaginationList<
     setParams: setUrlParams,
     resetParams,
     validateParams,
-  } = useOffsetPagination<Entity>();
+  } = useOffsetPaginationParams<Entity>();
 
   // Transform URL params to match your API's expected format
   const apiParams = useMemo(() => {
@@ -195,7 +195,7 @@ export function useCursorPaginationList<
     setParams: setUrlParams,
     resetParams,
     validateParams,
-  } = useCursorPagination<Entity>();
+  } = useCursorPaginationParams<Entity>();
 
   // Transform URL params to match your API's expected format
   const apiParams = useMemo(() => {

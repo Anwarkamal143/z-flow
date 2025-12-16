@@ -13,7 +13,7 @@ import {
   OffsetPaginationConfig,
   SearchConfig,
   SortConfig,
-} from "../../v1";
+} from "../../v1/types";
 import { createPaginationParams } from "../schema";
 
 // Create a reusable parser for cursor values (string or number)
@@ -126,9 +126,11 @@ const uesPaginationParams = <T extends Record<string, any>>(
   /* ------------------------------
      FILTERS (common for both)
   ------------------------------ */
-  const [filters, setFilters] = useQueryState<FilterCondition<T>[] | null>(
+  const [filters, setFilters] = useQueryState<
+    FilterCondition<T>[] | string | null
+  >(
     "filters",
-    parseAsJson<FilterCondition<T>[] | null>((value) => {
+    parseAsJson<FilterCondition<T>[] | string | null>((value) => {
       if (value === null || value === undefined) return null;
 
       const result = filterConfigSchema.safeParse(value);
@@ -148,9 +150,9 @@ const uesPaginationParams = <T extends Record<string, any>>(
   /* ------------------------------
      SORTS (common for both)
   ------------------------------ */
-  const [sorts, setSorts] = useQueryState<SortConfig<T>[] | null>(
+  const [sorts, setSorts] = useQueryState<SortConfig<T>[] | string | null>(
     "sorts",
-    parseAsJson<SortConfig<T>[] | null>((value) => {
+    parseAsJson<SortConfig<T>[] | string | null>((value) => {
       if (value === null || value === undefined) return null;
 
       const result = sortConfigSchema.safeParse(value);
@@ -170,10 +172,10 @@ const uesPaginationParams = <T extends Record<string, any>>(
   /* ------------------------------
      SEARCH (common for both)
   ------------------------------ */
-  const [search, setSearch] = useQueryState<SearchConfig<T> | null>(
+  const [search, setSearch] = useQueryState<SearchConfig<T> | string | null>(
     "search",
-    parseAsJson<SearchConfig<T> | null>((value) => {
-      if (value === null || value === undefined) return null;
+    parseAsJson<SearchConfig<T> | string | null>((value) => {
+      if (value == null || value == undefined) return null;
 
       const result = searchConfigSchema.safeParse(value);
       if (!result.success) {
@@ -220,8 +222,8 @@ const uesPaginationParams = <T extends Record<string, any>>(
      OFFSET PARAMS OBJECT
   ------------------------------ */
   const offsetParams: OffsetPaginationConfig<T> = {
-    page: page ?? PAGINATION.DEFAULT_PAGE,
-    limit: limit ?? PAGINATION.DEFAULT_PAGE_SIZE,
+    page: page || (PAGINATION.DEFAULT_PAGE as number),
+    limit: limit || (PAGINATION.DEFAULT_PAGE_SIZE as number),
     filters,
     sorts,
     search,
@@ -233,22 +235,29 @@ const uesPaginationParams = <T extends Record<string, any>>(
      SETTER FUNCTIONS
   ------------------------------ */
   const setCursorParams = (update: Partial<CursorPaginationConfig<T>>) => {
-    if (update.cursor !== undefined) setCursor(update.cursor);
-    if (update.cursorDirection !== undefined)
+    if (update.cursor != null) setCursor(update.cursor);
+    if (update.cursorDirection != null)
       setCursorDirection(update.cursorDirection);
-    if (update.limit !== undefined) setLimit(update.limit);
-    if (update.filters !== undefined) setFilters(update.filters);
-    if (update.sorts !== undefined) setSorts(update.sorts);
-    if (update.search !== undefined) setSearch(update.search);
-    if (update.includeTotal !== undefined) setIncludeTotal(update.includeTotal);
+    if (update.limit != null) setLimit(update.limit);
+    if (update.filters != null)
+      setFilters(filterConfigSchema.parse(update.filters));
+    if (update.sorts != null) setSorts(sortConfigSchema.parse(update.sorts));
+    if (update.search != null) {
+      setSearch(searchConfigSchema.parse(update.search));
+    }
+    if (update.includeTotal != null) setIncludeTotal(update.includeTotal);
   };
 
   const setOffsetParams = (update: Partial<OffsetPaginationConfig<T>>) => {
-    if (update.page !== undefined) setPage(update.page);
-    if (update.limit !== undefined) setLimit(update.limit);
-    if (update.filters !== undefined) setFilters(update.filters);
-    if (update.sorts !== undefined) setSorts(update.sorts);
-    if (update.search !== undefined) setSearch(update.search);
+    if (update.page != null) setPage(update.page);
+    if (update.limit != null) setLimit(update.limit);
+    if (update.filters != null)
+      setFilters(filterConfigSchema.parse(update.filters));
+    if (update.sorts != null) setSorts(sortConfigSchema.parse(update.sorts));
+    if (update.search != null) {
+      setSearch(searchConfigSchema.parse(update.search));
+    }
+
     if (update.includeTotal !== undefined) setIncludeTotal(update.includeTotal);
   };
 
@@ -355,7 +364,7 @@ const uesPaginationParams = <T extends Record<string, any>>(
 
 export default uesPaginationParams;
 // Offset-specific hook
-export function useOffsetPagination<T extends Record<string, any>>() {
+export function useOffsetPaginationParams<T extends Record<string, any>>() {
   const result = uesPaginationParams<T>("offset");
 
   // Type guard to ensure it's offset
@@ -367,7 +376,7 @@ export function useOffsetPagination<T extends Record<string, any>>() {
 }
 
 // Cursor-specific hook
-export function useCursorPagination<T extends Record<string, any>>() {
+export function useCursorPaginationParams<T extends Record<string, any>>() {
   const result = uesPaginationParams<T>("cursor");
 
   // if (result.mode != "cursor") {

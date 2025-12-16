@@ -1,4 +1,15 @@
-import { CursorPaginationConfig } from "./pagination/types";
+import {
+  CursorPaginationConfig,
+  cursorPaginationConfigSchema,
+  FilterCondition,
+  IPaginationType,
+  OffsetPaginationConfig,
+  offsetPaginationConfigSchema,
+  PaginationsConfig,
+  SearchConfig,
+  SortConfig,
+  SortDirection,
+} from "./pagination/types";
 // services/base.service.ts
 import { HTTPSTATUS } from "@/config/http.config";
 import {
@@ -8,7 +19,6 @@ import {
 } from "@/utils/catch-errors";
 
 import { db } from "@/db";
-import { UnionIfBPresent } from "@/types/api";
 import { formatZodError, getSingularPlural, stringToNumber } from "@/utils";
 import {
   buildPaginationMetaForOffset,
@@ -16,46 +26,40 @@ import {
 } from "@/utils/api";
 import { AnyColumn, asc, desc, getTableColumns, SQL, sql } from "drizzle-orm";
 import { AnyPgTable, getTableConfig, IndexColumn } from "drizzle-orm/pg-core";
-import {
-  OffsetPaginationConfig,
-  paginateCursor,
-  paginateOffset,
-} from "./pagination";
-import {
-  cursorPaginationConfigSchema,
-  offsetPaginationConfigSchema,
-  PaginationsConfig,
-} from "./pagination/types";
-
-export type IPaginationOrder = "asc" | "desc";
-export type IPaginationModes = "cursor" | "offset";
+import { paginateCursor, paginateOffset } from "./pagination";
+export type Table = AnyPgTable;
 export type IPaginatedParams =
   | {
       cursor?: number | string | null;
       limit?: number | string | null;
       mode?: "cursor";
-      sort?: IPaginationOrder;
+      sort?: SortDirection;
     }
   | {
       page?: number | string | null;
       limit?: number | string | null;
       mode?: "offset";
-      sort?: IPaginationOrder;
+      sort?: SortDirection;
     };
+
 type PaginationOffsetOptions<TTable extends AnyPgTable> = {
   limit?: number | string | null;
   page?: number | string | null;
   where?: (t: TTable) => SQL<unknown> | undefined;
-  sort?: IPaginationOrder;
+  sort?: SortDirection;
   cursorColumn?: (tableCols: TTable) => AnyColumn;
+  search?: string;
+  includeTotal?: boolean;
 };
 type PaginationCursortOptions<TCursorValue, TTable extends AnyPgTable> = {
   limit?: number | null | string;
   cursor?: TCursorValue;
   cursorColumn: (tableCols: TTable) => AnyColumn;
   direction?: "next" | "prev";
-  sort?: IPaginationOrder;
+  sort?: SortDirection;
   where?: (t: TTable) => SQL<unknown> | undefined;
+  search?: string;
+  includeTotal?: boolean;
 };
 
 // Update the queryTable function to be more specific about the return type
@@ -199,7 +203,6 @@ export class BaseService<
     where: (table: TTable) => SQL<unknown> | undefined,
     values: T
   ) {
-    console.log(values, "update");
     try {
       const result = await db
         .update(this.table)
@@ -330,6 +333,7 @@ export class BaseService<
       page,
       cursorColumn = (table: any) => table.id as AnyColumn,
       sort = "asc",
+      includeTotal,
     } = options;
     // Page starts from 1
     // Convert values
@@ -372,10 +376,11 @@ export class BaseService<
         query.offset(offset);
       }
       const result = await query;
-      const total = await db.$count(
-        this.table,
-        where?.(this.table) || sql`true`
-      );
+
+      let total = result.length;
+      if (includeTotal) {
+        total = await db.$count(this.table, where?.(this.table) || sql`true`);
+      }
       const items = limitNum
         ? (result.slice(0, limitNum) as TSelect[])
         : result;
@@ -413,6 +418,7 @@ export class BaseService<
       direction = "next",
       sort = "asc",
       where,
+      includeTotal,
     } = options;
     const limitNum = limit != null ? stringToNumber(limit) : undefined;
 
@@ -451,10 +457,10 @@ export class BaseService<
         query.limit(limitPlusOne);
       }
       const result = await query;
-      const total = await db.$count(
-        this.table,
-        where?.(this.table) || sql`true`
-      );
+      let total = result.length;
+      if (includeTotal) {
+        total = await db.$count(this.table, where?.(this.table) || sql`true`);
+      }
       const items = limitNum
         ? (result.slice(0, limitNum) as TSelect[])
         : result;
@@ -482,14 +488,12 @@ export class BaseService<
     }
   }
 
-  /*******************************************************Advanced pagination ****************************************************** */
   async paginationOffsetRecords(props: OffsetPaginationConfig<TTable>) {
     const parseResult = this.validateOffsetPagination(props);
     if (parseResult.error) {
       return parseResult;
     }
     const result = await paginateOffset(db, this.table, parseResult.data);
-
     return result;
   }
   async paginationCursorRecords(props: CursorPaginationConfig<TTable>) {
@@ -501,72 +505,54 @@ export class BaseService<
 
     return result;
   }
+  validateQuery(
+    p: typeof this._types.PaginationsConfig,
+    defaults: {
+      search: keyof TTable["$inferSelect"];
+      sort: keyof TTable["$inferSelect"];
+      filters?: (table: TTable) => FilterCondition<TTable>[];
+    }
+  ) {
+    const { search, limit, filters, sorts, includeTotal, mode } = p;
+    let toalInclude = false;
+    if (includeTotal) {
+      toalInclude =
+        typeof includeTotal == "string" ? includeTotal == "true" : includeTotal;
+    }
+    if (mode == "offset") {
+      const { page } = p;
 
-  validatePagination<T = any>(
-    props: PaginationsConfig<UnionIfBPresent<TTable, T>>
-  ):
-    | { data: PaginationsConfig<UnionIfBPresent<TTable, T>>; error: null }
-    | { error: ValidationException; data: null } {
-    if (props.mode == "cursor") {
-      const resp = this.validateCursorPagination(props);
-      if (resp.data) {
-        return {
-          data: resp.data as PaginationsConfig<UnionIfBPresent<TTable, T>> & {
-            mode: "cursor";
-          },
-          error: null,
-        };
-      }
-      return resp;
-    }
-    const resp = this.validateOffsetPagination(
-      props as OffsetPaginationConfig<TTable>
-    );
-    if (resp.data) {
       return {
-        data: resp.data as PaginationsConfig<UnionIfBPresent<TTable, T>> & {
-          mode: "offset";
-        },
-        error: null,
-      };
-    }
-    return resp;
-  }
-  validateOffsetPagination(params: OffsetPaginationConfig<TTable>) {
-    if (params.includeTotal) {
-      params.includeTotal =
-        typeof params.includeTotal == "string"
-          ? params.includeTotal == "true"
-          : params.includeTotal;
-    }
-    const config = offsetPaginationConfigSchema.safeParse({
-      page: stringToNumber(params.page) || 1,
-      limit: stringToNumber(params.limit),
-      filters: this.validateFilterColumnsColumns(
-        this.parseIfExistAndString(params.filters)
-      ),
-      search: this.validateSearchColumnsColumns(
-        this.parseIfExistAndString(params.search)
-      ),
-      sorts: this.validateFilterColumnsColumns(
-        this.parseIfExistAndString(params.sorts)
-      ),
-      includeTotal: params.includeTotal,
-    });
-    if (!config.success) {
-      return {
-        error: new ValidationException(
-          "Pagination Invalid params",
-          formatZodError(config.error)
+        page: stringToNumber(page) || 1,
+        limit: stringToNumber(limit),
+        filters: this.preValidateFilterColumns(
+          filters,
+          defaults?.filters?.(this.table)
         ),
-        data: null,
-      };
+        search: this.preValidateSearchColumns(search, defaults.search),
+        sorts: this.preValidateSortColumns(sorts, defaults.sort),
+        includeTotal: toalInclude,
+        mode: "offset" as IPaginationType,
+      } as typeof this._types.PaginationsConfig;
     }
+
+    const { cursorColumn, cursor } = p;
+
     return {
-      data: { ...config.data, mode: "offset" as IPaginationModes },
-      error: null,
-    };
+      cursor: (cursor as string) || null,
+      limit: stringToNumber(limit),
+      cursorColumn: (cursorColumn || "id") as keyof TTable["$inferSelect"],
+      filters: this.preValidateFilterColumns(
+        filters,
+        defaults.filters?.(this.table)
+      ),
+      search: this.preValidateSearchColumns(search, defaults.search),
+      sorts: this.preValidateSortColumns(sorts, defaults.sort),
+      includeTotal: toalInclude,
+      mode: "cursor" as IPaginationType,
+    } as typeof this._types.PaginationsConfig;
   }
+
   validateCursorPagination(props: CursorPaginationConfig<TTable>) {
     if (props.includeTotal) {
       props.includeTotal =
@@ -580,15 +566,11 @@ export class BaseService<
       cursorColumn: (props.cursorColumn ||
         "id") as keyof TTable["$inferSelect"],
       cursorDirection: (props.cursorDirection as string) || "forward",
-      filters: this.validateFilterColumnsColumns(
+      filters: this.validateFilterColumns(
         this.parseIfExistAndString(props.filters)
       ),
-      search: this.validateSearchColumnsColumns(
-        this.parseIfExistAndString(props.search)
-      ),
-      sorts: this.validateFilterColumnsColumns(
-        this.parseIfExistAndString(props.sorts)
-      ),
+      search: this.validateSearchColumns(props.search),
+      sorts: this.validateSortColumns(props.sorts),
       includeTotal: props.includeTotal,
     });
     if (!config.success) {
@@ -601,31 +583,201 @@ export class BaseService<
       };
     }
     return {
-      data: { ...config.data, mode: "cursor" as IPaginationModes },
+      data: { ...config.data, mode: "cursor" as IPaginationType },
       error: null,
     };
   }
-  validateFilterColumnsColumns<T extends { column: string }>(
-    columns?: T[]
-  ): T[] | undefined {
-    if (columns == null) {
-      return undefined;
+  validateOffsetPagination(params: OffsetPaginationConfig<TTable>) {
+    if (params.includeTotal) {
+      params.includeTotal =
+        typeof params.includeTotal == "string"
+          ? params.includeTotal == "true"
+          : params.includeTotal;
     }
-    const tableColumns = Object.keys(getTableColumns(this.table));
-
-    return columns?.filter((col) => tableColumns.includes(col.column));
+    const config = offsetPaginationConfigSchema.safeParse({
+      page: stringToNumber(params.page) || 1,
+      limit: stringToNumber(params.limit),
+      filters: this.validateFilterColumns(params.filters),
+      search: this.validateSearchColumns(params.search),
+      sorts: this.validateSortColumns(params.sorts),
+      includeTotal: params.includeTotal,
+    });
+    if (!config.success) {
+      return {
+        error: new ValidationException(
+          "Pagination Invalid params",
+          formatZodError(config.error)
+        ),
+        data: null,
+      };
+    }
+    return {
+      data: { ...config.data, mode: "offset" as IPaginationType },
+      error: null,
+    };
   }
-  validateSearchColumnsColumns<T extends { columns: string[] }>(
-    search?: T
-  ): T | undefined {
-    if (search == null || !search?.columns?.length) {
+  validateFilterColumns(
+    filters: FilterCondition<TTable>[] | string | undefined
+  ) {
+    const s = filters;
+    let parsedResult = this.parseIfExistAndString(
+      s
+    ) as FilterCondition<TTable>[];
+    if (parsedResult == null) {
+      return undefined;
+    }
+    if (typeof parsedResult == "string") {
+      return undefined;
+    }
+    if (!parsedResult.length) {
+      return undefined;
+    }
+    const tableColumns = Object.keys(this.columns);
+
+    return parsedResult?.filter((col) =>
+      tableColumns.includes(col.column as string)
+    );
+  }
+  validateSortColumns(sort: SortConfig<TTable>[] | string | undefined) {
+    const s = sort;
+    let parsedResult = this.parseIfExistAndString(s) as SortConfig<TTable>[];
+    if (parsedResult == null) {
+      return undefined;
+    }
+    if (typeof parsedResult == "string") {
+      return undefined;
+    }
+    if (!parsedResult.length) {
+      return undefined;
+    }
+    const tableColumns = Object.keys(this.columns);
+
+    return parsedResult?.filter((col) =>
+      tableColumns.includes(col.column as string)
+    );
+  }
+  validateSearchColumns(search: SearchConfig<TTable> | string | undefined) {
+    const s = search;
+    let parsedResult = this.parseIfExistAndString(s);
+    if (parsedResult == null) {
+      return undefined;
+    }
+    if (typeof parsedResult == "string") {
+      return undefined;
+    }
+    console.log(
+      parsedResult,
+      (parsedResult?.term || "")?.trim(),
+      "validateSearchColumns"
+    );
+    if ((parsedResult?.term || "")?.trim() == "") {
+      return undefined;
+    }
+    if (!parsedResult?.columns?.length) {
+      return undefined;
+    }
+    const tableColumns = Object.keys(this.columns);
+    const result = {
+      ...parsedResult,
+      columns: parsedResult?.columns?.filter((col) =>
+        tableColumns.includes(col)
+      ),
+    };
+
+    return result;
+  }
+  preValidateFilterColumns(
+    filters: FilterCondition<TTable>[] | string | undefined,
+    defaultfilters: FilterCondition<TTable>[] | undefined = []
+  ) {
+    const s = filters;
+    let parsedResult = this.parseIfExistAndString(
+      s
+    ) as FilterCondition<TTable>[];
+    if (parsedResult == null) {
+      if (defaultfilters.length > 0) {
+        return defaultfilters;
+      }
+      return undefined;
+    }
+    if (typeof parsedResult == "string") {
+      if (defaultfilters.length > 0) {
+        return defaultfilters;
+      }
+      return undefined;
+    }
+    if (!parsedResult.length) {
+      if (defaultfilters.length > 0) {
+        return defaultfilters;
+      }
       return undefined;
     }
     const tableColumns = Object.keys(getTableColumns(this.table));
+    const newResultedArray =
+      defaultfilters.length > 0
+        ? [...defaultfilters, ...parsedResult]
+        : parsedResult;
+    return newResultedArray?.filter((col) =>
+      tableColumns.includes(col.column as string)
+    );
+  }
+  preValidateSortColumns(
+    sort: SortConfig<TTable>[] | string | undefined,
+    defaultColumn: keyof TTable["$inferSelect"] = "created_at"
+  ) {
+    const s = sort;
+    let parsedResult = this.parseIfExistAndString(s) as SortConfig<TTable>[];
+    if (parsedResult == null) {
+      return undefined;
+    }
+    if (typeof parsedResult == "string") {
+      if (["asc", "desc"].includes(parsedResult)) {
+        return [
+          {
+            column: defaultColumn ? defaultColumn : undefined,
+            direction: parsedResult,
+          },
+        ] as SortConfig<TTable>[];
+      }
+      return undefined;
+    }
+    if (!parsedResult.length) {
+      return undefined;
+    }
+    const tableColumns = Object.keys(this.columns);
+
+    return parsedResult?.filter((col) =>
+      tableColumns.includes(col.column as string)
+    );
+  }
+  preValidateSearchColumns(
+    search: SearchConfig<TTable> | string | undefined,
+    defaultColumn: keyof TTable["$inferSelect"]
+  ) {
+    const s = search;
+    let parsedResult = this.parseIfExistAndString(s);
+    if (parsedResult == null) {
+      return undefined;
+    }
+    if (typeof parsedResult == "string") {
+      return {
+        columns: defaultColumn ? [defaultColumn] : [],
+        term: parsedResult,
+      } as SearchConfig<TTable>;
+    }
+    if ((parsedResult?.term || "")?.trim() == "") {
+      return undefined;
+    }
+    if (!parsedResult?.columns?.length) {
+      parsedResult.columns.push(defaultColumn);
+    }
+    const tableColumns = Object.keys(this.columns);
 
     return {
-      ...search,
-      columns: search?.columns?.filter((col) => tableColumns.includes(col)),
+      ...parsedResult,
+      columns: parsedResult?.columns?.filter((col) =>
+        tableColumns.includes(col)
+      ),
     };
   }
   parseIfExistAndString(value: any) {
@@ -638,7 +790,11 @@ export class BaseService<
     if (typeof value == "string" && value.trim() == "") {
       return undefined;
     }
-
-    return JSON.parse(value);
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      return value;
+    }
   }
+  /*******************************************************Advanced pagination ****************************************************** */
 }

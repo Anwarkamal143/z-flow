@@ -12,7 +12,7 @@ import {
   useSuspensePagination,
 } from "@/queries/pagination/hooks";
 import useQueryFn from "@/queries/useQueryFn";
-import { IPaginationModes } from "@/queries/v1";
+import { IPaginationModes } from "@/queries/v1/types";
 import { workflowListqueryOptions } from "./query-options";
 
 export const useOffsetGetAllWorkflows = (
