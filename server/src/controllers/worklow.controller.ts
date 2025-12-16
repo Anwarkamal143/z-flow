@@ -125,18 +125,15 @@ class WorkflowController {
     _rep: FastifyReply
   ) {
     const userId = req.user!.id;
-
-    const validationResult = workflowService.validatePagination(req.query);
-    if (validationResult.error) {
-      throw validationResult.error;
-    }
-    const config = validationResult.data;
+    const validaionResult = workflowService.validateQuery(req.query as any, {
+      search: "name",
+      sort: "id",
+      filters() {
+        return [{ column: "userId", operator: "eq", value: userId }];
+      },
+    }) as WorkflowPaginationConfig;
     const result = await workflowService.listAllPaginatedWorkflowsV2({
-      ...config,
-      filters: [
-        ...(config.filters || []),
-        { column: "userId", operator: "eq", value: userId },
-      ],
+      ...validaionResult,
     });
     if (result.error) {
       throw result.error;
@@ -146,6 +143,36 @@ class WorkflowController {
       data: result.data,
     });
   }
+
+  // public async getAllv2(
+  //   req: FastifyRequest<{
+  //     Querystring: WorkflowPaginationConfig;
+  //   }>,
+  //   _rep: FastifyReply
+  // ) {
+  //   const userId = req.user!.id;
+
+  //   const validationResult = workflowService.validatePagination(req.query);
+  //   console.log(validationResult, "ValidateResult");
+  //   if (validationResult.error) {
+  //     throw validationResult.error;
+  //   }
+  //   const config = validationResult.data;
+  //   const result = await workflowService.listAllPaginatedWorkflowsV2({
+  //     ...config,
+  //     filters: [
+  //       ...(config.filters || []),
+  //       { column: "userId", operator: "eq", value: userId },
+  //     ],
+  //   });
+  //   if (result.error) {
+  //     throw result.error;
+  //   }
+  //   return SuccessResponse(_rep, {
+  //     message: "workflows found",
+  //     data: result.data,
+  //   });
+  // }
 }
 
 // Export a singleton instance

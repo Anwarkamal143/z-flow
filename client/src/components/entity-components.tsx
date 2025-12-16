@@ -1,6 +1,7 @@
-import { PlusIcon } from "@/assets/icons";
+import { PlusIcon, SearchIcon } from "@/assets/icons";
 import Link from "next/link";
 import ButtonLoader from "./button-loader";
+import InputComponent from "./Input";
 
 type EntityHeaderProps = {
   title: string;
@@ -79,4 +80,36 @@ export const EntityContainer = ({
       {pagination}
     </div>
   );
+};
+
+interface EntitySearchProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  error?: string;
+}
+
+export const EntitySearch = ({
+  value,
+  onChange,
+  placeholder = "Search",
+  error,
+}: EntitySearchProps) => {
+  return (
+    <div className="left-3 top-1/2 -translate-y-1/2 text-muted-foreground ml-auto">
+      <InputComponent
+        className="max-w-[200px]"
+        rightIcon={{
+          Icon: <SearchIcon />,
+        }}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rounded={"xs"}
+        error={error}
+      />
+    </div>
+  );
+
+  return null;
 };

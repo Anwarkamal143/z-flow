@@ -56,3 +56,34 @@ export function getSingularPlural(name: string) {
 }
 export const sleep = (ms: number = 5000): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+export const isNotEmpty = (value: unknown): boolean => {
+  if (value == null) return false;
+
+  // string: non-whitespace characters
+  if (typeof value == "string") {
+    return value.trim().length > 0;
+  }
+
+  // number: finite values count as non-empty
+  if (typeof value == "number") {
+    return Number.isFinite(value);
+  }
+
+  // boolean: always has a value
+  if (typeof value == "boolean") {
+    return true;
+  }
+
+  // array: must have at least one item
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  // object: must have at least one key
+  if (typeof value == "object") {
+    return Object.keys(value).length > 0;
+  }
+
+  return false;
+};

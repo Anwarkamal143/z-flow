@@ -2,6 +2,7 @@ import AppError from "@/utils/app-error";
 import { AnyPgTable, PgColumn } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
+export type IPaginationType = "cursor" | "offset";
 // Base types
 export type Column = PgColumn;
 export type Table = AnyPgTable;
