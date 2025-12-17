@@ -120,8 +120,8 @@ export function useSuspensePagination<
       if (params.filters != null) update.filters = params.filters;
       if (params.sorts != null) update.sorts = params.sorts;
       if (params.search != null) update.search = params.search;
-      if (params.includeTotal != null)
-        update.includeTotal = params.includeTotal;
+      // if (params.includeTotal != null)
+      //   update.includeTotal = params.includeTotal;
     }
     return update;
   }
@@ -471,8 +471,8 @@ export function useSuspenseCursorPagination<
       if (params.filters != null) update.filters = params.filters;
       if (params.sorts != null) update.sorts = params.sorts;
       if (params.search != null) update.search = params.search;
-      if (params.includeTotal != null)
-        update.includeTotal = params.includeTotal;
+      // if (params.includeTotal != null)
+      //   update.includeTotal = params.includeTotal;
     }
     return update;
   }
