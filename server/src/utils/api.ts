@@ -1,10 +1,13 @@
 import { IPaginationMeta } from "@/services/pagination/types";
 
-export function calculateTotalPages(total: number = 0, limit?: number): number {
-  if (total > 0) {
+export function calculateTotalPages(
+  total: number = 0,
+  limit?: number
+): number | undefined {
+  if (total && total > 0) {
     return limit != null && limit > 0 ? Math.ceil(total / limit) : 1;
   }
-  return 0;
+  return undefined;
 }
 export function buildSimplePaginationMetaCursor({
   items,
@@ -16,7 +19,7 @@ export function buildSimplePaginationMetaCursor({
 }: {
   items: any[];
   limit?: number;
-  total: number;
+  total?: number;
   cursor: number | string;
   hasMore: boolean;
   columnName: string;
@@ -44,7 +47,7 @@ export function buildPaginationMetaCursor({
   previous,
 }: {
   limit?: number;
-  total: number;
+  total?: number;
   cursor: number | string;
   hasMore: boolean;
   next?: string;
@@ -69,7 +72,7 @@ export function buildPaginationMetaForOffset({
   hasMore,
 }: {
   limit?: number;
-  total: number;
+  total?: number;
   page?: number;
   hasMore: boolean;
 }): IPaginationMeta {

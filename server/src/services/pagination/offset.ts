@@ -33,23 +33,34 @@ export class OffsetPagination<T extends AnyPgTable> extends BasePagination<T> {
     if (limitNum != null) {
       // Apply pagination
       const offset = (config.page - 1) * limitNum;
-      query.limit(limitNum).offset(offset);
+      const limitPlusOne = limitNum + 1;
+      query.limit(limitPlusOne).offset(offset);
     }
 
     // Execute query
     const items = (await query) as Result[];
 
     // Get total count
-    const totalItems = await this.getTotalCount(whereClause);
-    const totalPages = limitNum != null ? Math.ceil(totalItems / limitNum) : 1;
-    const hasNextPage = config.page < totalPages;
+    let totalItems = config.includeTotal
+      ? await this.getTotalCount(whereClause)
+      : undefined;
+    if (limitNum == null && !config.includeTotal) {
+      totalItems = items.length;
+    }
+    let totalPages = items.length > 0 ? 1 : 0;
+    if (limitNum != null && totalItems) {
+      totalPages = Math.ceil(totalItems / limitNum);
+    }
+    const hasNextPage =
+      config.page < totalPages || items.length > (limitNum || 0);
     // const hasPreviousPage = config.page > 1;
-
+    const newItems =
+      limitNum && items.length > limitNum ? items.slice(0, -1) : items;
     return {
       data: {
-        items,
+        items: newItems,
         pagination_meta: buildPaginationMetaForOffset({
-          limit: limitNum != null ? limitNum : totalItems,
+          limit: limitNum,
           total: totalItems,
           page: config.page,
           hasMore: hasNextPage,

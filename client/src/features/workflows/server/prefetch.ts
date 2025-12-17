@@ -1,10 +1,13 @@
 import { optionsWithCookies } from "@/lib";
-import { workflowClient } from "@/models/v1/Workflow.model";
+import {
+  workflowClient,
+  WorkflowClientListOptions,
+} from "@/models/v1/Workflow.model";
 import { workflowListqueryOptions } from "../api/query-options";
 
 export const prefetchServerWorkflows = (
   cookies?: string,
-  props: typeof workflowClient.listOptions = {}
+  props: WorkflowClientListOptions = {}
 ) => {
   const queryOptions = { ...workflowListqueryOptions, ...props };
   workflowClient.prefetchList({

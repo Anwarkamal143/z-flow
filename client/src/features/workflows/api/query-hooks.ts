@@ -1,18 +1,11 @@
 "use client";
+import { workflowClient, WorkflowClientListOptions } from "@/models";
 import {
-  WorkFlowClient,
-  workflowClient,
-  WorkFlowClientEntity,
-  WorkflowClientListOptions,
-} from "@/models";
-import {
-  IuseSuspenseCursorPaginationType,
-  IuseSuspenseOffSetPaginationType,
   useOffsetPaginationList,
-  useSuspensePagination,
+  useSuspnseOffsetPagination,
 } from "@/queries/pagination/hooks";
 import useQueryFn from "@/queries/useQueryFn";
-import { IPaginationModes } from "@/queries/v1/types";
+import { IListCallOptions } from "@/queries/v1/types";
 import { workflowListqueryOptions } from "./query-options";
 
 export const useOffsetGetAllWorkflows = (
@@ -24,32 +17,25 @@ export const useOffsetGetAllWorkflows = (
   });
 };
 
-type IMode<T> = T extends undefined ? "offset" : T;
-export const useSuspenseWorkflows = <
-  Mode extends IPaginationModes | undefined,
-  T extends WorkflowClientListOptions<
-    IMode<Mode>,
-    true
-  > = WorkflowClientListOptions<IMode<Mode>, true>
+export const useSuspenseOffsetWorkflows = <
+  T extends Omit<
+    IListCallOptions<Partial<IWorkflow>, false, "offset">,
+    "mode"
+  > = Omit<IListCallOptions<Partial<IWorkflow>, false, "offset">, "mode">
 >(
-  props: T & {
-    mode?: Mode;
-  }
+  props?: T
 ) => {
-  const mode = (props?.mode || props?.params?.mode || "offset") as Mode;
-  const result = useSuspensePagination(workflowClient, {
+  const mode = "offset";
+  return useSuspnseOffsetPagination(workflowClient, {
     ...workflowListqueryOptions,
     ...props,
     mode,
     params: {
+      includeTotal: true,
       ...(props?.params || {}),
       mode,
     },
   });
-  // return result;
-  return result as Mode extends "cursor"
-    ? IuseSuspenseCursorPaginationType<WorkFlowClient, WorkFlowClientEntity>
-    : IuseSuspenseOffSetPaginationType<WorkFlowClient, WorkFlowClientEntity>;
 };
 export const useSuspenseCursorListWorkflows = useQueryFn(
   workflowClient.useInfiniteList

@@ -72,13 +72,11 @@ export class CursorPagination<T extends AnyPgTable> extends BasePagination<T> {
     }
 
     // Execute query
-    const items = (await query) as Result[];
+    const cursorItems = (await query) as Result[];
 
     // Check if we have extra item
-    const hasExtra = limitNum != null ? items.length > limitNum : false;
-    if (hasExtra) {
-      items.pop(); // Remove extra item
-    }
+    const hasExtra = limitNum != null ? cursorItems?.length > limitNum : false;
+    const items = hasExtra ? cursorItems?.slice(0, -1) : cursorItems;
 
     // Determine next/previous cursors
     let nextCursor: string | null = null;
@@ -106,12 +104,18 @@ export class CursorPagination<T extends AnyPgTable> extends BasePagination<T> {
     }
 
     // Get total count if requested
-    let totalItems: number = items.length;
     // let totalPages: number = 0;
 
-    if (config.includeTotal) {
-      totalItems = await this.getTotalCount(whereClause);
-      // totalPages = limitNum != null ? Math.ceil(totalItems / limitNum) : 1;
+    // Get total count
+    let totalItems = config.includeTotal
+      ? await this.getTotalCount(whereClause)
+      : undefined;
+    if (limitNum == null && !config.includeTotal) {
+      totalItems = items.length;
+    }
+    let totalPages = items.length > 0 ? 1 : 0;
+    if (limitNum != null && totalItems) {
+      totalPages = Math.ceil(totalItems / limitNum);
     }
 
     // return {

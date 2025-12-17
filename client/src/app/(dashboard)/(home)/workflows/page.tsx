@@ -24,20 +24,20 @@ const WorkFlowPage = async (props: Props) => {
 
   void prefetchServerWorkflows(resp?.cookie, {
     params: {
-      ...parseServerPaginationParams(params),
+      ...parseServerPaginationParams({ ...params, includeTotal: "true" }),
     },
   });
 
   return (
-    <WorkflowsContainer>
-      <HydrateClient>
-        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-          <Suspense fallback={<Dataloader message="Workflows loading.." />}>
+    <HydrateClient>
+      <ErrorBoundary fallback={<div>Something went wrong</div>}>
+        <Suspense fallback={<Dataloader message="Workflows loading.." />}>
+          <WorkflowsContainer>
             <Workflows />
-          </Suspense>
-        </ErrorBoundary>
-      </HydrateClient>
-    </WorkflowsContainer>
+          </WorkflowsContainer>
+        </Suspense>
+      </ErrorBoundary>
+    </HydrateClient>
   );
 };
 

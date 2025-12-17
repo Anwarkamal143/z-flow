@@ -77,8 +77,8 @@ export type IPaginationMeta = {
   current?: number | string;
   next?: number | string;
   previous?: number | string | null;
-  totalRecords: number;
-  totalPages: number;
+  totalRecords?: number;
+  totalPages?: number;
   limit?: number;
   direction?: "forward" | "backward";
   hasMore?: boolean;

@@ -251,15 +251,12 @@ export function useSuspensePagination<
 /******************** useSuspnse offset and Cursor hooks **************************** */
 export function useSuspnseOffsetPagination<
   Client extends Record<string, any>,
-  Options extends IListCallOptions<Client["Entity"], false, "offset">,
+  Options extends IListCallOptions<Client["Entity"], true, "offset">,
   Entity extends Record<string, any> = Client["Entity"]
 >(
   client: Client,
   props?: Options
-): ReturnType<Client["useSuspenseList"]> &
-  ReturnType<typeof useOffsetPaginationParams<Entity>> & {
-    pagination_meta: IPaginationMeta;
-  } {
+): IuseSuspenseOffSetPaginationType<Client, Entity> {
   // Use the URL-based pagination params
   const {
     params: urlParams,
@@ -309,8 +306,8 @@ export function useSuspnseOffsetPagination<
       if (params.filters != null) update.filters = params.filters;
       if (params.sorts != null) update.sorts = params.sorts;
       if (params.search != null) update.search = params.search;
-      if (params.includeTotal != null)
-        update.includeTotal = params.includeTotal;
+      // if (params.includeTotal != null)
+      //   update.includeTotal = params.includeTotal;
     }
     return update;
   }
@@ -410,10 +407,7 @@ export function useSuspenseCursorPagination<
 >(
   client: Client,
   props?: Options
-): ReturnType<Client["useSuspenseList"]> &
-  ReturnType<typeof useCursorPaginationParams<Entity>> & {
-    pagination_meta: IPaginationMeta;
-  } {
+): IuseSuspenseCursorPaginationType<Client, Entity> {
   // Use the URL-based pagination params
   const {
     params: urlParams,

@@ -22,21 +22,19 @@ const useEntitySearch = <
   setParams,
   debounceMs = 500,
 }: IEntitySearchProps<T>) => {
-  const [localSearch, setLocalSearch] = useState<string | null>(
-    params.search.trim()
-  );
+  const [localSearch, setLocalSearch] = useState<string>(params.search?.trim());
 
   useEffect(() => {
-    if (localSearch == "" && params.search != "") {
+    if (localSearch == "" && params?.search != "") {
       setParams({
         ...params,
-        search: null,
+        search: "",
         page: PAGINATION.DEFAULT_PAGE,
       });
       return;
     }
     const timer = setTimeout(() => {
-      if (localSearch != params.search) {
+      if (localSearch != params?.search) {
         setParams({
           ...params,
           search: localSearch,
@@ -51,8 +49,7 @@ const useEntitySearch = <
   }, [localSearch, params.search, debounceMs]);
 
   useEffect(() => {
-    const value = params.search.trim() != "" ? params.search : null;
-    setLocalSearch(value);
+    setLocalSearch(params.search?.trim());
   }, [params.search]);
 
   return { searchValue: localSearch, onSearchChange: setLocalSearch };

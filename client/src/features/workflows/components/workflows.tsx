@@ -1,9 +1,9 @@
 "use client";
 
-import ButtonLoader from "@/components/button-loader";
 import {
   EntityContainer,
   EntityHeader,
+  EntityPaination,
   EntitySearch,
 } from "@/components/entity-components";
 import useEntitySearch from "@/hooks/use-entity-search";
@@ -12,64 +12,16 @@ import { useOffsetPaginationParams } from "@/queries/pagination/hooks/use-pagina
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCreateWorkflow, useDeleteWorkflows } from "../api";
-import { useSuspenseWorkflows } from "../api/query-hooks";
+import { useSuspenseOffsetWorkflows } from "../api/query-hooks";
 
 type Props = {};
 
 const Workflows = (props: Props) => {
-  const { data, pagination_meta, setSearch, isLoading } = useSuspenseWorkflows({
-    mode: "offset",
-  });
+  const { data } = useSuspenseOffsetWorkflows();
   const { handleDelete } = useDeleteWorkflows();
   const router = useRouter();
   return (
     <div className="">
-      <div className="flex gap-x-3 justify-center">
-        <ButtonLoader
-          onClick={async () => {
-            await handleDelete();
-          }}
-        >
-          Delete workflows
-        </ButtonLoader>
-
-        <ButtonLoader
-          onClick={() => {
-            // setPage(data?.pagination_meta.next as number);
-            router.push("/server?server=true");
-          }}
-        >
-          Server
-        </ButtonLoader>
-        <ButtonLoader
-          onClick={() => {
-            // setPage(data?.pagination_meta.next as number);
-            setSearch({
-              columns: ["name"],
-              mode: "all",
-              term: "abundant",
-            });
-          }}
-        >
-          Search
-        </ButtonLoader>
-        <ButtonLoader
-          onClick={() => {
-            // setPage(data?.pagination_meta.next as number);
-            setSearch(null);
-          }}
-        >
-          Clear Search
-        </ButtonLoader>
-
-        <ButtonLoader
-          onClick={() => {
-            router.push("/workflows?server=true");
-          }}
-        >
-          workflows
-        </ButtonLoader>
-      </div>
       {JSON.stringify(data?.items, null, 2)}
       <br />
       <br />
@@ -81,25 +33,27 @@ const Workflows = (props: Props) => {
 export default Workflows;
 
 export const WorkflowSearch = () => {
-  const { setParams: setUrlParams, params } =
-    useOffsetPaginationParams<IWorkflow>();
+  const {
+    setParams: setUrlParams,
+    params,
+    search,
+  } = useOffsetPaginationParams<IWorkflow>();
   const { searchValue, onSearchChange } = useEntitySearch({
     setParams(params) {
       setUrlParams({
         search: searchValue,
-
         page: params.page,
       });
     },
     params: {
       page: params.page as unknown as number,
-      search: (params.search || "") as string,
+      search: (search || "") as string,
     },
   });
   return (
     <EntitySearch
       placeholder="Search workflows"
-      value={searchValue || ""}
+      value={searchValue}
       onChange={(e) => {
         onSearchChange(e);
       }}
@@ -134,6 +88,19 @@ export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
     </>
   );
 };
+
+export const WorkflowPagination = () => {
+  const { pagination_meta } = useSuspenseOffsetWorkflows();
+  const { page, setPage } = useOffsetPaginationParams<IWorkflow>();
+  return (
+    <EntityPaination
+      page={page}
+      onPageChange={setPage}
+      totalPages={pagination_meta?.totalPages}
+      isNext={!!pagination_meta?.next}
+    />
+  );
+};
 export const WorkflowsContainer = ({
   children,
 }: {
@@ -144,7 +111,7 @@ export const WorkflowsContainer = ({
       <EntityContainer
         header={<WorkflowsHeader />}
         search={<WorkflowSearch />}
-        pagination={<></>}
+        pagination={<WorkflowPagination />}
       >
         {children}
       </EntityContainer>
