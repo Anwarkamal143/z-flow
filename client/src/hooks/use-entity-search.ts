@@ -1,37 +1,37 @@
-import { PAGINATION } from "@/config/constants";
-import { useEffect, useState } from "react";
+import { PAGINATION } from '@/config/constants'
+import { useEffect, useState } from 'react'
 
 type IEntitySearchProps<
   T extends {
-    search: string;
-    page: number;
-  }
+    search: string
+    page: number
+  },
 > = {
-  setParams: (params: T) => void;
-  params: T;
-  debounceMs?: number;
-};
+  setParams: (params: T) => void
+  params: T
+  debounceMs?: number
+}
 
 const useEntitySearch = <
   T extends {
-    search: string;
-    page: number;
-  }
+    search: string
+    page: number
+  },
 >({
   params,
   setParams,
   debounceMs = 500,
 }: IEntitySearchProps<T>) => {
-  const [localSearch, setLocalSearch] = useState<string>(params.search?.trim());
+  const [localSearch, setLocalSearch] = useState<string>(params.search?.trim())
 
   useEffect(() => {
-    if (localSearch == "" && params?.search != "") {
+    if (localSearch == '' && params?.search != '') {
       setParams({
         ...params,
-        search: "",
+        search: '',
         page: PAGINATION.DEFAULT_PAGE,
-      });
-      return;
+      })
+      return
     }
     const timer = setTimeout(() => {
       if (localSearch != params?.search) {
@@ -39,20 +39,20 @@ const useEntitySearch = <
           ...params,
           search: localSearch,
           page: PAGINATION.DEFAULT_PAGE,
-        });
+        })
       }
-    }, debounceMs);
+    }, debounceMs)
 
     return () => {
-      clearTimeout(timer);
-    };
-  }, [localSearch, params.search, debounceMs]);
+      clearTimeout(timer)
+    }
+  }, [localSearch, params.search, debounceMs])
 
   useEffect(() => {
-    setLocalSearch(params.search?.trim());
-  }, [params.search]);
+    setLocalSearch(params.search?.trim()) // eslint-disable-line
+  }, [params.search])
 
-  return { searchValue: localSearch, onSearchChange: setLocalSearch };
-};
+  return { searchValue: localSearch, onSearchChange: setLocalSearch }
+}
 
-export default useEntitySearch;
+export default useEntitySearch

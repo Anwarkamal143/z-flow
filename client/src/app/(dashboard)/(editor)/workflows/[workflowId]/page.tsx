@@ -1,13 +1,13 @@
-import { authSession } from "@/lib/auth/auth";
+import { authSession } from '@/lib/auth/auth'
 
 type IPageProps = {
-  params: Promise<{ workflowId: string }>;
-};
+  params: Promise<{ workflowId: string }>
+}
 
 const WorkflowPage = async (props: IPageProps) => {
-  await authSession();
-  const { workflowId } = await props.params;
-  return <div>Workflow Id: {workflowId}</div>;
-};
+  await authSession()
+  const { workflowId } = await props.params
+  return <div>Workflow Id: {workflowId}</div>
+}
 
-export default WorkflowPage;
+export default WorkflowPage

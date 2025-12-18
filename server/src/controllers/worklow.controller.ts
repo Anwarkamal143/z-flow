@@ -4,7 +4,7 @@ import {
   WorkflowPaginationConfig,
   workflowService,
 } from "@/services/workflow.service";
-import { formatZodError, sleep } from "@/utils";
+import { formatZodError } from "@/utils";
 import { BadRequestException, ValidationException } from "@/utils/catch-errors";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
@@ -135,7 +135,6 @@ class WorkflowController {
     const result = await workflowService.listAllPaginatedWorkflowsV2({
       ...validaionResult,
     });
-    await sleep(3000);
     if (result.error) {
       throw result.error;
     }

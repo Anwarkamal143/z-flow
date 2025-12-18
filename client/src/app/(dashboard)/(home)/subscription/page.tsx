@@ -1,14 +1,14 @@
-"use client";
-import Dataloader from "@/components/loaders";
-import { useHasActiveSubscription } from "@/features/payments/subscriptions";
+'use client'
+import Dataloader from '@/components/loaders'
+import { useHasActiveSubscription } from '@/features/payments/subscriptions'
 
 const SubscriptionPage = () => {
   const { subscription, hasActiveSubscription, isSubscriptionLoading } =
-    useHasActiveSubscription();
+    useHasActiveSubscription()
   if (isSubscriptionLoading) {
-    return <Dataloader message="Subscription loading..." />;
+    return <Dataloader message='Subscription loading...' />
   }
-  return <div>{JSON.stringify(subscription)}</div>;
-};
+  return <div>{JSON.stringify(subscription)}</div>
+}
 
-export default SubscriptionPage;
+export default SubscriptionPage

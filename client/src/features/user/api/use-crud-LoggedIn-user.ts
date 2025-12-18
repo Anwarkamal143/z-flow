@@ -1,8 +1,8 @@
-import { userClient } from "@/models";
-import useQueryFn from "@/queries/useQueryFn";
-import { USER_PATHS, USER_QUERY } from "../paths";
+import { userClient } from '@/models'
+import getQueryFn from '@/queries/useQueryFn'
+import { USER_PATHS, USER_QUERY } from '../paths'
 
-export const useGetLoggedInUser = useQueryFn(
+export const useGetLoggedInUser = getQueryFn(
   userClient.useGet<{ accessToken: string; refreshToken: string }>,
   {
     id: USER_PATHS.me,
@@ -10,5 +10,5 @@ export const useGetLoggedInUser = useQueryFn(
     queryOptions: {
       staleTime: 60 * 1000,
     },
-  }
-);
+  },
+)

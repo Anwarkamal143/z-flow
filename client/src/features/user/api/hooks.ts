@@ -1,6 +1,6 @@
-import { userClient } from "@/models";
-import useQueryFn from "@/queries/useQueryFn";
+import { userClient } from '@/models'
+import getQueryFn from '@/queries/useQueryFn'
 
-export const useGetAllUsers = useQueryFn(userClient.useList);
+export const useGetAllUsers = getQueryFn(userClient.useList)
 
-export const useCursorGetAllUsers = useQueryFn(userClient.useInfiniteList);
+export const useCursorGetAllUsers = getQueryFn(userClient.useInfiniteList)

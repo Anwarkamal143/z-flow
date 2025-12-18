@@ -1,2 +1,2 @@
-import "./isArray";
-import "./intersection-observer";
+import './isArray'
+import './intersection-observer'

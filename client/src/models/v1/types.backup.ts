@@ -1,34 +1,34 @@
-type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never;
+type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never
 
 export type hooksOptionsTypes<Client extends Record<string, any>> = {
   /** GET (single item) */
-  GetQueryOptions: ExtractHookParams<Client["useGet"]>[0];
-  GetSuspenseQueryOptions: ExtractHookParams<Client["useSuspenseGet"]>[0];
+  GetQueryOptions: ExtractHookParams<Client['useGet']>[0]
+  GetSuspenseQueryOptions: ExtractHookParams<Client['useSuspenseGet']>[0]
 
   /** GET MANY */
-  GetManyQueryOptions: ExtractHookParams<Client["useGetQuries"]>[0];
+  GetManyQueryOptions: ExtractHookParams<Client['useGetQuries']>[0]
   GetManySuspenseQueryOptions: ExtractHookParams<
-    Client["useSuspenseGetQuries"]
-  >[0];
+    Client['useSuspenseGetQuries']
+  >[0]
 
   /** LIST (paginated) */
-  ListQueryOptions: ExtractHookParams<Client["useList"]>[0];
-  ListSuspenseQueryOptions: ExtractHookParams<Client["useSuspenseList"]>[0];
+  ListQueryOptions: ExtractHookParams<Client['useList']>[0]
+  ListSuspenseQueryOptions: ExtractHookParams<Client['useSuspenseList']>[0]
 
   /** INFINITE LIST */
-  InfiniteListQueryOptions: ExtractHookParams<Client["useCursorList"]>[0];
+  InfiniteListQueryOptions: ExtractHookParams<Client['useCursorList']>[0]
   InfiniteListSuspenseQueryOptions: ExtractHookParams<
-    Client["useSuspenseCursorList"]
-  >[0];
+    Client['useSuspenseCursorList']
+  >[0]
 
   /** POST */
-  PostOptions: ExtractHookParams<Client["usePost"]>[0];
+  PostOptions: ExtractHookParams<Client['usePost']>[0]
 
   /** MUTATIONS */
-  CreateMutationOptions: ExtractHookParams<Client["useCreate"]>[0];
-  UpdateMutationOptions: ExtractHookParams<Client["useUpdate"]>[0];
-  DeleteMutationOptions: ExtractHookParams<Client["useDelete"]>[0];
-};
+  CreateMutationOptions: ExtractHookParams<Client['useCreate']>[0]
+  UpdateMutationOptions: ExtractHookParams<Client['useUpdate']>[0]
+  DeleteMutationOptions: ExtractHookParams<Client['useDelete']>[0]
+}
 
 // type ExtractParams<T> = T extends (...args: infer P) => any ? P : never;
 

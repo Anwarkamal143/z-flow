@@ -90,23 +90,23 @@ It combines **event streaming**, **background job processing**, and **workflow o
 ## ⚙️ Example Workflow (Code)
 
 ```ts
-import { Workflow, Trigger, Action } from "./core";
+import { Workflow, Trigger, Action } from './core'
 
 export const userSignupFlow = new Workflow({
-  name: "User Signup Workflow",
-  trigger: Trigger.event("user.signup"),
+  name: 'User Signup Workflow',
+  trigger: Trigger.event('user.signup'),
   actions: [
-    Action.run("Send Slack Notification", async ({ data }) => {
-      await slack.sendMessage(`#signups`, `🎉 New signup: ${data.email}`);
+    Action.run('Send Slack Notification', async ({ data }) => {
+      await slack.sendMessage(`#signups`, `🎉 New signup: ${data.email}`)
     }),
-    Action.delay("Wait 3 days"),
-    Action.run("Send Follow-up Email", async ({ data }) => {
+    Action.delay('Wait 3 days'),
+    Action.run('Send Follow-up Email', async ({ data }) => {
       await email.send({
         to: data.email,
-        subject: "How’s it going?",
-        text: "We noticed you joined a few days ago. Need help?",
-      });
+        subject: 'How’s it going?',
+        text: 'We noticed you joined a few days ago. Need help?',
+      })
     }),
   ],
-});
+})
 ```

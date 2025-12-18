@@ -1,26 +1,25 @@
-"use client";
-import { Loader } from "@/components/loaders";
-import { useGetLoggedInUser } from "@/features/user/api";
+'use client'
+import { Loader } from '@/components/loaders'
+import { useGetLoggedInUser } from '@/features/user/api'
 import {
   useStoreAuthActions,
   useStoreUserIsAuthenticating,
-} from "@/store/userAuthStore";
-import { ReactNode, useEffect } from "react";
-import SocketContextProvider from "./SocketProvider";
+} from '@/store/userAuthStore'
+import { ReactNode, useEffect } from 'react'
+import SocketContextProvider from './SocketProvider'
 
 type IAppWrapper = {
-  children: ReactNode;
-};
+  children: ReactNode
+}
 
 const AppWrapper = ({ children }: IAppWrapper) => {
-  const { data: userData, isLoading: isFirstTimeLoading } =
-    useGetLoggedInUser();
-  const { setUser } = useStoreAuthActions();
-  const isAuthenticating = useStoreUserIsAuthenticating();
+  const { data: userData, isLoading: isFirstTimeLoading } = useGetLoggedInUser()
+  const { setUser } = useStoreAuthActions()
+  const isAuthenticating = useStoreUserIsAuthenticating()
   useEffect(() => {
-    if (isFirstTimeLoading) return;
+    if (isFirstTimeLoading) return
     if (userData?.data?.id) {
-      const { accounts, accessToken, refreshToken, ...rest } = userData.data;
+      const { accounts, accessToken, refreshToken, ...rest } = userData.data
       setUser({
         user: rest,
         accounts,
@@ -30,8 +29,8 @@ const AppWrapper = ({ children }: IAppWrapper) => {
         isTokensRefreshing: false,
         accessToken,
         refreshToken,
-      });
-      return;
+      })
+      return
     }
     setUser({
       user: undefined,
@@ -42,14 +41,14 @@ const AppWrapper = ({ children }: IAppWrapper) => {
       isTokensRefreshing: false,
       accessToken: undefined,
       refreshToken: undefined,
-    });
-  }, [isFirstTimeLoading]);
-  const isLoading = isFirstTimeLoading || isAuthenticating;
+    })
+  }, [isFirstTimeLoading])
+  const isLoading = isFirstTimeLoading || isAuthenticating
   if (isLoading) {
-    return <Loader size="xlg" full />;
+    return <Loader size='xlg' full />
   }
 
-  return <SocketContextProvider>{children}</SocketContextProvider>;
-};
+  return <SocketContextProvider>{children}</SocketContextProvider>
+}
 
-export default AppWrapper;
+export default AppWrapper

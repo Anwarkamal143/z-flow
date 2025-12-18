@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* =============================
    Enhanced CRUD Client Factory
    ============================= */
 
-import { IRequestOptions } from "@/models";
+import { IRequestOptions } from '@/models'
 import {
   IApiResponse,
   IApiResponseHooks,
@@ -11,7 +10,7 @@ import {
   IPaginationMeta,
   IResponseError,
   ReturnModelType,
-} from "@/types/Iquery";
+} from '@/types/Iquery'
 import {
   InfiniteData,
   QueryKey,
@@ -20,139 +19,139 @@ import {
   UseQueryOptions,
   UseSuspenseInfiniteQueryOptions,
   UseSuspenseQueryOptions,
-} from "@tanstack/react-query";
+} from '@tanstack/react-query'
 
 /* -----------------------
    Core Types
    ----------------------- */
 const filterOperatorList = [
-  "eq",
-  "neq",
-  "gt",
-  "gte",
-  "lt",
-  "lte",
-  "like",
-  "ilike",
-  "in",
-  "notIn",
-  "isNull",
-  "isNotNull",
-  "between",
-  "notBetween",
-] as const;
+  'eq',
+  'neq',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'like',
+  'ilike',
+  'in',
+  'notIn',
+  'isNull',
+  'isNotNull',
+  'between',
+  'notBetween',
+] as const
 
 export const FilterOperatorEnum = Object.fromEntries(
-  filterOperatorList.map((op) => [op, op])
-) as { [K in (typeof filterOperatorList)[number]]: K };
-type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never;
+  filterOperatorList.map((op) => [op, op]),
+) as { [K in (typeof filterOperatorList)[number]]: K }
+type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never
 
 // Extract the first parameter type from a hook function
 export type ExtractHookOptions<T> = T extends (...args: any) => any
   ? ExtractHookParams<T>[0]
-  : never;
+  : never
 
-export type Id = string | number | undefined;
-export type SortOrder = "asc" | "desc";
-export type DefaultError = IResponseError<null>;
-export type ReturnModel<TEntity, Entity> = ReturnModelType<TEntity, Entity>;
-export type ApiHooksResp<T> = IApiResponseHooks<T>;
+export type Id = string | number | undefined
+export type SortOrder = 'asc' | 'desc'
+export type DefaultError = IResponseError<null>
+export type ReturnModel<TEntity, Entity> = ReturnModelType<TEntity, Entity>
+export type ApiHooksResp<T> = IApiResponseHooks<T>
 
 export type BaseParams = {
-  entity?: string;
-  [key: string]: any;
-};
+  entity?: string
+  [key: string]: any
+}
 /* -----------------------
    Parameter Types
    ----------------------- */
 
 //  new Types
-export type SortDirection = "asc" | "desc";
-export type IPaginationModes = "cursor" | "offset";
+export type SortDirection = 'asc' | 'desc'
+export type IPaginationModes = 'cursor' | 'offset'
 
 // Filter operators
 export type FilterOperator =
-  (typeof FilterOperatorEnum)[keyof typeof FilterOperatorEnum];
+  (typeof FilterOperatorEnum)[keyof typeof FilterOperatorEnum]
 
 export interface FilterCondition<T = Record<string, any>> {
-  column: keyof T;
-  operator: FilterOperator;
-  value: any;
+  column: keyof T
+  operator: FilterOperator
+  value: any
 }
 
 export interface SortConfig<T = Record<string, any>> {
-  column: keyof T;
-  direction: SortDirection;
-  nulls?: "first" | "last";
+  column: keyof T
+  direction: SortDirection
+  nulls?: 'first' | 'last'
 }
 
 export interface SearchConfig<T = Record<string, any>> {
-  columns: (keyof T)[];
-  term: string;
-  mode?: "any" | "all" | "phrase";
+  columns: (keyof T)[]
+  term: string
+  mode?: 'any' | 'all' | 'phrase'
 }
 
 // Pagination base config
 export type BasePaginationConfig<T = Record<string, any>> = BaseParams & {
-  filters?: FilterCondition<T>[] | string | null;
-  search?: SearchConfig<T> | string | null;
-  sorts?: SortConfig<T>[] | string | null;
-  includeTotal?: boolean;
-};
+  filters?: FilterCondition<T>[] | string | null
+  search?: SearchConfig<T> | string | null
+  sorts?: SortConfig<T>[] | string | null
+  includeTotal?: boolean
+}
 
 // Offset pagination config
 export type OffsetPaginationConfig<T = Record<string, any>> =
   BasePaginationConfig<T> & {
-    page?: number;
-    limit?: number;
-  };
+    page?: number
+    limit?: number
+  }
 
 // Cursor pagination config
 export type CursorPaginationConfig<T = Record<string, any>> =
   BasePaginationConfig<T> & {
-    cursor?: string | number | null;
-    limit?: number;
+    cursor?: string | number | null
+    limit?: number
     // cursorColumn: keyof T;
-    cursorDirection?: "forward" | "backward";
-  };
+    cursorDirection?: 'forward' | 'backward'
+  }
 export type QueryParams<T = Record<string, any>> = BasePaginationConfig<T> &
   (
-    | (CursorPaginationConfig<T> & { mode: "cursor" })
-    | (OffsetPaginationConfig<T> & { mode: "offset" })
+    | (CursorPaginationConfig<T> & { mode: 'cursor' })
+    | (OffsetPaginationConfig<T> & { mode: 'offset' })
     | { mode?: undefined }
-  );
+  )
 /* -----------------------
 Request Options
 ----------------------- */
 
 export type RequestOptions<T = Record<string, any>> = {
-  query?: QueryParams<T>; // Make query match params type
-  path?: string;
-  requestOptions?: Partial<IRequestOptions>;
-};
+  query?: QueryParams<T> // Make query match params type
+  path?: string
+  requestOptions?: Partial<IRequestOptions>
+}
 
 export type CallOptions<T = Record<string, any>> = {
   // params?: QueryParams<T>;
-  options?: RequestOptions<T>; // Use generic RequestOptions
-  queryKey?: QueryKey;
-  isEnabled?: boolean;
+  options?: RequestOptions<T> // Use generic RequestOptions
+  queryKey?: QueryKey
+  isEnabled?: boolean
 } & {
-  params?: Partial<Record<keyof T, any>>;
-};
+  params?: Partial<Record<keyof T, any>>
+}
 
 /* -----------------------
    Response Types
    ----------------------- */
 
-export type ListData<T> = { items: T; pagination_meta: IPaginationMeta };
-export type InfiniteListData<T> = InfiniteData<ListData<T>, unknown>;
+export type ListData<T> = { items: T; pagination_meta: IPaginationMeta }
+export type InfiniteListData<T> = InfiniteData<ListData<T>, unknown>
 
 export type ListReturnType<T> = {
-  pagination_meta: IPaginationMeta | undefined;
-  items: T;
-  pageParams: unknown[];
-  pages: { items: T; pagination_meta: IPaginationMeta }[];
-};
+  pagination_meta: IPaginationMeta | undefined
+  items: T
+  pageParams: unknown[]
+  pages: { items: T; pagination_meta: IPaginationMeta }[]
+}
 
 /* -----------------------
    Query Option Types
@@ -160,12 +159,12 @@ export type ListReturnType<T> = {
 
 type QueryOptions<T, S extends boolean, ErrorT = DefaultError> = S extends true
   ? UseSuspenseQueryOptions<ApiHooksResp<T>, ErrorT, ListData<T>, QueryKey>
-  : UseQueryOptions<ApiHooksResp<T>, ErrorT, ListData<T>, QueryKey>;
+  : UseQueryOptions<ApiHooksResp<T>, ErrorT, ListData<T>, QueryKey>
 
 type InfiniteQueryOptions<
   T,
   S extends boolean,
-  ErrorT = DefaultError
+  ErrorT = DefaultError,
 > = S extends true
   ? UseSuspenseInfiniteQueryOptions<
       ApiHooksResp<T>,
@@ -180,55 +179,55 @@ type InfiniteQueryOptions<
       // InfiniteListData<T>,,
       ListReturnType<T>,
       QueryKey
-    >;
+    >
 
 /* -----------------------
    Operation Options
    ----------------------- */
 
 type CommonListOptions<T, S extends boolean = false, ErrorT = DefaultError> = {
-  options?: RequestOptions<T>; // Use generic RequestOptions
-  queryOptions?: Omit<QueryOptions<T[], S, ErrorT>, "queryKey">;
-  queryKey?: QueryKey;
-  isEnabled?: boolean;
-};
+  options?: RequestOptions<T> // Use generic RequestOptions
+  queryOptions?: Omit<QueryOptions<T[], S, ErrorT>, 'queryKey'>
+  queryKey?: QueryKey
+  isEnabled?: boolean
+}
 
 export type ListCallOptions<
   T,
   S extends boolean = false,
-  ErrorT = DefaultError
+  ErrorT = DefaultError,
 > = CommonListOptions<T, S, ErrorT> & {
   infiniteOptions?: Partial<
-    Omit<InfiniteQueryOptions<T[], S, ErrorT>, "queryKey">
-  >;
-  getNextPageParam?: InfiniteQueryOptions<T[], S, ErrorT>["getNextPageParam"];
-  onSuccess?: (data: ListReturnType<T[]>) => void;
-};
+    Omit<InfiniteQueryOptions<T[], S, ErrorT>, 'queryKey'>
+  >
+  getNextPageParam?: InfiniteQueryOptions<T[], S, ErrorT>['getNextPageParam']
+  onSuccess?: (data: ListReturnType<T[]>) => void
+}
 
 export type CursorCallOptions<
   T,
   S extends boolean = false,
-  ErrorT = DefaultError
+  ErrorT = DefaultError,
 > = {
-  params?: CursorPaginationConfig<T>;
-  onSuccess?: (data: ListReturnType<T[]>) => void;
-} & ListCallOptions<T, S, ErrorT>;
+  params?: CursorPaginationConfig<T>
+  onSuccess?: (data: ListReturnType<T[]>) => void
+} & ListCallOptions<T, S, ErrorT>
 
 export type IListCallOptions<
   T,
   S extends boolean = false,
   Mode extends IPaginationModes | undefined = undefined,
-  ErrorT = DefaultError
+  ErrorT = DefaultError,
 > = CommonListOptions<T, S, ErrorT> & {
-  mode?: Mode;
+  mode?: Mode
 
-  params?: Mode extends "offset"
+  params?: Mode extends 'offset'
     ? OffsetPaginationConfig<T>
-    : Mode extends "cursor"
-    ? CursorPaginationConfig<T>
-    : QueryParams<T>;
-  onSuccess?: (data: IPaginatedReturnType<T[]>) => void;
-};
+    : Mode extends 'cursor'
+      ? CursorPaginationConfig<T>
+      : QueryParams<T>
+  onSuccess?: (data: IPaginatedReturnType<T[]>) => void
+}
 
 /* -----------------------
    Enhanced Mutation Types
@@ -237,31 +236,31 @@ export type IListCallOptions<
 export type MutationCallOptions<
   TData = any,
   TVars = any,
-  ErrorT = DefaultError
+  ErrorT = DefaultError,
 > = {
-  params?: QueryParams<TData>;
-  options?: RequestOptions<TData>; // Use generic RequestOptions
-  mutationOptions?: UseMutationOptions<IApiResponse<TData>, ErrorT, TVars>;
-  onSuccess?: (data: TData) => void;
+  params?: QueryParams<TData>
+  options?: RequestOptions<TData> // Use generic RequestOptions
+  mutationOptions?: UseMutationOptions<IApiResponse<TData>, ErrorT, TVars>
+  onSuccess?: (data: TData) => void
   invalidateQueries?: {
-    queryKey: QueryKey;
-    exact?: boolean;
-  }[];
+    queryKey: QueryKey
+    exact?: boolean
+  }[]
   refetchQueries?: {
-    queryKey: QueryKey;
-    exact?: boolean;
-  }[];
+    queryKey: QueryKey
+    exact?: boolean
+  }[]
   optimisticUpdate?: {
-    queryKey: QueryKey;
-    updateFn: (oldData: any, newData: TVars) => any;
-  };
-};
+    queryKey: QueryKey
+    updateFn: (oldData: any, newData: TVars) => any
+  }
+}
 
 type CommonQueryOptions<
   TEntity,
   Entity,
   S extends boolean = false,
-  ErrorT = DefaultError
+  ErrorT = DefaultError,
 > = {
   queryOptions?: S extends true
     ? Omit<
@@ -271,7 +270,7 @@ type CommonQueryOptions<
           ApiHooksResp<ReturnModel<TEntity, Entity>>,
           QueryKey
         >,
-        "queryKey"
+        'queryKey'
       >
     : Omit<
         UseQueryOptions<
@@ -280,31 +279,31 @@ type CommonQueryOptions<
           ApiHooksResp<ReturnModel<TEntity, Entity>>,
           QueryKey
         >,
-        "queryKey"
-      >;
-};
+        'queryKey'
+      >
+}
 
 export type SingleQueryOptions<
   TEntity,
   Entity,
   S extends boolean = false,
-  ErrorT = DefaultError
+  ErrorT = DefaultError,
 > = CallOptions<ReturnModel<TEntity, Entity>> & {
-  id?: Id;
-  onSuccess?: (data: ApiHooksResp<ReturnModel<TEntity, Entity>>) => void;
-} & CommonQueryOptions<TEntity, Entity, S, ErrorT>;
+  id?: Id
+  onSuccess?: (data: ApiHooksResp<ReturnModel<TEntity, Entity>>) => void
+} & CommonQueryOptions<TEntity, Entity, S, ErrorT>
 
 export type MultiQueryOptions<
   TEntity,
   Entity,
   S extends boolean = false,
-  ErrorT = DefaultError
+  ErrorT = DefaultError,
 > = CallOptions<ReturnModel<TEntity, Entity>> & {
-  ids?: Id[];
+  ids?: Id[]
   onSuccess?: (
-    data: (ApiHooksResp<ReturnModel<TEntity, Entity>> | undefined)[]
-  ) => void;
-} & CommonQueryOptions<TEntity, Entity, S, ErrorT>;
+    data: (ApiHooksResp<ReturnModel<TEntity, Entity>> | undefined)[],
+  ) => void
+} & CommonQueryOptions<TEntity, Entity, S, ErrorT>
 
 /* -----------------------
    Factory Options
@@ -312,10 +311,10 @@ export type MultiQueryOptions<
 
 export type CrudFactoryOptions<
   TParams = Record<string, any>,
-  Prefix = string
+  Prefix = string,
 > = {
-  defaultParams?: TParams & { entity: Prefix };
-};
+  defaultParams?: TParams & { entity: Prefix }
+}
 
 // export type PrefetchOptions<Mode extends IPaginationModes, TEntity, Entity> = {
 //   list?: IListCallOptions<ReturnModel<TEntity, Entity>[], false, Mode>;

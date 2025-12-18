@@ -1,29 +1,29 @@
-"use client";
+'use client'
 
-import ButtonLoader from "@/components/button-loader";
-import Dataloader from "@/components/loaders";
-import { useCursorGetAllUsers } from "@/features/user/api/hooks";
+import ButtonLoader from '@/components/button-loader'
+import Dataloader from '@/components/loaders'
+import { useCursorGetAllUsers } from '@/features/user/api/hooks'
 
 const TestPage = () => {
-  const { data, isLoading, fetchNextPage } = useCursorGetAllUsers();
+  const { data, isLoading, fetchNextPage } = useCursorGetAllUsers()
 
   if (isLoading) {
-    return <Dataloader message="Loading cursor users list..." />;
+    return <Dataloader message='Loading cursor users list...' />
   }
   return (
-    <div className="gap-2 px-2 flex justify-center items-center flex-col">
-      {JSON.stringify(data?.data, null, 2)}
+    <div className='flex flex-col items-center justify-center gap-2 px-2'>
+      {JSON.stringify(data?.items, null, 2)}
 
       <ButtonLoader
         disabled={!data?.pagination_meta?.hasMore}
         onClick={() => {
-          fetchNextPage();
+          fetchNextPage()
         }}
       >
         Fetch Next
       </ButtonLoader>
     </div>
-  );
-};
+  )
+}
 
-export default TestPage;
+export default TestPage

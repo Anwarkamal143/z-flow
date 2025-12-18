@@ -1,32 +1,32 @@
-import { ReactNode } from "react";
-import { useFormContext } from "react-hook-form";
+import { ReactNode } from 'react'
+import { useFormContext } from 'react-hook-form'
 
 function FieldHelperText({
   name,
   className,
-  helperText
+  helperText,
 }: {
-  name: string;
-  className?: string;
-  helperText?: ReactNode;
+  name: string
+  className?: string
+  helperText?: ReactNode
 }) {
   // the useFormContext hook returns the current state of hook form.
   const {
-    formState: { errors }
-  } = useFormContext();
+    formState: { errors },
+  } = useFormContext()
   if (!helperText) {
-    return null;
+    return null
   }
-  if (!name) return null;
+  if (!name) return null
 
-  const error = errors[name];
+  const error = errors[name]
 
-  if (error) return null;
+  if (error) return null
 
   return (
     <span className={`field-helper-text text-xs ${className}`}>
       {helperText}
     </span>
-  );
+  )
 }
-export default FieldHelperText;
+export default FieldHelperText

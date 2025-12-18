@@ -1,10 +1,10 @@
-import { createCrudClient } from "@/queries/v1";
-import { IAppUser } from "@/types/user";
-import Model from "./Model";
+import { createCrudClient } from '@/queries/v1'
+import { IAppUser } from '@/types/user'
+import Model from './Model'
 
 class AuthModel extends Model<IAppUser> {
   constructor() {
-    super("/auth", "public-1");
+    super('/auth', 'public-1')
   }
   // async requestCredit() {
   //   const res = await request("/add-beta-credits", {
@@ -16,8 +16,8 @@ class AuthModel extends Model<IAppUser> {
   // }
 }
 
-const authModelInstance = new AuthModel();
-export default authModelInstance;
+const authModelInstance = new AuthModel()
+export default authModelInstance
 export const authClient = createCrudClient(authModelInstance, {
-  defaultParams: { limit: 50, entity: "auth" }
-});
+  defaultParams: { limit: 50, entity: 'auth' },
+})

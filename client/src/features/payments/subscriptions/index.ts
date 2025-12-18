@@ -1,1 +1,1 @@
-export * from "./api/quries";
+export * from './api/quries'

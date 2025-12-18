@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import { useTokenRefresher } from "@/hooks/useTokenRefresher";
+import { useTokenRefresher } from '@/hooks/useTokenRefresher'
 
 export default function TokenManager() {
-  useTokenRefresher();
+  useTokenRefresher()
 
-  return null; // invisible background component
+  return null // invisible background component
 }

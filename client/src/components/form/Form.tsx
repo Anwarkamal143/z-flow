@@ -1,21 +1,23 @@
-"use client";
-import { cn } from "@/lib/utils";
+'use client'
+import { cn } from '@/lib/utils'
 // we omit the native `onSubmit` event in favor of `SubmitHandler` event
 // the beauty of this is, the values returned by the submit handler are fully typed
 
-import { ComponentProps } from "react";
+import { ComponentProps } from 'react'
 import {
   FieldValues,
   FormProvider,
   SubmitHandler,
-  UseFormReturn
-} from "react-hook-form";
+  UseFormReturn,
+} from 'react-hook-form'
 
-interface FormProps<T extends FieldValues = any>
-  extends Omit<ComponentProps<"form">, "onSubmit"> {
-  form: UseFormReturn<T>;
-  onSubmit: SubmitHandler<T>;
-  className?: string;
+interface FormProps<T extends FieldValues = any> extends Omit<
+  ComponentProps<'form'>,
+  'onSubmit'
+> {
+  form: UseFormReturn<T>
+  onSubmit: SubmitHandler<T>
+  className?: string
 }
 
 const Form = <T extends FieldValues>({
@@ -32,7 +34,7 @@ const Form = <T extends FieldValues>({
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         {...props}
-        className={cn("bg-transparent border-none outline-none", className)}
+        className={cn('border-none bg-transparent outline-none', className)}
         ref={ref as any}
       >
         {/* <fieldset
@@ -53,6 +55,6 @@ const Form = <T extends FieldValues>({
         {/* </fieldset> */}
       </form>
     </FormProvider>
-  );
-};
-export default Form;
+  )
+}
+export default Form

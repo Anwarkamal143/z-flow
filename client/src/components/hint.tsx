@@ -1,23 +1,23 @@
-"use client";
+'use client'
 
-import { ReactNode } from "react";
+import { ReactNode } from 'react'
 import {
   Tooltip,
   TooltipContent,
   TooltipProps,
   TooltipProvider,
-  TooltipTrigger
-} from "./ui/tooltip";
+  TooltipTrigger,
+} from './ui/tooltip'
 
 type IHintProps = TooltipProps & {
-  label: ReactNode;
-  children: ReactNode;
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
-};
+  label: ReactNode
+  children: ReactNode
+  side?: 'top' | 'right' | 'bottom' | 'left'
+  align?: 'start' | 'center' | 'end'
+}
 
 const Hint = (props: IHintProps) => {
-  const { label, children, side, align, ...rest } = props;
+  const { label, children, side, align, ...rest } = props
 
   return (
     <TooltipProvider>
@@ -28,11 +28,11 @@ const Hint = (props: IHintProps) => {
           align={align}
           // className="bg-black text-white border border-white/5"
         >
-          <p className="font-medium text-xs">{label}</p>
+          <p className='text-xs font-medium'>{label}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  );
-};
+  )
+}
 
-export default Hint;
+export default Hint

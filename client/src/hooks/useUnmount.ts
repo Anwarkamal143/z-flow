@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect } from 'react'
 
 /**
  * Runs a function only when the component unmounts.
@@ -7,7 +7,7 @@ import { useEffect } from "react";
 export function useUnmount(cleanupFn: () => void) {
   useEffect(() => {
     return () => {
-      cleanupFn();
-    };
-  }, []);
+      cleanupFn()
+    }
+  }, [])
 }
