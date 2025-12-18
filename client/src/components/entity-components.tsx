@@ -130,6 +130,7 @@ interface EntitySearchProps {
   onChange: (value: string) => void
   placeholder?: string
   error?: string
+  autoFocus?: boolean
 }
 
 export const EntitySearch = ({
@@ -137,10 +138,12 @@ export const EntitySearch = ({
   onChange,
   placeholder = 'Search',
   error,
+  autoFocus = false,
 }: EntitySearchProps) => {
   return (
     <div className='text-muted-foreground top-1/2 left-3 ml-auto -translate-y-1/2'>
       <InputComponent
+        autoFocus={autoFocus}
         className='max-w-[200px]'
         rightIcon={{
           Icon: <SearchIcon />,

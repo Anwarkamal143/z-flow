@@ -61,6 +61,7 @@ export const WorkflowSearch = () => {
   })
   return (
     <EntitySearch
+      autoFocus={true}
       placeholder='Search workflows'
       value={searchValue}
       onChange={(e) => {
