@@ -1,19 +1,19 @@
-"use client";
+'use client'
 
-import { isServer as IsServer } from "@/lib";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { isServer as IsServer } from '@/lib'
+import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 
 const useServer = (): [boolean, Dispatch<SetStateAction<boolean>>] => {
-  const [isServer, setIsServer] = useState(IsServer);
+  const [isServer, setIsServer] = useState(IsServer)
 
   useEffect(() => {
     if (isServer) {
-      setIsServer(false);
+      setIsServer(false) // eslint-disable-line
     }
-    return () => {};
-  }, []);
+    return () => {}
+  }, [])
 
-  return [isServer, setIsServer];
-};
+  return [isServer, setIsServer]
+}
 
-export default useServer;
+export default useServer

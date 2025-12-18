@@ -1,4 +1,5 @@
 import {
+  AlertTriangleIcon,
   ChevronDownIcon,
   CreditCardIcon,
   EyeIcon,
@@ -11,18 +12,23 @@ import {
   Loader2Icon,
   LogOutIcon,
   MoonIcon,
+  MoreVerticalIcon,
+  PackageOpenIcon,
   PlusIcon,
   SearchIcon,
   SmileIcon,
   StarIcon,
   SunIcon,
-} from "lucide-react";
-import EmailIcon from "./EmailIcon";
-import GithubIcon from "./GithubIcon";
-import GoogleIcon from "./GoogleIcon";
-import InfoIcon from "./info-icon";
+  TrashIcon,
+  WorkflowIcon,
+} from 'lucide-react'
+import EmailIcon from './EmailIcon'
+import GithubIcon from './GithubIcon'
+import GoogleIcon from './GoogleIcon'
+import InfoIcon from './info-icon'
 
 export {
+  AlertTriangleIcon,
   ChevronDownIcon,
   CreditCardIcon,
   EmailIcon,
@@ -39,9 +45,13 @@ export {
   Loader2Icon,
   LogOutIcon,
   MoonIcon,
+  MoreVerticalIcon,
+  PackageOpenIcon,
   PlusIcon,
   SearchIcon,
   SmileIcon,
   StarIcon,
   SunIcon,
-};
+  TrashIcon,
+  WorkflowIcon,
+}

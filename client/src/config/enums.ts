@@ -1,76 +1,76 @@
 export enum Role {
-  USER = "user",
-  ADMIN = "admin",
-  GUEST = "guest",
-  SUPER_ADMIN = "super_admin",
+  USER = 'user',
+  ADMIN = 'admin',
+  GUEST = 'guest',
+  SUPER_ADMIN = 'super_admin',
 }
-export type IRole = `${Role}`;
+export type IRole = `${Role}`
 export enum Provider {
-  email = "email",
-  google = "google",
-  github = "github",
-  linkedIn = "linkedIn",
+  email = 'email',
+  google = 'google',
+  github = 'github',
+  linkedIn = 'linkedIn',
 }
-export type IProviderType = `${Provider}`;
+export type IProviderType = `${Provider}`
 export enum AccountType {
-  oauth = "oauth",
-  email = "email",
+  oauth = 'oauth',
+  email = 'email',
 }
-export type IAccountType = `${AccountType}`;
+export type IAccountType = `${AccountType}`
 export enum AccountStatus {
-  PENDING = "pending",
-  ACTIVE = "active",
-  SUSPENDED = "suspended",
-  DELETED = "deleted",
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  DELETED = 'deleted',
 }
-export type IAccountStatus = `${AccountStatus}`;
+export type IAccountStatus = `${AccountStatus}`
 
 export enum PaymentStatus {
-  PENDING = "pending",
-  PAID = "paid",
-  FAILED = "failed",
-  REFUNDED = "refunded",
-  PARTIALLY_REFUNDED = "partially_refunded",
+  PENDING = 'pending',
+  PAID = 'paid',
+  FAILED = 'failed',
+  REFUNDED = 'refunded',
+  PARTIALLY_REFUNDED = 'partially_refunded',
 }
-export type IPaymentStatus = `${PaymentStatus}`;
+export type IPaymentStatus = `${PaymentStatus}`
 export enum PaymentMethod {
-  CREDIT_CARD = "credit_card",
-  DEBIT_CARD = "debit_card",
-  PAYPAL = "paypal",
-  STRIPE = "stripe",
-  BANK_TRANSFER = "bank_transfer",
-  CASH_ON_DELIVERY = "cash_on_delivery",
+  CREDIT_CARD = 'credit_card',
+  DEBIT_CARD = 'debit_card',
+  PAYPAL = 'paypal',
+  STRIPE = 'stripe',
+  BANK_TRANSFER = 'bank_transfer',
+  CASH_ON_DELIVERY = 'cash_on_delivery',
 }
 
-export type IPaymentMethod = `${PaymentMethod}`;
+export type IPaymentMethod = `${PaymentMethod}`
 export enum AssetType {
-  IMAGE = "image",
-  VIDEO = "video",
-  AUDIO = "audio",
-  DOCUMENT = "document",
-  OTHER = "other",
+  IMAGE = 'image',
+  VIDEO = 'video',
+  AUDIO = 'audio',
+  DOCUMENT = 'document',
+  OTHER = 'other',
 }
-export type IAssetType = `${AssetType}`;
+export type IAssetType = `${AssetType}`
 
 export enum UserStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  SUSPENDED = "suspended",
-  DELETED = "deleted",
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+  DELETED = 'deleted',
 }
-export type IUserStatus = `${UserStatus}`;
+export type IUserStatus = `${UserStatus}`
 export enum ProductVisiblity {
-  PUBLIC = "public",
-  PRIVATE = "private",
-  ARCHIVED = "archived",
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+  ARCHIVED = 'archived',
 }
-export type IProductVisiblity = `${ProductVisiblity}`;
+export type IProductVisiblity = `${ProductVisiblity}`
 export enum UserAddressType {
-  BILLING = "billing",
+  BILLING = 'billing',
 }
-export type IUserAddressType = `${UserAddressType}`;
+export type IUserAddressType = `${UserAddressType}`
 export enum DiscountType {
-  PERCENTAGE = "percentage",
-  FIXED_AMOUNT = "fixed_amount",
+  PERCENTAGE = 'percentage',
+  FIXED_AMOUNT = 'fixed_amount',
 }
-export type IDiscountType = `${DiscountType}`;
+export type IDiscountType = `${DiscountType}`

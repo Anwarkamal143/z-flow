@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { cn } from "@/lib/utils";
-import { cva, VariantProps } from "class-variance-authority";
+import { cn } from '@/lib/utils'
+import { cva, VariantProps } from 'class-variance-authority'
 import {
   cloneElement,
   ElementType,
@@ -9,7 +9,7 @@ import {
   MouseEvent,
   ReactElement,
   ReactNode,
-} from "react";
+} from 'react'
 
 import {
   Field,
@@ -17,70 +17,69 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "@/components/ui/field";
+} from '@/components/ui/field'
 
-import { Input, InputProps } from "@/components/ui/input";
-import { Textarea } from "./ui/textarea";
+import { Input, InputProps } from '@/components/ui/input'
+import { Textarea } from './ui/textarea'
 
 // ✅ Border variants (top, bottom, left, right)
 const inputVariants = cva(
-  "rounded-none focus-visible:border-primary focus-visible:ring-primary/50 dark:focus-visible:ring-ring/50 dark:focus-visible:border-ring",
+  'rounded-none focus-visible:border-primary focus-visible:ring-primary/50 dark:focus-visible:ring-ring/50 dark:focus-visible:border-ring',
   {
     variants: {
       rounded: {
-        sm: "rounded-sm px-2 ",
-        md: "rounded-md px-2",
-        lg: "rounded-lg px-2",
-        full: "rounded-full px-2",
-        xs: "rounded-xs px-2 ",
+        sm: 'rounded-sm px-2 ',
+        md: 'rounded-md px-2',
+        lg: 'rounded-lg px-2',
+        full: 'rounded-full px-2',
       },
       border: {
         bottom:
-          "border-b border-b-input hover:border-b-inputActive focus-visible:border-b-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-b-ring",
-        top: "border-t border-t-input hover:border-t-inputActive focus-visible:border-t-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-t-ring",
-        left: "border-l border-l-input hover:border-l-inputActive focus-visible:border-l-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-l-ring",
+          'border-b border-b-input hover:border-b-inputActive focus-visible:border-b-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-b-ring',
+        top: 'border-t border-t-input hover:border-t-inputActive focus-visible:border-t-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-t-ring',
+        left: 'border-l border-l-input hover:border-l-inputActive focus-visible:border-l-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-l-ring',
         right:
-          "border-r border-r-input hover:border-r-inputActive focus-visible:border-r-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-r-ring",
+          'border-r border-r-input hover:border-r-inputActive focus-visible:border-r-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-r-ring',
       },
       error: {
         primary:
-          "ring-destructive/20 dark:ring-destructive/40 border-destructive",
+          'ring-destructive/20 dark:ring-destructive/40 border-destructive',
       },
     },
     // defaultVariants: {
     //   error: "primary",
     // },
-  }
-);
+  },
+)
 
 type IconProps = {
-  className?: string;
-  onClick?: (e: MouseEvent, meta: { value: any; name: string }) => void;
-  meta?: Record<string, any>;
+  className?: string
+  onClick?: (e: MouseEvent, meta: { value: any; name: string }) => void
+  meta?: Record<string, any>
   render?: (props: {
-    className?: string;
-    onClick: (e: MouseEvent) => void;
-  }) => ReactNode;
-  Icon?: ElementType | ReactElement;
-};
+    className?: string
+    onClick: (e: MouseEvent) => void
+  }) => ReactNode
+  Icon?: ElementType | ReactElement
+}
 
 type InputFormProps = {
-  label?: ReactNode;
-  labelClass?: string;
-  helperText?: ReactNode;
-  leftIcon?: IconProps;
-  rightIcon?: IconProps;
-  border?: VariantProps<typeof inputVariants>["border"];
-  rounded?: VariantProps<typeof inputVariants>["rounded"];
+  label?: ReactNode
+  labelClass?: string
+  helperText?: ReactNode
+  leftIcon?: IconProps
+  rightIcon?: IconProps
+  border?: VariantProps<typeof inputVariants>['border']
+  rounded?: VariantProps<typeof inputVariants>['rounded']
 
-  placeholder?: string;
-  error?: string;
-} & InputProps;
+  placeholder?: string
+  error?: string
+} & InputProps
 
-type FormInputProps = InputFormProps;
+type FormInputProps = InputFormProps
 
 const ICON_COMMON_CLASSES = (extra: string) =>
-  "h-[45%] absolute top-1/2 -translate-y-1/2 pointer-events-none " + extra;
+  'h-[45%] absolute top-1/2 -translate-y-1/2 pointer-events-none ' + extra
 
 const InputComponent = ({
   name,
@@ -89,72 +88,72 @@ const InputComponent = ({
   helperText,
   leftIcon,
   rightIcon,
-  type = "text",
+  type = 'text',
   border,
   rounded,
   disabled = false,
-  error: erroMessage = "",
+  error: erroMessage = '',
   placeholder,
   className,
   ...rest
 }: FormInputProps) => {
-  const isTextArea = type == "textarea";
-  const error = erroMessage != null ? erroMessage.trim() : undefined;
+  const isTextArea = type == 'textarea'
+  const error = erroMessage != null ? erroMessage.trim() : undefined
   const renderIcon = (icon?: IconProps, position?: string) => {
-    if (!icon) return null;
-    const { render, Icon, onClick, className, meta } = icon;
+    if (!icon) return null
+    const { render, Icon, onClick, className, meta } = icon
     const handleClick = (e: MouseEvent) => {
-      onClick?.(e, { value: rest.value, name: name as string });
-    };
-    const pointer = onClick ? "cursor-pointer pointer-events-auto" : "";
+      onClick?.(e, { value: rest.value, name: name as string })
+    }
+    const pointer = onClick ? 'cursor-pointer pointer-events-auto' : ''
 
     if (render) {
       return render({
-        className: cn(ICON_COMMON_CLASSES(position || ""), pointer, className),
+        className: cn(ICON_COMMON_CLASSES(position || ''), pointer, className),
         onClick: handleClick,
-      });
+      })
     }
 
     if (Icon) {
       if (isValidElement(Icon)) {
         return cloneElement(Icon, {
           className: cn(
-            ICON_COMMON_CLASSES(position || ""),
+            ICON_COMMON_CLASSES(position || ''),
             pointer,
-            className
+            className,
           ),
           onClick: handleClick,
           ...meta,
-        } as any);
+        } as any)
       }
-      const Comp = Icon as ElementType;
+      const Comp = Icon as ElementType
       return (
         <Comp
           className={cn(
-            ICON_COMMON_CLASSES(position || ""),
+            ICON_COMMON_CLASSES(position || ''),
             pointer,
-            className
+            className,
           )}
           onClick={handleClick}
           {...meta}
         />
-      );
+      )
     }
-    return null;
-  };
+    return null
+  }
 
   return (
-    <Field data-invalid={!!error} className={cn("w-full", className)}>
+    <Field data-invalid={!!error} className={cn('w-full', className)}>
       {label && (
-        <FieldLabel className={cn("text-sm font-medium", labelClass)}>
+        <FieldLabel className={cn('text-sm font-medium', labelClass)}>
           {label}
         </FieldLabel>
       )}
 
       <FieldContent>
-        <div className="relative flex items-center h-full">
-          {renderIcon(leftIcon, "left-2")}
-          {renderIcon(rightIcon, "right-2")}
+        <div className='relative flex h-full items-center'>
+          {renderIcon(leftIcon, 'left-2')}
+          {renderIcon(rightIcon, 'right-2')}
 
           {isTextArea ? (
             <Textarea
@@ -165,9 +164,9 @@ const InputComponent = ({
                 border && inputVariants({ border }),
                 rounded && inputVariants({ rounded }),
                 {
-                  "pl-8": !!leftIcon,
-                  "pr-8": !!rightIcon,
-                }
+                  'pl-8': !!leftIcon,
+                  'pr-8': !!rightIcon,
+                },
               )}
             />
           ) : (
@@ -187,10 +186,10 @@ const InputComponent = ({
                 !border && rounded && inputVariants({ rounded }),
 
                 {
-                  "pl-8": !!leftIcon,
-                  "pr-8": !!rightIcon,
+                  'pl-8': !!leftIcon,
+                  'pr-8': !!rightIcon,
                 },
-                !!error && inputVariants({ error: "primary" })
+                !!error && inputVariants({ error: 'primary' }),
               )}
               autoComplete={rest.autoComplete}
               {...rest}
@@ -202,17 +201,17 @@ const InputComponent = ({
 
         <FieldDescription>
           {helperText && !error && (
-            <span className={`field-helper-text text-xs `}>{helperText}</span>
+            <span className={`field-helper-text text-xs`}>{helperText}</span>
           )}
           <FieldError>
             {!!error && (
-              <span className="text-destructive text-sm">{error}</span>
+              <span className='text-destructive text-sm'>{error}</span>
             )}
           </FieldError>
         </FieldDescription>
       </FieldContent>
     </Field>
-  );
-};
+  )
+}
 
-export default InputComponent;
+export default InputComponent

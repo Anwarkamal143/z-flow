@@ -1,65 +1,65 @@
-"use client";
-import { SOCKET_URL } from "@/config";
-import { ISocketContextProps, SocketContext } from "@/context/socket";
+'use client'
+import { SOCKET_URL } from '@/config'
+import { ISocketContextProps, SocketContext } from '@/context/socket'
 
 import {
   useAuthAccessToken,
   useAuthIsTokensRefreshing,
   useStoreUserIsAuthenticated,
-} from "@/store/userAuthStore";
-import { ReactNode, useEffect, useState } from "react";
-import { connect } from "socket.io-client";
+} from '@/store/userAuthStore'
+import { ReactNode, useEffect, useState } from 'react'
+import { connect } from 'socket.io-client'
 export const socket = connect(SOCKET_URL, {
   // withCredentials: true,
   autoConnect: false,
-});
+})
 export default function SocketContextProvider({
   children,
 }: {
-  children: ReactNode;
+  children: ReactNode
 }) {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [transport, setTransport] = useState("N/A");
-  const isAuthenticated = useStoreUserIsAuthenticated();
-  const accessToken = useAuthAccessToken();
-  const isTokenRefreshing = useAuthIsTokensRefreshing();
+  const [transport, setTransport] = useState('N/A')
+  const isAuthenticated = useStoreUserIsAuthenticated()
+  const accessToken = useAuthAccessToken()
+  const isTokenRefreshing = useAuthIsTokensRefreshing()
 
   function onConnect() {
-    setIsConnected(true);
-    setTransport(socket.io.engine.transport.name);
-    console.log("Connected", socket.id);
+    setIsConnected(true)
+    setTransport(socket.io.engine.transport.name)
+    console.log('Connected', socket.id)
 
-    socket.io.engine.on("upgrade", (transport) => {
-      setTransport(transport.name);
-    });
-    socket.on("ping", (data, ack: (ok: string) => void) => {
-      console.log("SOCKET: ", data);
+    socket.io.engine.on('upgrade', (transport) => {
+      setTransport(transport.name)
+    })
+    socket.on('ping', (data, ack: (ok: string) => void) => {
+      console.log('SOCKET: ', data)
       // socket.emit("pong");
-      ack("OK");
-    });
+      ack('OK')
+    })
   }
   function onDisconnect() {
-    setIsConnected(false);
-    setTransport("N/A");
+    setIsConnected(false)
+    setTransport('N/A')
   }
   useEffect(() => {
     if (socket?.connected) {
-      onConnect();
+      onConnect() // eslint-disable-line
     }
     if (socket?.disconnected && accessToken) {
-      socket.auth = { token: accessToken };
-      socket.connect();
+      socket.auth = { token: accessToken }
+      socket.connect()
     }
 
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
+    socket.on('connect', onConnect)
+    socket.on('disconnect', onDisconnect)
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.disconnect();
-    };
-  }, [isAuthenticated, isTokenRefreshing]);
+      socket.off('connect', onConnect)
+      socket.off('disconnect', onDisconnect)
+      socket.disconnect()
+    }
+  }, [isAuthenticated, isTokenRefreshing])
 
   return (
     <SocketContext.Provider
@@ -72,5 +72,5 @@ export default function SocketContextProvider({
     >
       {children}
     </SocketContext.Provider>
-  );
+  )
 }

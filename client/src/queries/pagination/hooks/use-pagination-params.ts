@@ -1,58 +1,58 @@
-import { PAGINATION } from "@/config/constants";
+import { PAGINATION } from '@/config/constants'
 import {
   createParser,
   parseAsBoolean,
   parseAsFloat,
   parseAsJson,
   useQueryState,
-} from "nuqs";
-import z from "zod";
+} from 'nuqs'
+import z from 'zod'
 import {
   CursorPaginationConfig,
   FilterCondition,
   OffsetPaginationConfig,
   SearchConfig,
   SortConfig,
-} from "../../v1/types";
-import { createPaginationParams } from "../schema";
+} from '../../v1/types'
+import { createPaginationParams } from '../schema'
 
 // Create a reusable parser for cursor values (string or number)
 const cursorParser = createParser<string | number | null>({
   parse: (value: string | null): string | number | null => {
-    if (value == null) return null;
+    if (value == null) return null
 
-    if (typeof value == "string" && value.trim() == "") return null;
-    const trimmed = value.trim();
-    const num = Number(trimmed);
+    if (typeof value == 'string' && value.trim() == '') return null
+    const trimmed = value.trim()
+    const num = Number(trimmed)
 
     // Return number if it's a valid numeric string, otherwise string
-    return !isNaN(num) && trimmed != "" ? num : trimmed;
+    return !isNaN(num) && trimmed != '' ? num : trimmed
   },
   serialize: (value: string | number | null): string => {
-    return value == null ? "" : String(value);
+    return value == null ? '' : String(value)
   },
-});
+})
 
-const cursorDirectionParser = createParser<"forward" | "backward" | null>({
-  parse: (value: string | null): "forward" | "backward" | null => {
-    if (value == null || value == "") return null;
+const cursorDirectionParser = createParser<'forward' | 'backward' | null>({
+  parse: (value: string | null): 'forward' | 'backward' | null => {
+    if (value == null || value == '') return null
 
-    if (value === "forward" || value === "backward") {
-      return value;
+    if (value === 'forward' || value === 'backward') {
+      return value
     }
 
     // Return null for invalid values
-    return null;
+    return null
   },
-  serialize: (value: "forward" | "backward" | null): string => {
-    return value == null ? "" : value;
+  serialize: (value: 'forward' | 'backward' | null): string => {
+    return value == null ? '' : value
   },
-});
+})
 
-const uesPaginationParams = <T extends Record<string, any>>(
-  paginationType: "offset" | "cursor" = "offset"
+const usePaginationParams = <T extends Record<string, any>>(
+  paginationType: 'offset' | 'cursor' = 'offset',
 ) => {
-  const isCursor = paginationType == "cursor";
+  const isCursor = paginationType == 'cursor'
   /* ------------------------------
      SCHEMAS FOR THIS GENERIC INSTANCE
   ------------------------------ */
@@ -63,65 +63,64 @@ const uesPaginationParams = <T extends Record<string, any>>(
     pageSchema,
     limitSchema,
     includeTotalSchema,
-    cursorSchema,
-  } = createPaginationParams<T>();
+  } = createPaginationParams()
 
   /* ------------------------------
      PAGE (for offset pagination only)
   ------------------------------ */
   const [page, setPage] = useQueryState(
-    "page",
+    'page',
     parseAsFloat
       .withOptions({
-        history: "push",
+        history: 'push',
         clearOnDefault: true,
       })
       .withDefault(pageSchema.parse(PAGINATION.DEFAULT_PAGE))
       // Only clear page if it's offset pagination
-      .withOptions({ clearOnDefault: !isCursor })
-  );
+      .withOptions({ clearOnDefault: !isCursor }),
+  )
 
   /* ------------------------------
      CURSOR (for cursor pagination only)
   ------------------------------ */
   const [cursor, setCursor] = useQueryState(
-    "cursor",
+    'cursor',
     cursorParser
       .withOptions({
-        history: "push",
+        history: 'push',
         clearOnDefault: true,
       })
-      .withDefault("")
+      .withDefault('')
       // Only clear cursor if it's cursor pagination
-      .withOptions({ clearOnDefault: isCursor })
-  );
+      .withOptions({ clearOnDefault: isCursor }),
+  )
 
   /* ------------------------------
      CURSOR DIRECTION (for cursor pagination only)
   ------------------------------ */
 
   const [cursorDirection, setCursorDirection] = useQueryState(
-    "cursorDirection",
+    'cursorDirection',
     cursorDirectionParser
       .withOptions({
-        history: "push",
+        history: 'push',
         clearOnDefault: true,
       })
       .withDefault(null as any)
-      .withOptions({ clearOnDefault: isCursor })
-  );
+      .withOptions({ clearOnDefault: isCursor }),
+  )
   /* ------------------------------
      LIMIT (common for both)
   ------------------------------ */
   const [limit, setLimit] = useQueryState(
-    "limit",
+    'limit',
     parseAsFloat
       .withOptions({
-        history: "push",
+        history: 'push',
         clearOnDefault: true,
       })
-      .withDefault(limitSchema.parse(PAGINATION.DEFAULT_PAGE_SIZE) as number)
-  );
+      .withDefault(limitSchema.parse(PAGINATION.DEFAULT_PAGE_SIZE) as number),
+  )
 
   /* ------------------------------
      FILTERS (common for both)
@@ -129,94 +128,94 @@ const uesPaginationParams = <T extends Record<string, any>>(
   const [filters, setFilters] = useQueryState<
     FilterCondition<T>[] | string | null
   >(
-    "filters",
+    'filters',
     parseAsJson<FilterCondition<T>[] | string | null>((value) => {
-      if (value === null || value === undefined) return null;
+      if (value === null || value === undefined) return null
 
-      const result = filterConfigSchema.safeParse(value);
+      const result = filterConfigSchema.safeParse(value)
       if (!result.success) {
-        console.warn("Invalid filters in URL:", result.error.format());
-        return null;
+        console.warn('Invalid filters in URL:', result.error.format())
+        return null
       }
-      return result.data;
+      return result.data
     })
       .withOptions({
-        history: "push",
+        history: 'push',
         clearOnDefault: true,
       })
-      .withDefault(filterConfigSchema.parse(null) as any)
-  );
+      .withDefault(filterConfigSchema.parse(null) as any),
+  )
 
   /* ------------------------------
      SORTS (common for both)
   ------------------------------ */
   const [sorts, setSorts] = useQueryState<SortConfig<T>[] | string | null>(
-    "sorts",
+    'sorts',
     parseAsJson<SortConfig<T>[] | string | null>((value) => {
-      if (value === null || value === undefined) return null;
+      if (value === null || value === undefined) return null
 
-      const result = sortConfigSchema.safeParse(value);
+      const result = sortConfigSchema.safeParse(value)
       if (!result.success) {
-        console.warn("Invalid sorts in URL:", result.error.format());
-        return null;
+        console.warn('Invalid sorts in URL:', result.error.format())
+        return null
       }
-      return result.data;
+      return result.data
     })
       .withOptions({
-        history: "push",
+        history: 'push',
         clearOnDefault: true,
       })
-      .withDefault(sortConfigSchema.parse(null) as any)
-  );
+      .withDefault(sortConfigSchema.parse(null) as any),
+  )
 
   /* ------------------------------
      SEARCH (common for both)
   ------------------------------ */
   const [search, setSearch] = useQueryState<SearchConfig<T> | string | null>(
-    "search",
+    'search',
     parseAsJson<SearchConfig<T> | string | null>((value) => {
-      if (value == null || value == undefined) return null;
+      if (value == null || value == undefined) return null
 
-      const result = searchConfigSchema.safeParse(value);
+      const result = searchConfigSchema.safeParse(value)
       if (!result.success) {
-        console.warn("Invalid search in URL:", result.error.format());
-        return null;
+        console.warn('Invalid search in URL:', result.error.format())
+        return null
       }
-      return result.data;
+      return result.data
     })
       .withOptions({
-        history: "push",
+        history: 'push',
         clearOnDefault: true,
       })
-      .withDefault(searchConfigSchema.parse(null) as any)
-  );
+      .withDefault(searchConfigSchema.parse(null) as any),
+  )
 
   /* ------------------------------
      INCLUDE TOTAL (common for both)
   ------------------------------ */
   const [includeTotal, setIncludeTotal] = useQueryState(
-    "includeTotal",
+    'includeTotal',
     parseAsBoolean
       .withOptions({
-        history: "push",
+        history: 'push',
         clearOnDefault: true,
       })
-      .withDefault(includeTotalSchema.parse(false))
-  );
+      .withDefault(includeTotalSchema.parse(false)),
+  )
 
   /* ------------------------------
      CURSOR PARAMS OBJECT
   ------------------------------ */
   const cursorParams: CursorPaginationConfig<T> = {
     cursor: cursor as string | number | null,
-    cursorDirection: cursorDirection as "forward" | "backward",
+    cursorDirection: cursorDirection as 'forward' | 'backward',
     limit: limit ?? PAGINATION.DEFAULT_PAGE_SIZE,
     filters,
     sorts,
     search,
     includeTotal,
-    mode: "cursor",
-  };
+    mode: 'cursor',
+  }
 
   /* ------------------------------
      OFFSET PARAMS OBJECT
@@ -228,91 +227,91 @@ const uesPaginationParams = <T extends Record<string, any>>(
     sorts,
     search,
     includeTotal,
-    mode: "offset",
-  };
+    mode: 'offset',
+  }
 
   /* ------------------------------
      SETTER FUNCTIONS
   ------------------------------ */
   const setCursorParams = (update: Partial<CursorPaginationConfig<T>>) => {
-    if (update.cursor != null) setCursor(update.cursor);
+    if (update.cursor != null) setCursor(update.cursor)
     if (update.cursorDirection != null)
-      setCursorDirection(update.cursorDirection);
-    if (update.limit != null) setLimit(update.limit);
+      setCursorDirection(update.cursorDirection)
+    if (update.limit != null) setLimit(update.limit)
     if (update.filters != null)
-      setFilters(filterConfigSchema.parse(update.filters));
-    if (update.sorts != null) setSorts(sortConfigSchema.parse(update.sorts));
+      setFilters(filterConfigSchema.parse(update.filters))
+    if (update.sorts != null) setSorts(sortConfigSchema.parse(update.sorts))
     if (update.search != null) {
-      setSearch(searchConfigSchema.parse(update.search));
+      setSearch(searchConfigSchema.parse(update.search))
     }
-    if (update.includeTotal != null) setIncludeTotal(update.includeTotal);
-  };
+    if (update.includeTotal != null) setIncludeTotal(update.includeTotal)
+  }
 
   const setOffsetParams = (update: Partial<OffsetPaginationConfig<T>>) => {
-    if (update.page != null) setPage(update.page);
-    if (update.limit != null) setLimit(update.limit);
+    if (update.page != null) setPage(update.page)
+    if (update.limit != null) setLimit(update.limit)
     if (update.filters != null)
-      setFilters(filterConfigSchema.parse(update.filters));
-    if (update.sorts != null) setSorts(sortConfigSchema.parse(update.sorts));
+      setFilters(filterConfigSchema.parse(update.filters))
+    if (update.sorts != null) setSorts(sortConfigSchema.parse(update.sorts))
     if (update.search != null) {
-      setSearch(searchConfigSchema.parse(update.search));
+      setSearch(searchConfigSchema.parse(update.search))
     }
 
-    if (update.includeTotal !== undefined) setIncludeTotal(update.includeTotal);
-  };
+    if (update.includeTotal !== undefined) setIncludeTotal(update.includeTotal)
+  }
 
   /* ------------------------------
      RESET FUNCTIONS
   ------------------------------ */
   const resetCursorParams = () => {
-    setCursor(null);
-    setCursorDirection("forward");
-    setLimit(PAGINATION.DEFAULT_PAGE_SIZE);
-    setFilters(null);
-    setSorts(null);
-    setSearch(null);
-    setIncludeTotal(false);
-  };
+    setCursor(null)
+    setCursorDirection('forward')
+    setLimit(PAGINATION.DEFAULT_PAGE_SIZE)
+    setFilters(null)
+    setSorts(null)
+    setSearch(null)
+    setIncludeTotal(false)
+  }
 
   const resetOffsetParams = () => {
-    setPage(PAGINATION.DEFAULT_PAGE);
-    setLimit(PAGINATION.DEFAULT_PAGE_SIZE);
-    setFilters(null);
-    setSorts(null);
-    setSearch(null);
-    setIncludeTotal(false);
-  };
+    setPage(PAGINATION.DEFAULT_PAGE)
+    setLimit(PAGINATION.DEFAULT_PAGE_SIZE)
+    setFilters(null)
+    setSorts(null)
+    setSearch(null)
+    setIncludeTotal(false)
+  }
 
   /* ------------------------------
      VALIDATION HELPER
   ------------------------------ */
   const validateParams = () => {
     const errors: {
-      filters?: z.ZodError;
-      sorts?: z.ZodError;
-      search?: z.ZodError;
-    } = {};
+      filters?: z.ZodError
+      sorts?: z.ZodError
+      search?: z.ZodError
+    } = {}
 
     if (filters !== null) {
-      const result = filterConfigSchema.safeParse(filters);
-      if (!result.success) errors.filters = result.error;
+      const result = filterConfigSchema.safeParse(filters)
+      if (!result.success) errors.filters = result.error
     }
 
     if (sorts !== null) {
-      const result = sortConfigSchema.safeParse(sorts);
-      if (!result.success) errors.sorts = result.error;
+      const result = sortConfigSchema.safeParse(sorts)
+      if (!result.success) errors.sorts = result.error
     }
 
     if (search !== null) {
-      const result = searchConfigSchema.safeParse(search);
-      if (!result.success) errors.search = result.error;
+      const result = searchConfigSchema.safeParse(search)
+      if (!result.success) errors.search = result.error
     }
 
     return {
       isValid: Object.keys(errors).length === 0,
       errors,
-    };
-  };
+    }
+  }
 
   /* ------------------------------
      RETURN BASED ON PAGINATION TYPE
@@ -329,59 +328,59 @@ const uesPaginationParams = <T extends Record<string, any>>(
     setSorts,
     setFilters,
     validateParams,
-  };
+  }
   const cursorResp = {
     ...common,
-    mode: "cursor" as const,
+    mode: 'cursor' as const,
     cursor: cursor as string | number | null,
-    cursorDirection: cursorDirection as "forward" | "backward",
+    cursorDirection: cursorDirection as 'forward' | 'backward',
     params: cursorParams,
     setCursor,
     setCursorDirection,
     setParams: setCursorParams,
     resetParams: resetCursorParams,
-  };
+  }
   const offsetResp = {
     ...common,
-    mode: "offset" as const,
+    mode: 'offset' as const,
     page: page,
     params: offsetParams,
     setPage,
     setParams: setOffsetParams,
     resetParams: resetOffsetParams,
-  };
+  }
   return {
     ...common,
     cursorConfig: cursorResp,
     offsetConfig: offsetResp,
     mode: paginationType,
-  };
+  }
 
   // if (isCursor) {
   //   return { ...cursorResp, offsetConfig: offsetResp };
   // } else return { ...offsetResp, cursorConfig: cursorResp };
-};
+}
 
-export default uesPaginationParams;
+export default usePaginationParams
 // Offset-specific hook
 export function useOffsetPaginationParams<T extends Record<string, any>>() {
-  const result = uesPaginationParams<T>("offset");
+  const result = usePaginationParams<T>('offset')
 
   // Type guard to ensure it's offset
   // if (result.mode != "offset") {
   //   throw new Error("Expected offset pagination");
   // }
 
-  return result.offsetConfig;
+  return result.offsetConfig
 }
 
 // Cursor-specific hook
 export function useCursorPaginationParams<T extends Record<string, any>>() {
-  const result = uesPaginationParams<T>("cursor");
+  const result = usePaginationParams<T>('cursor')
 
   // if (result.mode != "cursor") {
   //   throw new Error("Expected cursor pagination");
   // }
 
-  return result.cursorConfig;
+  return result.cursorConfig
 }

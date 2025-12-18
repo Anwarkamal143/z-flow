@@ -1,25 +1,28 @@
-import { customerClient } from "@/models";
-import { subscriptionQueryOptions } from "./query-options";
+import { customerClient } from '@/models'
+import { subscriptionQueryOptions } from './query-options'
 
 export const useGetSubscriptions = () => {
   // Implementation to get customer state
-  return customerClient.useGet(subscriptionQueryOptions);
-};
+  return customerClient.useGet(subscriptionQueryOptions)
+}
 
 export const useGetSuspenseSubscriptions = () => {
   // Implementation to get customer state
-  return customerClient.useSuspenseGet(subscriptionQueryOptions);
-};
+  return customerClient.useSuspenseGet(subscriptionQueryOptions)
+}
 
 export const useHasActiveSubscription = (useSuspense = false) => {
+  const useHook = useSuspense
+    ? useGetSuspenseSubscriptions
+    : useGetSubscriptions
   const {
     data: customerState,
     isLoading: isSubscriptionLoading,
     ...rest
-  } = useSuspense ? useGetSuspenseSubscriptions() : useGetSubscriptions();
+  } = useHook()
   const hasActiveSubscription =
     customerState?.data?.activeSubscriptions &&
-    customerState.data.activeSubscriptions.length > 0;
+    customerState.data.activeSubscriptions.length > 0
 
   return {
     hasExist: !!customerState?.data?.id,
@@ -27,5 +30,5 @@ export const useHasActiveSubscription = (useSuspense = false) => {
     subscription: customerState?.data?.activeSubscriptions?.[0],
     isSubscriptionLoading,
     ...rest,
-  };
-};
+  }
+}

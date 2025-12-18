@@ -1,22 +1,22 @@
-"use client";
-import Placeholder from "@/assets/icons/placeholder";
-import { cn } from "@/lib/utils";
-import { useCallback, useState } from "react";
-import Dataloader from "./loaders";
+'use client'
+import Placeholder from '@/assets/icons/placeholder'
+import { cn } from '@/lib/utils'
+import { useState } from 'react'
+import Dataloader from './loaders'
 
 type ImageWithFallbackProps = {
-  src?: string;
-  alt?: string;
-  width?: number;
-  height?: number;
-  className?: string;
-  onLoad?: (url?: string) => void;
-  onLoadStart?: (url?: string) => void;
-  onError?: (url?: string) => void;
-  loadingImage?: HTMLImageElement["loading"];
-  onClick?: (url: string) => void;
-  placeholder?: React.ReactNode;
-};
+  src?: string
+  alt?: string
+  width?: number
+  height?: number
+  className?: string
+  onLoad?: (url?: string) => void
+  onLoadStart?: (url?: string) => void
+  onError?: (url?: string) => void
+  loadingImage?: HTMLImageElement['loading']
+  onClick?: (url: string) => void
+  placeholder?: React.ReactNode
+}
 
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   src,
@@ -30,100 +30,78 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   placeholder: FallBack,
   ...props
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const fallbackCheck = FallBack && typeof FallBack == "string";
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const fallbackCheck = FallBack && typeof FallBack == 'string'
   const handleLoadStart = () => {
-    onLoadStart?.(src);
-  };
+    onLoadStart?.(src)
+  }
 
   const handleLoad = () => {
-    setIsLoaded(true);
-    onLoad?.(src);
-  };
+    setIsLoaded(true)
+    onLoad?.(src)
+  }
 
   const handleError = () => {
-    console.log("ërror", alt);
-    setHasError(true);
-    onError?.(src);
-    setIsLoaded(true);
-  };
+    console.log('ërror', alt)
+    setHasError(true)
+    onError?.(src)
+    setIsLoaded(true)
+  }
 
   const handleClick = () => {
-    if (src && !hasError) onClick?.(src);
-  };
+    if (src && !hasError) onClick?.(src)
+  }
 
-  const shouldShowImg = src && !hasError && isLoaded;
-  const shoudShowPlaceholder = !shouldShowImg;
-  const getPlaceholder = useCallback(() => {
+  const shouldShowImg = src && !hasError && isLoaded
+  const shoudShowPlaceholder = !shouldShowImg
+  const getPlaceholder = () => {
     if (!shoudShowPlaceholder) {
-      return null;
+      return null
     }
     if (fallbackCheck) {
       return (
         <img
           src={FallBack}
           alt={alt}
-          className={cn("h-full w-full block", className)}
+          className={cn('block h-full w-full', className)}
           loading={loadingImage}
           onLoad={handleLoad}
           onError={handleError}
           onLoadStart={handleLoadStart}
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleClick();
+            e.preventDefault()
+            e.stopPropagation()
+            handleClick()
           }}
           {...props}
         />
-      );
+      )
     }
     if (FallBack) {
-      return FallBack;
+      return FallBack
     }
 
     return (
       <Placeholder
-        className={cn("h-full w-full  ", className)}
+        className={cn('h-full w-full', className)}
         onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleClick();
+          e.preventDefault()
+          e.stopPropagation()
+          handleClick()
         }}
       />
-    );
-
-    // return (
-    //   <img
-    //     src={makeThumb('No Preview') as string}
-    //     alt={alt}
-    //     className={cn(
-    //       'h-full w-full',
-    //       className
-    //       // shouldShowImg ? 'block' : 'hidden'
-    //     )}
-    //     loading={loadingImage}
-    //     onLoad={handleLoad}
-    //     onError={handleError}
-    //     onLoadStart={handleLoadStart}
-    //     onClick={(e) => {
-    //       e.preventDefault();
-    //       e.stopPropagation();
-    //       handleClick();
-    //     }}
-    //     {...props}
-    //   />
-    // );
-  }, [src, isLoaded]);
+    )
+  }
 
   return (
     <div
-      style={{ position: "relative", display: "inline-block" }}
-      className="w-full h-full"
+      style={{ position: 'relative', display: 'inline-block' }}
+      className='h-full w-full'
     >
       <>
         {!isLoaded && !hasError && (
-          <Dataloader className="absolute w-full top-0 h-full bg-gray-400/40 rounded-xl" />
+          <Dataloader className='absolute top-0 h-full w-full rounded-xl bg-gray-400/40' />
         )}
         {!shouldShowImg && shoudShowPlaceholder && getPlaceholder()}
         {/* <Placeholder
@@ -140,24 +118,24 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
           src={src}
           alt={alt}
           className={cn(
-            "h-full w-full",
+            'h-full w-full',
             className,
-            shouldShowImg ? "block" : "hidden"
+            shouldShowImg ? 'block' : 'hidden',
           )}
           loading={loadingImage}
           onLoad={handleLoad}
           onError={handleError}
           onLoadStart={handleLoadStart}
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleClick();
+            e.preventDefault()
+            e.stopPropagation()
+            handleClick()
           }}
           {...props}
         />
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ImageWithFallback;
+export default ImageWithFallback

@@ -1,13 +1,13 @@
-"use client";
-import NetWorkStatus from "@/components/network-status";
-import { getQueryClient } from "@/get-query-client";
+'use client'
+import NetWorkStatus from '@/components/network-status'
+import { getQueryClient } from '@/get-query-client'
 
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from '@/components/ui/sonner'
 // import useRefreshToken from "@/hooks/useRefreshToken";
-import TokenManager from "@/components/token-manager";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import AppWrapper from "./app-wrapper";
+import TokenManager from '@/components/token-manager'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import AppWrapper from './app-wrapper'
 
 // const RefreshTokens = () => {
 //   useRefreshToken();
@@ -19,9 +19,9 @@ import AppWrapper from "./app-wrapper";
 export default function QueryProvider({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const queryClient = getQueryClient();
+  const queryClient = getQueryClient()
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -32,5 +32,5 @@ export default function QueryProvider({
       <Toaster richColors />
       <ReactQueryDevtools />
     </QueryClientProvider>
-  );
+  )
 }
