@@ -14,7 +14,7 @@ export const useOffsetGetAllWorkflows = (
   props: WorkflowClientListOptions<'offset'>,
 ) => {
   return useOffsetPaginationList(workflowClient, {
-    ...getWorkflowListQueryOptions<'offset', false>(),
+    ...getWorkflowListQueryOptions(),
     ...props,
   })
 }

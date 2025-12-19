@@ -980,6 +980,9 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         })
       },
       initialPageParam: params.cursor,
+      getNextPageParam: (
+        lastPage: ApiHooksResp<ReturnModel<TEntity, Entity>[]>,
+      ) => lastPage.pagination_meta?.next || undefined,
       ...(callOptions?.infiniteOptions || {}),
     })
   }
