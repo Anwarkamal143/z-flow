@@ -8,8 +8,10 @@ import { useRequireUnAuthClient } from '@/hooks/useAuthGuard'
 import useZodForm from '@/hooks/useZodForm'
 import { useStoreAuthActions } from '@/store/userAuthStore'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { parseAsBoolean, useQueryState } from 'nuqs'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useSignOut } from '../api'
 import { useSignIn } from '../api/hooks'
 import { SIGN_IN_SCHEMA, SignInSchemaType } from '../schema'
 import AuthForm from './AuthForm'
@@ -21,9 +23,27 @@ const SignInScreen = ({}) => {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const [isSocialLogginIn, setIsSocialLogginIn] = useState(false)
+  const [isSigningOUt, setSignout] = useQueryState(
+    'signout',
+    parseAsBoolean
+      .withOptions({
+        history: 'push',
+        clearOnDefault: true,
+      })
+      .withDefault(false),
+  )
   const setUser = useStoreAuthActions().setUser
-  useRequireUnAuthClient()
+  const { loading, user } = useRequireUnAuthClient(!isSigningOUt)
   const { handleSignIn } = useSignIn()
+  const { signOut } = useSignOut()
+  const handleSignout = async () => {
+    if (!user) {
+      setSignout(null)
+      return
+    }
+    await signOut(false)
+    setSignout(null)
+  }
   const form = useZodForm({
     schema: SIGN_IN_SCHEMA,
     defaultValues: {
@@ -65,6 +85,13 @@ const SignInScreen = ({}) => {
       toast.error(error.message)
     }
   }
+  useEffect(() => {
+    if (isSigningOUt) {
+      handleSignout()
+    }
+
+    return () => {}
+  }, [loading, user])
 
   const { formState } = form
   const isFormSubmitting = formState.isSubmitting || isSocialLogginIn

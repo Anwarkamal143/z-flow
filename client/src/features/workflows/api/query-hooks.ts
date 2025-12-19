@@ -5,8 +5,7 @@ import {
   useSuspnseOffsetPagination,
 } from '@/queries/pagination/hooks'
 import getQueryFn from '@/queries/useQueryFn'
-import { IListCallOptions } from '@/queries/v1/types'
-import { workflowListqueryOptions } from './query-options'
+import { getWorkflowListQueryOptions } from './query-options'
 
 export const useSuspenseCursorListWorkflows = getQueryFn(
   workflowClient.useInfiniteList,
@@ -15,28 +14,27 @@ export const useOffsetGetAllWorkflows = (
   props: WorkflowClientListOptions<'offset'>,
 ) => {
   return useOffsetPaginationList(workflowClient, {
-    ...workflowListqueryOptions,
+    ...getWorkflowListQueryOptions<'offset', false>(),
     ...props,
   })
 }
 
 export const useSuspenseOffsetWorkflows = <
-  T extends Omit<
-    IListCallOptions<Partial<IWorkflow>, false, 'offset'>,
-    'mode'
-  > = Omit<IListCallOptions<Partial<IWorkflow>, false, 'offset'>, 'mode'>,
+  T extends WorkflowClientListOptions<'offset', true> =
+    WorkflowClientListOptions<'offset', true>,
 >(
   props?: T,
 ) => {
   const mode = 'offset'
   return useSuspnseOffsetPagination(workflowClient, {
-    ...workflowListqueryOptions,
-    ...props,
-    mode,
-    params: {
-      includeTotal: true,
-      ...(props?.params || {}),
+    ...getWorkflowListQueryOptions<'offset', true>({
+      ...props,
       mode,
-    },
+      params: {
+        includeTotal: true,
+        ...(props?.params || {}),
+        mode,
+      },
+    }),
   })
 }

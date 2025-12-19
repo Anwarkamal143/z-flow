@@ -850,8 +850,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
   // ---------- Enhanced Prefetch Methods ----------
 
-  const prefetchList = <Entity = TEntity>(
-    callOptions?: IListCallOptions<ReturnModel<TEntity, Entity>, false>,
+  const prefetchList = <
+    Entity = TEntity,
+    Mode extends IPaginationModes | undefined = undefined,
+  >(
+    callOptions?: IListCallOptions<ReturnModel<TEntity, Entity>, false, Mode>,
   ) => {
     const params = mergeParams(callOptions?.params) as OffsetPaginationConfig<
       ReturnModel<TEntity, Entity>
@@ -891,12 +894,13 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         callOptions?.onSuccess?.(response)
         return response
       },
+
       ...(callOptions?.queryOptions || {}),
     })
   }
 
   const prefetchGet = <Entity = TEntity>(
-    callOptions: SingleQueryOptions<TEntity, Entity, false> & { id?: Id },
+    callOptions: SingleQueryOptions<TEntity, Entity, false>,
   ) => {
     const params = mergeParams(callOptions?.params) as QueryParams<
       ReturnModel<TEntity, Entity>
@@ -1131,6 +1135,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   > = {}
   const deleteOptions: ExtractHookOptions<typeof useDelete<TEntity>> = {}
   const Entity: Partial<TEntity> = {}
+  const TEntity = {} as TEntity
 
   return {
     // Raw methods
@@ -1180,5 +1185,6 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     createOptions,
     deleteOptions,
     Entity,
+    TEntity,
   }
 }

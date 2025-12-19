@@ -1,5 +1,6 @@
 // lib/server/parse-pagination-params.ts
 import { PAGINATION } from '@/config/constants'
+import { QueryParams } from '@/queries/v1/types'
 import { SearchParams } from 'nuqs/server'
 import 'server-only'
 import { createPaginationParams } from '../schema'
@@ -9,7 +10,7 @@ import { createPaginationParams } from '../schema'
 // Parse params from search params (Next.js)
 export function parseServerPaginationParams<T extends Record<string, any>>(
   searchParams: SearchParams,
-) {
+): QueryParams<T> {
   const {
     filterConfigSchema,
     pageSchema,
@@ -20,7 +21,7 @@ export function parseServerPaginationParams<T extends Record<string, any>>(
     cursorSchema,
     cursorDirectionSchema,
     paginationMode,
-  } = createPaginationParams<T>()
+  } = createPaginationParams()
 
   // const page =
   //   stringToNumber(searchParams.page as string) || PAGINATION.DEFAULT_PAGE;

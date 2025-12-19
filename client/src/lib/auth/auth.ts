@@ -26,6 +26,10 @@ export const authSession = async (
   user: IServerCookieType
   cookie: string
 }> => {
+  // if want to refresh directly from server remove this and the condition above check for REFRESH_QUERY_KEY which returns null
+  if (searchParams?.[REFRESH_QUERY_KEY] == 'true') {
+    return null
+  }
   const cookieStore = await cookies()
   const tokens = getAuthCookiesValues(cookieStore)
   const res = await TokenService.verify(tokens.accessToken)
@@ -36,10 +40,6 @@ export const authSession = async (
       ...tokens,
       cookie: await getCookieAsString(),
     }
-  }
-  // if want to refresh directly from server remove this and the condition above check for REFRESH_QUERY_KEY which returns null
-  if (searchParams?.[REFRESH_QUERY_KEY] == 'true') {
-    return null
   }
   if (res.isExpired) {
     delete searchParams?.[REFRESH_QUERY_KEY]
@@ -68,7 +68,8 @@ export const authSession = async (
     // }
   }
   if (isRedirect) {
-    return redirect('/login')
+    // return redirect('/login', RedirectType.replace)
+    return redirect('/login?signout=true', RedirectType.replace)
   }
   return null
 }
@@ -86,6 +87,7 @@ export const requireUnAuth = async (): Promise<null | {
   }
   return null
 }
+const a = ' '
 
 async function refreshTokens(refreshToken: string) {
   try {

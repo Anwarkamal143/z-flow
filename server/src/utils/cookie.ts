@@ -122,7 +122,6 @@ export const getCookiesOptions = (props?: {
     expiresIn: APP_CONFIG.JWT_COOKIE_EXPIRES_IN,
     cookies: {},
   };
-  console.log({ token: getCookieTime(expiresIn), expiresIn });
   const updatedCookies = { ...cookies };
   updatedCookies.expires = updatedCookies.expires || getCookieTime(expiresIn);
   updatedCookies.httpOnly = updatedCookies.httpOnly || true;

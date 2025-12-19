@@ -32,7 +32,7 @@ export function useAuthGuard(requiredRoles?: Role[]) {
 
   return { loading: false, user }
 }
-export function useRequireUnAuthClient() {
+export function useRequireUnAuthClient(redirect = true) {
   const router = useRouter()
   const user = useStoreUser()
   const isAuthenticating = useStoreUserIsAuthenticating()
@@ -40,7 +40,7 @@ export function useRequireUnAuthClient() {
   // Redirect logic
   useEffect(() => {
     if (!isAuthenticating) {
-      if (user?.id) {
+      if (user?.id && redirect) {
         router.replace('/')
       }
     }

@@ -14,4 +14,5 @@ export {
   type WorkFlowClient,
   type WorkFlowClientEntity,
   type WorkflowClientListOptions,
+  type WorkFlowClientPartialEntity,
 } from './Workflow.model'

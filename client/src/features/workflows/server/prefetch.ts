@@ -1,17 +1,41 @@
+'use server'
 import { optionsWithCookies } from '@/lib'
+import { getCookieAsString } from '@/lib/auth/server-utils'
 import {
   workflowClient,
   WorkflowClientListOptions,
 } from '@/models/v1/Workflow.model'
-import { workflowListqueryOptions } from '../api/query-options'
+import {
+  getWorkflowListQueryOptions,
+  getWorkflowQueryOptions,
+} from '../api/query-options'
 
-export const prefetchServerWorkflows = (
-  cookies?: string,
-  props: WorkflowClientListOptions = {},
+export const prefetchServerWorkflows = async (
+  props: WorkflowClientListOptions<'offset', false> = {},
+  cookies: string | undefined = undefined,
 ) => {
-  const queryOptions = { ...workflowListqueryOptions, ...props }
+  const cokies = cookies || (await getCookieAsString())
+  const queryOptions = {
+    ...getWorkflowListQueryOptions(),
+    ...props,
+  }
   workflowClient.prefetchList({
     ...queryOptions,
-    options: optionsWithCookies(queryOptions.options, cookies),
+    options: optionsWithCookies(queryOptions.options, cokies),
+  })
+}
+export const prefetchServerWorkflow = async (
+  id: string,
+  cookies: string | undefined = undefined,
+) => {
+  const cokies = cookies || (await getCookieAsString())
+
+  const queryOptions = { ...getWorkflowQueryOptions() }
+
+  const options = { ...(queryOptions.options || {}) }
+  workflowClient.prefetchGet({
+    ...queryOptions,
+    id,
+    options: optionsWithCookies(options, cokies),
   })
 }

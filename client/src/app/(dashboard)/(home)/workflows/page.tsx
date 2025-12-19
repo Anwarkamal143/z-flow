@@ -18,13 +18,12 @@ type Props = {
 
 const WorkFlowPage = async (props: Props) => {
   const params = await props.searchParams
-
-  const resp = await authSession(params)
+  await authSession(params)
   if (params?.[REFRESH_QUERY_KEY]) {
     return <Dataloader />
   }
 
-  void prefetchServerWorkflows(resp?.cookie, {
+  void prefetchServerWorkflows({
     params: {
       ...parseServerPaginationParams({ ...params, includeTotal: 'true' }),
     },
