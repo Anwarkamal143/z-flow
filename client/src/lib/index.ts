@@ -1,3 +1,4 @@
+import { REFRESH_QUERY_KEY } from '@/config'
 import { getQueryClient } from '@/get-query-client'
 import { RequestOptions } from '@/queries/v1/types'
 import { resetAllStores } from '@/store/useGlobalStore'
@@ -278,5 +279,12 @@ export const isNotEmpty = (value: unknown): boolean => {
     return Object.keys(value).length > 0
   }
 
+  return false
+}
+
+export const isAccessTokenRefresing = (params?: Record<string, any>) => {
+  if (params && params?.[REFRESH_QUERY_KEY]) {
+    return true
+  }
   return false
 }

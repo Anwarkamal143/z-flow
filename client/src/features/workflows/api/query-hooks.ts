@@ -1,23 +1,19 @@
 'use client'
 import { workflowClient, WorkflowClientListOptions } from '@/models'
+import { useSuspnseOffsetPagination } from '@/queries/pagination/hooks'
+import { SingleQueryOptions } from '@/queries/v1/types'
 import {
-  useOffsetPaginationList,
-  useSuspnseOffsetPagination,
-} from '@/queries/pagination/hooks'
-import getQueryFn from '@/queries/useQueryFn'
-import { getWorkflowListQueryOptions } from './query-options'
+  getWorkflowListQueryOptions,
+  getWorkflowQueryOptions,
+} from './query-options'
 
-export const useSuspenseCursorListWorkflows = getQueryFn(
-  workflowClient.useInfiniteList,
-)
-export const useOffsetGetAllWorkflows = (
-  props: WorkflowClientListOptions<'offset'>,
-) => {
-  return useOffsetPaginationList(workflowClient, {
-    ...getWorkflowListQueryOptions(),
-    ...props,
+export const useGetSuspenseWorkflow = (
+  opts: SingleQueryOptions<IWorkflow, IWorkflow, true> = {},
+) =>
+  workflowClient.useSuspenseGet({
+    ...opts,
+    queryKey: getWorkflowQueryOptions({ ...opts }).queryKey,
   })
-}
 
 export const useSuspenseOffsetWorkflows = <
   T extends WorkflowClientListOptions<'offset', true> =

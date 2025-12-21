@@ -249,6 +249,34 @@ export const EmptyView = ({ message, onNew }: EmptyViewProps) => {
     </Empty>
   )
 }
+export const EmptySingleView = ({
+  message,
+  onActionClick,
+  actionMessage,
+}: {
+  message?: string
+  actionMessage?: string
+  onActionClick?: () => void
+}) => {
+  return (
+    <Empty className='border border-dashed shadow'>
+      <EmptyHeader>
+        <EmptyMedia variant={'icon'}>
+          <PackageOpenIcon />
+        </EmptyMedia>
+      </EmptyHeader>
+      <EmptyTitle>Not Found</EmptyTitle>
+      {!!message && <EmptyDescription>{message}</EmptyDescription>}
+      {!!onActionClick && (
+        <EmptyContent>
+          <ButtonLoader onClick={onActionClick}>
+            {actionMessage || 'Go Back'}
+          </ButtonLoader>
+        </EmptyContent>
+      )}
+    </Empty>
+  )
+}
 
 interface EntityListProps<T> {
   items?: T[]

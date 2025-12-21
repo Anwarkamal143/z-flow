@@ -127,7 +127,6 @@ class WorkflowController {
     const userId = req.user!.id;
     const validaionResult = workflowService.validateQuery(req.query as any, {
       search: "name",
-      sort: "id",
       filters() {
         return [{ column: "userId", operator: "eq", value: userId }];
       },

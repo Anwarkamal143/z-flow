@@ -1,12 +1,12 @@
 import Dataloader from '@/components/loaders'
 import { HydrateClient } from '@/components/server'
-import { REFRESH_QUERY_KEY } from '@/config'
 import Workflows, {
   WorkflowsContainer,
   WorksflowError,
   WorksflowLoading,
 } from '@/features/workflows/components/workflows'
 import { prefetchServerWorkflows } from '@/features/workflows/server/prefetch'
+import { isAccessTokenRefresing } from '@/lib'
 import { authSession } from '@/lib/auth/auth'
 import { parseServerPaginationParams } from '@/queries/pagination/server/pagination-params'
 import { SearchParams } from 'nuqs/server'
@@ -19,7 +19,7 @@ type Props = {
 const WorkFlowPage = async (props: Props) => {
   const params = await props.searchParams
   await authSession(params)
-  if (params?.[REFRESH_QUERY_KEY]) {
+  if (isAccessTokenRefresing(params)) {
     return <Dataloader />
   }
 

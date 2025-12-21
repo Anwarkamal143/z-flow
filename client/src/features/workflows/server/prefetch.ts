@@ -16,7 +16,7 @@ export const prefetchServerWorkflows = async (
 ) => {
   const cokies = cookies || (await getCookieAsString())
   const queryOptions = {
-    ...getWorkflowListQueryOptions(),
+    ...getWorkflowListQueryOptions<'offset', false>(),
     ...props,
   }
   workflowClient.prefetchList({
@@ -32,10 +32,9 @@ export const prefetchServerWorkflow = async (
 
   const queryOptions = { ...getWorkflowQueryOptions() }
 
-  const options = { ...(queryOptions.options || {}) }
   workflowClient.prefetchGet({
     ...queryOptions,
     id,
-    options: optionsWithCookies(options, cokies),
+    options: optionsWithCookies(queryOptions.options, cokies),
   })
 }
