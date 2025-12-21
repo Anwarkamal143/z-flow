@@ -9,7 +9,6 @@ import {
   IApiResponse,
   IPaginatedReturnType,
   IPaginationMeta,
-  IPartialIfExist,
   ReturnModelType,
 } from '@/types/Iquery'
 import {
@@ -394,12 +393,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       queryKey: buildQueryKey(
         params.entity,
         'list',
+        ...(callOptions?.queryKey || []),
         params.limit,
         params.page,
         validateParams?.search,
         validateParams?.sort,
         validateParams?.filters,
-        ...(callOptions?.queryKey || []),
       ),
       queryFn: async ({ signal }) => {
         const response = await listRaw<Entity>({
@@ -460,12 +459,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       queryKey: buildQueryKey(
         params.entity,
         'infinite-list',
+        ...(callOptions?.queryKey || []),
         params.limit,
         params.cursor,
         validateParams?.search,
         validateParams?.sort,
         validateParams?.filters,
-        ...(callOptions?.queryKey || []),
       ),
       queryFn: async ({ pageParam }) => {
         const cursorParams = pageParam ? { cursor: pageParam as string } : {}
@@ -515,13 +514,13 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     return useHook({
       queryKey: buildQueryKey(
         entity,
-        'get',
+        ...(callOptions?.queryKey || []),
         id,
+        'get',
 
         validateParams?.search,
         validateParams?.sort,
         validateParams?.filters,
-        ...(callOptions?.queryKey || []),
       ),
       queryFn: async ({ signal }) => {
         // if (id == null) throw new Error("ID is required for useGet");
@@ -621,8 +620,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
         if (callOptions?.invalidateQueries) {
           callOptions.invalidateQueries.forEach(({ queryKey, exact }) => {
+            let key
+            if (typeof queryKey == 'function') {
+              key = queryKey(data.data, variables)
+            } else {
+              key = queryKey
+            }
             queryClient.invalidateQueries({
-              queryKey: buildQueryKey(params.entity, ...(queryKey || [])),
+              queryKey: buildQueryKey(params.entity, ...(key || [])),
               exact,
             })
           })
@@ -630,8 +635,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
         if (callOptions?.refetchQueries) {
           callOptions.refetchQueries.forEach(({ queryKey, exact }) => {
+            let key
+            if (typeof queryKey == 'function') {
+              key = queryKey(data.data, variables)
+            } else {
+              key = queryKey
+            }
             queryClient.refetchQueries({
-              queryKey: [params.entity, ...(queryKey || [])],
+              queryKey: [params.entity, ...(key || [])],
               exact,
             })
           })
@@ -647,12 +658,17 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       onMutate: async (variables, ctx) => {
         if (callOptions?.optimisticUpdate) {
           const { queryKey, updateFn } = callOptions.optimisticUpdate
-          await queryClient.cancelQueries({ queryKey })
+          let qKey
+          if (typeof queryKey == 'function') {
+            qKey = queryKey(variables, ctx)
+          } else {
+            qKey = queryKey
+          }
+          const key = [params.entity, ...(qKey || [])]
+          await queryClient.cancelQueries({ queryKey: key })
 
-          const previousData = queryClient.getQueryData(queryKey)
-          queryClient.setQueryData(queryKey, (old: any) =>
-            updateFn(old, variables),
-          )
+          const previousData = queryClient.getQueryData(key)
+          queryClient.setQueryData(key, (old: any) => updateFn(old, variables))
 
           return { previousData }
         }
@@ -664,7 +680,16 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           const { queryKey } = callOptions?.optimisticUpdate || {
             queryKey: [],
           }
-          queryClient.setQueryData(queryKey, (context as any).previousData)
+          let key
+          if (typeof queryKey == 'function') {
+            key = queryKey(variables, context)
+          } else {
+            key = queryKey
+          }
+          if (key.length) {
+            const qKey = [params.entity, ...(key || [])]
+            queryClient.setQueryData(qKey, (context as any).previousData)
+          }
         }
 
         callOptions?.mutationOptions?.onError?.(
@@ -699,10 +724,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
   const useUpdate = <Entity = TEntity, TVars = Partial<TEntity>>(
     callOptions?: MutationCallOptions<
-      { id: Id; data: TEntity & IPartialIfExist<Entity> },
+      // { id: Id; data: TEntity & IPartialIfExist<Entity> },
+      ReturnModel<TEntity, Entity>,
       { id: Id; data: TVars }
     >,
   ) => {
+    const params = mergeParams(callOptions?.params) as QueryParams<
+      ReturnModel<TEntity, Entity>
+    >
     const mutate = useMutation({
       mutationFn: ({ id, data }: { id: Id; data: TVars }) =>
         updateRaw({
@@ -716,15 +745,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         if (data.data) {
           callOptions?.onSuccess?.(data.data)
         }
-
         if (variables?.id) {
-          const entityKey = buildQueryKey(
-            opts?.defaultParams?.entity,
-            variables.id,
-          )
+          const entityKey = buildQueryKey(params?.entity, variables.id, 'get')
           queryClient.setQueryData(entityKey, (old: any) => {
             if (old && data.data) {
-              return { ...old, ...data.data }
+              return { ...old, data: { ...(old.data || {}), ...data.data } }
             }
             return old
           })
@@ -732,7 +757,16 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
         if (callOptions?.invalidateQueries) {
           callOptions.invalidateQueries.forEach(({ queryKey, exact }) => {
-            queryClient.invalidateQueries({ queryKey, exact })
+            let key
+            if (typeof queryKey == 'function') {
+              key = queryKey(data.data, variables)
+            } else {
+              key = queryKey
+            }
+            queryClient.invalidateQueries({
+              queryKey: [params.entity, ...(key || [])],
+              exact,
+            })
           })
         }
 
@@ -742,6 +776,26 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           mutationResult,
           context,
         )
+      },
+      onMutate: async (variables, ctx) => {
+        if (callOptions?.optimisticUpdate) {
+          const { queryKey, updateFn } = callOptions.optimisticUpdate
+          let qKey
+          if (typeof queryKey == 'function') {
+            qKey = queryKey(variables, ctx)
+          } else {
+            qKey = queryKey
+          }
+          const key = [params.entity, ...(qKey || [])]
+          await queryClient.cancelQueries({ queryKey: key })
+
+          const previousData = queryClient.getQueryData(key)
+          queryClient.setQueryData(key, (old: any) => updateFn(old, variables))
+
+          return { previousData }
+        }
+
+        return callOptions?.mutationOptions?.onMutate?.(variables, ctx)
       },
       ...callOptions?.mutationOptions,
     })
@@ -754,10 +808,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         },
         options?:
           | MutateOptions<
-              IApiResponse<{
-                id: Id
-                data: TEntity & IPartialIfExist<Entity>
-              }>,
+              IApiResponse<ReturnModel<TEntity, Entity>>,
               DefaultError,
               {
                 id: Id
@@ -768,7 +819,6 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           | undefined,
       ) => {
         const res = await mutate.mutateAsync(variables, options)
-
         return res
       },
     )
@@ -869,13 +919,13 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       queryKey: buildQueryKey(
         params.entity,
         'list',
+        ...(callOptions?.queryKey || []),
         params.limit,
         params.page,
 
         validateParams?.search,
         validateParams?.sort,
         validateParams?.filters,
-        ...(callOptions?.queryKey || []),
       ),
       queryFn: async ({ signal }) => {
         const response = await listRaw<Entity>({
@@ -914,13 +964,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     queryClient.prefetchQuery({
       queryKey: buildQueryKey(
         params.entity,
-        'get',
+        ...(callOptions.queryKey || []),
         callOptions.id,
+        'get',
         validateParams?.search,
         validateParams?.sort,
         validateParams?.filters,
-
-        ...(callOptions.queryKey || []),
       ),
       queryFn: async ({ signal }) => {
         const response = await getRaw<ReturnModel<TEntity, Entity>>({
@@ -959,12 +1008,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       queryKey: buildQueryKey(
         params.entity,
         'infinite-list',
+        ...(callOptions?.queryKey || []),
         params.limit,
         params.cursor,
         validateParams?.search,
         validateParams?.sort,
         validateParams?.filters,
-        ...(callOptions?.queryKey || []),
       ),
       queryFn: async ({ pageParam }) => {
         const cursorParams = pageParam ? { cursor: pageParam as string } : {}
@@ -999,9 +1048,9 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       queryClient.prefetchQuery({
         queryKey: buildQueryKey(
           params.entity,
-          'get',
-          id,
           ...(callOptions.queryKey || []),
+          id,
+          'get',
         ),
         queryFn: async ({ signal }) => {
           const response = await getRaw<ReturnModel<TEntity, Entity>>({

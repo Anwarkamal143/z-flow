@@ -508,10 +508,13 @@ export class BaseService<
   validateQuery(
     p: typeof this._types.PaginationsConfig,
     defaults: {
-      search: keyof TTable["$inferSelect"];
-      sort: keyof TTable["$inferSelect"];
+      search?: keyof TTable["$inferSelect"];
+      sort?: {
+        column: keyof TTable["$inferSelect"];
+        direction?: "asc" | "desc";
+      };
       filters?: (table: TTable) => FilterCondition<TTable>[];
-    }
+    } = { sort: { column: "updated_at", direction: "desc" } }
   ) {
     const { search, limit, filters, sorts, includeTotal, mode } = p;
     let toalInclude = false;
@@ -519,6 +522,10 @@ export class BaseService<
       toalInclude =
         typeof includeTotal == "string" ? includeTotal == "true" : includeTotal;
     }
+    const defaultSort = defaults.sort || {
+      column: "updated_at",
+      direction: "desc",
+    };
     if (mode == "offset") {
       const { page } = p;
 
@@ -530,7 +537,7 @@ export class BaseService<
           defaults?.filters?.(this.table)
         ),
         search: this.preValidateSearchColumns(search, defaults.search),
-        sorts: this.preValidateSortColumns(sorts, defaults.sort),
+        sorts: this.preValidateSortColumns(sorts, defaultSort),
         includeTotal: toalInclude,
         mode: "offset" as IPaginationType,
       } as typeof this._types.PaginationsConfig;
@@ -665,11 +672,6 @@ export class BaseService<
     if (typeof parsedResult == "string") {
       return undefined;
     }
-    console.log(
-      parsedResult,
-      (parsedResult?.term || "")?.trim(),
-      "validateSearchColumns"
-    );
     if ((parsedResult?.term || "")?.trim() == "") {
       return undefined;
     }
@@ -723,22 +725,34 @@ export class BaseService<
   }
   preValidateSortColumns(
     sort: SortConfig<TTable>[] | string | undefined,
-    defaultColumn: keyof TTable["$inferSelect"] = "created_at"
+    defaultColumn?: {
+      column: keyof TTable["$inferSelect"];
+      direction?: "asc" | "desc";
+    }
   ) {
     const s = sort;
     let parsedResult = this.parseIfExistAndString(s) as SortConfig<TTable>[];
     if (parsedResult == null) {
+      if (defaultColumn?.column) {
+        return [
+          {
+            column: defaultColumn.column ? defaultColumn.column : undefined,
+            direction: defaultColumn.direction || "desc",
+          },
+        ] as SortConfig<TTable>[];
+      }
       return undefined;
     }
     if (typeof parsedResult == "string") {
       if (["asc", "desc"].includes(parsedResult)) {
         return [
           {
-            column: defaultColumn ? defaultColumn : undefined,
+            column: defaultColumn?.column ? defaultColumn.column : undefined,
             direction: parsedResult,
           },
         ] as SortConfig<TTable>[];
       }
+
       return undefined;
     }
     if (!parsedResult.length) {
@@ -752,7 +766,7 @@ export class BaseService<
   }
   preValidateSearchColumns(
     search: SearchConfig<TTable> | string | undefined,
-    defaultColumn: keyof TTable["$inferSelect"]
+    defaultColumn?: keyof TTable["$inferSelect"]
   ) {
     const s = search;
     let parsedResult = this.parseIfExistAndString(s);
@@ -760,10 +774,12 @@ export class BaseService<
       return undefined;
     }
     if (typeof parsedResult == "string") {
-      return {
-        columns: defaultColumn ? [defaultColumn] : [],
-        term: parsedResult,
-      } as SearchConfig<TTable>;
+      return defaultColumn
+        ? ({
+            columns: defaultColumn ? [defaultColumn] : [],
+            term: parsedResult,
+          } as SearchConfig<TTable>)
+        : null;
     }
     if ((parsedResult?.term || "")?.trim() == "") {
       return undefined;

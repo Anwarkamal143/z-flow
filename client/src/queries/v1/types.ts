@@ -13,6 +13,7 @@ import {
 } from '@/types/Iquery'
 import {
   InfiniteData,
+  MutationFunctionContext,
   QueryKey,
   UseInfiniteQueryOptions,
   UseMutationOptions,
@@ -243,15 +244,17 @@ export type MutationCallOptions<
   mutationOptions?: UseMutationOptions<IApiResponse<TData>, ErrorT, TVars>
   onSuccess?: (data: TData) => void
   invalidateQueries?: {
-    queryKey: QueryKey
+    queryKey: QueryKey | ((data?: TData, params?: TVars) => QueryKey)
     exact?: boolean
   }[]
   refetchQueries?: {
-    queryKey: QueryKey
+    queryKey: QueryKey | ((data?: TData, params?: TVars) => QueryKey)
     exact?: boolean
   }[]
   optimisticUpdate?: {
-    queryKey: QueryKey
+    queryKey:
+      | QueryKey
+      | ((vars?: TVars, ctx?: MutationFunctionContext) => QueryKey)
     updateFn: (oldData: any, newData: TVars) => any
   }
 }

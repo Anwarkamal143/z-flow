@@ -10,12 +10,12 @@ export const getWorkflowListQueryOptions = <
 >(
   props: IListCallOptions<WorkFlowClientPartialEntity, IS_SUSPENSE, Mode> = {},
 ): IListCallOptions<any, IS_SUSPENSE, Mode> => ({
-  queryKey: ['workflow_list'],
   ...props,
+  queryKey: ['workflow_list', ...(props.queryKey || [])],
 })
 export const getWorkflowQueryOptions = <IS_SUSPENSE extends boolean = false>(
   props: SingleQueryOptions<WorkFlowClientEntity, object, IS_SUSPENSE> = {},
 ): SingleQueryOptions<WorkFlowClientEntity, object, IS_SUSPENSE> => ({
-  queryKey: ['workflow_item'],
   ...props,
+  queryKey: [...(props.queryKey || [])],
 })
