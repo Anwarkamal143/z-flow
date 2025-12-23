@@ -4,7 +4,7 @@ import { generateUlid } from "@/utils";
 import { CountryAlpha2Input } from "@polar-sh/sdk/models/components/addressinput.js";
 import { relations } from "drizzle-orm";
 import { boolean, index, pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { users } from "./users";
+import { users } from "./user";
 
 export const userAddresses = pgTable(
   "user_addresses",

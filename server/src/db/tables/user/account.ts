@@ -2,7 +2,7 @@ import { accountTypeEnum, baseTimestamps, isActive } from "@/db/helpers";
 import { generateUlid } from "@/utils";
 import { relations } from "drizzle-orm";
 import { integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
-import { users } from "./users";
+import { users } from "./user";
 
 export const accounts = pgTable("accounts", {
   id: text("id").primaryKey().$defaultFn(generateUlid),

@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1763227878395,
-      "tag": "0000_common_baron_zemo",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1764064479479,
-      "tag": "0001_burly_fixer",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1764143525825,
-      "tag": "0002_skinny_hex",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1764844496869,
-      "tag": "0003_ancient_sphinx",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1764844863637,
-      "tag": "0004_chubby_jimmy_woo",
+      "when": 1766474757518,
+      "tag": "0000_grey_celestials",
       "breakpoints": true
     }
   ]

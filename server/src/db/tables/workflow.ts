@@ -2,6 +2,8 @@ import { generateUlid } from "@/utils";
 import { relations } from "drizzle-orm";
 import { pgTable, text } from "drizzle-orm/pg-core";
 import { baseTimestamps } from "../helpers";
+import { connections } from "./connection";
+import { nodes } from "./node";
 import { users } from "./user";
 
 export const workflows = pgTable("workflows", {
@@ -13,9 +15,15 @@ export const workflows = pgTable("workflows", {
   ...baseTimestamps,
 });
 
-export const workflowsRelations = relations(workflows, ({ one }) => ({
+export const workflowRelations = relations(workflows, ({ one, many }) => ({
   user: one(users, {
     fields: [workflows.userId],
     references: [users.id],
+  }),
+  nodes: many(nodes, {
+    relationName: "workflow_nodes",
+  }),
+  connections: many(connections, {
+    relationName: "workflow_connections",
   }),
 }));

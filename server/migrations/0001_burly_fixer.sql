@@ -1,1 +1,0 @@
-ALTER TABLE "users" ADD COLUMN "polar_customer_id" timestamp;

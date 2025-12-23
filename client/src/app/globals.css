@@ -1,10 +1,11 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '@xyflow/react/dist/style.css';
 
 @custom-variant dark (&:is(.dark *));
+
 :root {
   --background: oklch(0.994 0 0);
-  /* --foreground: oklch(0 0 0); */
   --foreground: oklch(0.2223 0.006 271.1393);
   --card: oklch(0.994 0 0);
   --card-foreground: oklch(0 0 0);
@@ -122,6 +123,7 @@
 }
 
 @theme inline {
+  /* Base Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -155,15 +157,21 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Typography */
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 
+  /* Border Radius */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-full: 9999px;
 
+  /* Shadows */
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
@@ -173,6 +181,7 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
+  /* Tracking */
   --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
   --tracking-tight: calc(var(--tracking-normal) - 0.025em);
   --tracking-normal: var(--tracking-normal);
@@ -186,15 +195,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    /* letter-spacing: var(--tracking-normal); */
     @apply bg-background text-foreground tracking-normal;
   }
   button:not([disabled]),
   [role='button']:not([disabled]) {
     cursor: pointer;
   }
-}
-
-.react-flow__node.selected #base-node {
-  @apply ring-muted-foreground/25 shadow-lg ring-3;
 }

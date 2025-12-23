@@ -1,7 +1,11 @@
-import { assets } from '@/db/tables';
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod';
-import z from 'zod';
+import { assets } from "@/db/tables";
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
+import z from "zod";
 export const UpdateAssetSchema = createUpdateSchema(assets);
 
 export const InsertAssetSchema = createInsertSchema(assets);

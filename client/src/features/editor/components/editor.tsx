@@ -5,7 +5,9 @@ import {
   ErrorView,
   LoadingView,
 } from '@/components/entity-components'
+import FlowContainer from '@/components/react-flow'
 import { useGetSuspenseWorkflow } from '@/features/workflows/api'
+import '@xyflow/react/dist/style.css'
 import { useRouter } from 'next/navigation'
 
 type IEditorProps = {
@@ -17,10 +19,15 @@ const Editor = ({ workflowId }: IEditorProps) => {
     id: workflowId,
     isEnabled: !!workflowId,
   })
+
   if (!data?.data) {
     return <EditorSingleEmptyView />
   }
-  return <div>{JSON.stringify(data)}</div>
+  return (
+    <div className='h-full w-full'>
+      <FlowContainer />
+    </div>
+  )
 }
 
 export default Editor

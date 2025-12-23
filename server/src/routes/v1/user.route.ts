@@ -1,5 +1,6 @@
 import userController from "@/controllers/user.controller";
 import authMiddleware from "@/middlewares/auth.middleware";
+import { UsersPaginationConfig } from "@/services/user.service";
 import { FastifyInstance } from "fastify";
 
 export default async function userRoutes(fastify: FastifyInstance) {
@@ -10,7 +11,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
   fastify.get("/me", userController.me);
 
   // GET /user → findAll
-  fastify.get(
+  fastify.get<{ Querystring: UsersPaginationConfig }>(
     "/",
     { preHandler: authMiddleware.isAuthenticated },
     userController.findAll

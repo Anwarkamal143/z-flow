@@ -1,15 +1,18 @@
 import { Role, UserStatus } from "@/db/enumTypes";
-import { generateUlid } from "@/utils";
-import { relations } from "drizzle-orm";
-import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import {
   baseTimestamps,
   isActive,
   roleEnum,
   userStatusEnum,
-} from "../../helpers";
+} from "@/db/helpers";
+import { generateUlid } from "@/utils";
+import { relations } from "drizzle-orm";
+import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
+import { connections } from "../connection";
+import { nodes } from "../node";
 import { workflows } from "../workflow";
+import { accounts } from "./account";
 import { userAddresses } from "./user-addresses";
 
 /* =========================
@@ -40,6 +43,9 @@ export const users = pgTable(
 );
 
 export const usersRelations = relations(users, ({ many }) => ({
-  addresses: many(userAddresses),
-  workflows: many(workflows),
+  addresses: many(userAddresses, { relationName: "user_addresses" }),
+  workflows: many(workflows, { relationName: "user_workflows" }),
+  nodes: many(nodes, { relationName: "user_nodes" }),
+  connections: many(connections, { relationName: "user_connections" }),
+  accounts: many(accounts, { relationName: "user_accounts" }),
 }));

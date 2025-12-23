@@ -59,12 +59,7 @@ export enum UserStatus {
   DELETED = "deleted",
 }
 export type IUserStatus = `${UserStatus}`;
-export enum ProductVisiblity {
-  PUBLIC = "public",
-  PRIVATE = "private",
-  ARCHIVED = "archived",
-}
-export type IProductVisiblity = `${ProductVisiblity}`;
+
 export enum UserAddressType {
   BILLING = "billing",
 }
@@ -74,3 +69,6 @@ export enum DiscountType {
   FIXED_AMOUNT = "fixed_amount",
 }
 export type IDiscountType = `${DiscountType}`;
+export enum NodeType {
+  INITIAL = "initial",
+}

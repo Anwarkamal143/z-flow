@@ -56,7 +56,7 @@ class UserController {
   ) => {
     const validationResult = userService.validateQuery(req.query, {
       search: "name",
-      sort: "id",
+      sort: { column: "updated_at", direction: "desc" },
     });
 
     const result = await userService.listAllPaginatedUsersV2({

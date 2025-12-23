@@ -24,7 +24,7 @@ export async function seedDatabase(
         },
       });
       if (!isExist) {
-        const [user] = await txs
+        const [resp] = await txs
           .insert(users)
           .values({
             email,
@@ -35,11 +35,11 @@ export async function seedDatabase(
             status: UserStatus.ACTIVE,
           })
           .returning();
-        if (user?.id) {
+        if (resp?.id) {
           await txs
             .insert(accounts)
             .values({
-              userId: user.id,
+              userId: resp.id,
               type: AccountType.email,
               provider: Provider.email,
             })

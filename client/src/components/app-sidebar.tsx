@@ -139,10 +139,6 @@ const AppSidebar = () => {
 
                             isSidebarClosed && 'gap-0 rounded-xs p-0',
                           )}
-                          onClick={(e) => {
-                            // e.stopPropagation();
-                            setTheme(newTheme)
-                          }}
                         >
                           <Link href={item.url} prefetch={true}>
                             {isActive && (
@@ -182,6 +178,17 @@ const AppSidebar = () => {
             </SidebarMenuItem>
           )}
 
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip={'Billing Portal'}
+              className='h-10 gap-x-4 px-4'
+              onClick={() => {
+                setTheme(newTheme)
+              }}
+            >
+              Change Theme
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip={'Billing Portal'}
