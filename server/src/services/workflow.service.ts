@@ -1,4 +1,4 @@
-import { and, eq } from "@/db";
+import { and, eq, inArray, NodeType } from "@/db";
 import { workflows } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
 import { IUpdateUser } from "@/schema/user";
@@ -13,7 +13,9 @@ import { formatZodError } from "@/utils";
 import { BadRequestException, ValidationException } from "@/utils/catch-errors";
 import { cacheManager } from "@/utils/redis-cache/cache-manager";
 import drizzleCache from "@/utils/redis-cache/drizzle-cache";
+import { UUID } from "ulid";
 import { BaseService } from "./base.service";
+import { nodeService } from "./node.service";
 export type WorkflowPaginationConfig =
   typeof workflowService._types.PaginationsConfig;
 export type WorkflowSimplePaginationConfig =
@@ -30,11 +32,12 @@ export class WorkflowService extends BaseService<
   async listAllPaginatedWorkflows(params: WorkflowSimplePaginationConfig = {}) {
     const { mode, sort = "desc", ...rest } = params;
     if (mode === "offset") {
-      return await this.paginateOffset({
+      const listresp = await this.paginateOffset({
         ...rest,
         sort,
         where: rest.where,
       });
+      return listresp;
     }
 
     return await this.paginateCursor({
@@ -46,14 +49,53 @@ export class WorkflowService extends BaseService<
         : (table) => table.id,
     });
   }
+
+  private async populateNodes(workflowIds: UUID[]) {
+    const nodesResp = await nodeService.findMany((table) =>
+      inArray(table.workflowId, workflowIds)
+    );
+    if (!nodesResp.data) {
+      return {};
+    }
+    return nodesResp.data?.reduce((acc, node) => {
+      if (!node || !node.workflowId) return acc;
+      if (acc[node.workflowId]) {
+        acc[node.workflowId]!.push(node);
+      } else {
+        acc[node.workflowId] = [node];
+      }
+      return acc;
+    }, {} as Record<string, (typeof nodesResp.data)[0][]>);
+  }
+
   async listAllPaginatedWorkflowsV2(params: WorkflowPaginationConfig) {
     const { mode } = params;
     if (mode == "offset") {
-      return await this.paginationOffsetRecords({
+      const listresp = await this.paginationOffsetRecords({
         ...params,
       });
+      // if (listresp.data?.items?.length) {
+      //   const nodesMap = await this.populateNodes(
+      //     listresp.data.items.map((w) => w.id)
+      //   );
+      //   listresp.data.items = listresp.data.items.map((workflow) => ({
+      //     ...workflow,
+      //     nodes: nodesMap[workflow.id] || [],
+      //   }));
+      // }
+      return listresp;
     }
-    return this.paginationCursorRecords(params);
+    const listresp = await this.paginationCursorRecords(params);
+    // if (listresp.data?.items?.length) {
+    //   const nodesMap = await this.populateNodes(
+    //     listresp.data.items.map((w) => w.id)
+    //   );
+    //   listresp.data.items = listresp.data.items.map((workflow) => ({
+    //     ...workflow,
+    //     nodes: nodesMap[workflow.id] || [],
+    //   }));
+    // }
+    return listresp;
   }
 
   public async getByName(name: string) {
@@ -102,7 +144,22 @@ export class WorkflowService extends BaseService<
       };
     }
 
-    return await this.findMany((fields) => eq(fields.userId, userId));
+    const workflows = await this.findMany((fields) =>
+      eq(fields.userId, userId)
+    );
+    if (workflows.data?.length) {
+      const nodesMap = await this.populateNodes(
+        workflows.data.map((w) => w.id)
+      );
+      return {
+        data: workflows.data.map((workflow) => ({
+          ...workflow,
+          nodes: nodesMap[workflow.id] || [],
+        })),
+        error: null,
+      };
+    }
+    return workflows;
   }
   public async getByIdAndUserId(id?: string, userId?: string) {
     const parseResult = WorkflowByIdUserIdSchema.safeParse({
@@ -119,9 +176,20 @@ export class WorkflowService extends BaseService<
       };
     }
     const parseData = parseResult.data;
-    return await this.findOne((fields) =>
+    const workflowClient = await this.findOne((fields) =>
       and(eq(fields.id, parseData.id), eq(fields.userId, parseData.userId))
     );
+    if (workflowClient.data) {
+      const nodes = await this.populateNodes([workflowClient.data.id]);
+      return {
+        data: {
+          ...workflowClient.data,
+          nodes: nodes[workflowClient.data.id] || [],
+        },
+        error: null,
+      };
+    }
+    return workflowClient;
   }
   async softDeleteById(accountId: string) {
     return this.softDelete((table) => eq(table.id, accountId), {
@@ -173,7 +241,39 @@ export class WorkflowService extends BaseService<
         ),
       };
     }
-    return await this.create(parseResult.data);
+    try {
+      return await this.withTransaction(async (tx) => {
+        const res = await this.create(parseResult.data, tx);
+
+        if (res.error) {
+          throw new BadRequestException("Failed to create workflow", {
+            errorCode: ErrorCode.DATABASE_ERROR,
+          });
+        }
+        const workflow = res.data;
+        const node = await nodeService.createItem(
+          {
+            workflowId: workflow.id,
+            userId: workflow.userId,
+            name: NodeType.INITIAL,
+            type: NodeType.INITIAL,
+            position: { x: 0, y: 0 },
+          },
+          tx
+        );
+        if (node.error) {
+          throw new BadRequestException("Failed to create initial node", {
+            errorCode: ErrorCode.DATABASE_ERROR,
+          });
+        }
+        return { data: { ...workflow, initialNode: node.data }, error: null };
+      });
+    } catch (error) {
+      return {
+        data: null,
+        error: error as Error,
+      };
+    }
   }
 
   async updateWorkflowNameByIdAndUserId(

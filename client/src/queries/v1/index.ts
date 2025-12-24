@@ -491,7 +491,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   // ---------- Single Entity Hooks ----------
 
   const useGetEntity = <Entity = TEntity, S extends boolean = false>(
-    callOptions?: SingleQueryOptions<TEntity, Entity, S>,
+    callOptions?: SingleQueryOptions<ReturnModel<TEntity, Entity>, S>,
     isSuspense: S = false as S,
   ) => {
     const params = mergeParams(callOptions?.params) as QueryParams<
@@ -509,7 +509,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     const { id } = { ...params, ...callOptions }
     const useHook = createQueryHook(isSuspense)
     const queryoptions = filterSuspenseOptions<
-      SingleQueryOptions<TEntity, Entity, S>['queryOptions']
+      SingleQueryOptions<ReturnModel<TEntity, Entity>, S>['queryOptions']
     >(callOptions?.queryOptions, isSuspense)
     return useHook({
       queryKey: buildQueryKey(
@@ -950,7 +950,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   }
 
   const prefetchGet = <Entity = TEntity>(
-    callOptions: SingleQueryOptions<TEntity, Entity, false>,
+    callOptions: SingleQueryOptions<ReturnModelType<TEntity, Entity>, false>,
   ) => {
     const params = mergeParams(callOptions?.params) as QueryParams<
       ReturnModel<TEntity, Entity>
@@ -1099,7 +1099,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     list?: IListCallOptions<ReturnModel<TEntity, Entity>, false>
     items?: Array<{
       id: Id
-      options?: SingleQueryOptions<TEntity, Entity, false>
+      options?: SingleQueryOptions<ReturnModel<TEntity, Entity>, false>
     }>
     infiniteList?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>
   }) => {
@@ -1162,11 +1162,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   ) => useInfiniteListEntities(opts)
 
   const useSuspenseGet = <Entity = TEntity>(
-    opts?: SingleQueryOptions<TEntity, Entity, true>,
+    opts?: SingleQueryOptions<ReturnModel<TEntity, Entity>, true>,
   ) => useGetEntity(opts, true)
 
   const useGet = <Entity = TEntity>(
-    opts?: SingleQueryOptions<TEntity, Entity>,
+    opts?: SingleQueryOptions<ReturnModel<TEntity, Entity>>,
   ) => useGetEntity(opts)
 
   const useSuspenseGetMany = <Entity = TEntity>(

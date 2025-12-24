@@ -53,12 +53,11 @@ type IResponseError<T = never> = Omit<
 > & {
   data: ICommon<T>
 }
-type UnionIfBPresent<A, B> = [B] extends [never] ? A : A & B
-type ReturnModelType<A, B> = [B] extends [never]
-  ? A
-  : // : HasKey<B, "replace_type"> extends true
-    //   ? Omit<B, "replace_type">
-    UnionIfBPresent<A, B>
+type Merge<A, B> = Omit<A, keyof B> & B
+
+type UnionIfBPresent<A, B> = [B] extends [never] ? A : Merge<A, B>
+
+type ReturnModelType<A, B> = [B] extends [never] ? A : Merge<A, B>
 // type ApiModelKey = keyof typeof ApiModelMapping;
 // type WithType<L extends keyof typeof ApiModelMapping, M> = [M] extends [never]
 //   ? ApiModelDataTypes[L]

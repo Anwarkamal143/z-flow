@@ -259,42 +259,31 @@ export type MutationCallOptions<
   }
 }
 
-type CommonQueryOptions<
-  TEntity,
-  Entity,
-  S extends boolean = false,
-  ErrorT = DefaultError,
-> = {
+type CommonQueryOptions<T, S extends boolean = false, ErrorT = DefaultError> = {
   queryOptions?: S extends true
     ? Omit<
         UseSuspenseQueryOptions<
-          ApiHooksResp<ReturnModel<TEntity, Entity>>,
+          ApiHooksResp<T>,
           ErrorT,
-          ApiHooksResp<ReturnModel<TEntity, Entity>>,
+          ApiHooksResp<T>,
           QueryKey
         >,
         'queryKey'
       >
     : Omit<
-        UseQueryOptions<
-          ApiHooksResp<ReturnModel<TEntity, Entity>>,
-          ErrorT,
-          ApiHooksResp<ReturnModel<TEntity, Entity>>,
-          QueryKey
-        >,
+        UseQueryOptions<ApiHooksResp<T>, ErrorT, ApiHooksResp<T>, QueryKey>,
         'queryKey'
       >
 }
 
 export type SingleQueryOptions<
-  TEntity,
-  Entity,
+  T,
   S extends boolean = false,
   ErrorT = DefaultError,
-> = CallOptions<ReturnModel<TEntity, Entity>> & {
+> = CallOptions<T> & {
   id?: Id
-  onSuccess?: (data: ApiHooksResp<ReturnModel<TEntity, Entity>>) => void
-} & CommonQueryOptions<TEntity, Entity, S, ErrorT>
+  onSuccess?: (data: ApiHooksResp<T>) => void
+} & CommonQueryOptions<T, S, ErrorT>
 
 export type MultiQueryOptions<
   TEntity,
@@ -306,7 +295,7 @@ export type MultiQueryOptions<
   onSuccess?: (
     data: (ApiHooksResp<ReturnModel<TEntity, Entity>> | undefined)[],
   ) => void
-} & CommonQueryOptions<TEntity, Entity, S, ErrorT>
+} & CommonQueryOptions<ReturnModel<TEntity, Entity>, S, ErrorT>
 
 /* -----------------------
    Factory Options

@@ -1,5 +1,9 @@
 'use client'
-import { workflowClient, WorkflowClientListOptions } from '@/models'
+import {
+  workflowClient,
+  WorkFlowClientEntity,
+  WorkflowClientListOptions,
+} from '@/models'
 import { useSuspnseOffsetPagination } from '@/queries/pagination/hooks'
 import { SingleQueryOptions } from '@/queries/v1/types'
 import {
@@ -8,7 +12,7 @@ import {
 } from './query-options'
 
 export const useGetSuspenseWorkflow = (
-  opts: SingleQueryOptions<IWorkflow, IWorkflow, true> = {},
+  opts: SingleQueryOptions<WorkFlowClientEntity, true> = {},
 ) =>
   workflowClient.useSuspenseGet({
     ...opts,
@@ -26,6 +30,7 @@ export const useSuspenseOffsetWorkflows = <
     ...getWorkflowListQueryOptions<'offset', true>({
       ...props,
       mode,
+
       params: {
         includeTotal: true,
         ...(props?.params || {}),

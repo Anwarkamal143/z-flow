@@ -19,14 +19,36 @@ import {
 } from "@/utils/catch-errors";
 
 import { db } from "@/db";
+import * as schema from "@/db/schema";
 import { formatZodError, getSingularPlural, stringToNumber } from "@/utils";
 import {
   buildPaginationMetaForOffset,
   buildSimplePaginationMetaCursor,
 } from "@/utils/api";
-import { AnyColumn, asc, desc, getTableColumns, SQL, sql } from "drizzle-orm";
-import { AnyPgTable, getTableConfig, IndexColumn } from "drizzle-orm/pg-core";
+import {
+  AnyColumn,
+  asc,
+  desc,
+  ExtractTablesWithRelations,
+  getTableColumns,
+  SQL,
+  sql,
+} from "drizzle-orm";
+import {
+  AnyPgTable,
+  getTableConfig,
+  IndexColumn,
+  PgTransaction,
+} from "drizzle-orm/pg-core";
+import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import { paginateCursor, paginateOffset } from "./pagination";
+export type DB = typeof db;
+export type ITransaction = PgTransaction<
+  PostgresJsQueryResultHKT,
+  typeof schema,
+  ExtractTablesWithRelations<typeof schema>
+>;
+
 export type Table = AnyPgTable;
 export type IPaginatedParams =
   | {
@@ -80,6 +102,8 @@ export class BaseService<
     CursorPaginationConfig: CursorPaginationConfig<TTable>;
     PaginationsConfig: PaginationsConfig<TTable>;
   };
+
+  public transaction = db.transaction;
   public readonly columns = getTableColumns(this.table);
   public _singular!: string;
   public _plural!: string;
@@ -108,7 +132,7 @@ export class BaseService<
     this.queryName = config.name as keyof typeof db.query;
   }
   queryTable<K extends keyof typeof db.query>(
-    dbb: typeof db,
+    dbb: DB,
     key: K
   ): {
     findFirst: (params: {
@@ -120,9 +144,19 @@ export class BaseService<
   } {
     return dbb.query[key] as any; // We need to cast here because of Drizzle's complex types
   }
-  async create(value: TInsert) {
+
+  async withTransaction<T>(fn: (tx: ITransaction) => Promise<T>): Promise<T> {
+    return db.transaction(async (tx) => {
+      return fn(tx);
+    });
+  }
+  async create(value: TInsert, tsx?: ITransaction) {
     try {
-      const [record] = await db.insert(this.table).values(value).returning();
+      const [record] = await (tsx ? tsx : db)
+        .insert(this.table)
+        .values(value)
+        .returning();
+
       if (!record) {
         return {
           error: new BadRequestException(`${this.singular} not created`),
@@ -142,9 +176,12 @@ export class BaseService<
     }
   }
 
-  async createMany(values: TInsert[]) {
+  async createMany(values: TInsert[], tsx?: ITransaction) {
     try {
-      const records = await db.insert(this.table).values(values).returning();
+      const records = await (tsx ? tsx : db)
+        .insert(this.table)
+        .values(values)
+        .returning();
       if (records.length == 0) {
         return {
           error: new BadRequestException(`${this.plural} not created`),
@@ -201,10 +238,11 @@ export class BaseService<
 
   async update<T = TUpdate>(
     where: (table: TTable) => SQL<unknown> | undefined,
-    values: T
+    values: T,
+    tsx?: ITransaction
   ) {
     try {
-      const result = await db
+      const result = await (tsx ? tsx : db)
         .update(this.table)
         .set(values)
         .where(where(this.table))
@@ -228,9 +266,12 @@ export class BaseService<
     }
   }
 
-  async delete(where: (table: TTable) => SQL<unknown> | undefined) {
+  async delete(
+    where: (table: TTable) => SQL<unknown> | undefined,
+    tsx?: ITransaction
+  ) {
     try {
-      const result = await db
+      const result = await (tsx ? tsx : db)
         .delete(this.table)
         .where(where(this.table))
         .returning();
@@ -260,10 +301,11 @@ export class BaseService<
   async upsert(
     values: TInsert[],
     conflictTarget: IndexColumn | IndexColumn[],
-    updateValues: Partial<TInsert>
+    updateValues: Partial<TInsert>,
+    tsx?: ITransaction
   ) {
     try {
-      const records = await db
+      const records = await (tsx ? tsx : db)
         .insert(this.table)
         .values(values)
         .onConflictDoUpdate({
@@ -296,10 +338,11 @@ export class BaseService<
    */
   async softDelete(
     where: (tableCols: TTable) => SQL<unknown>,
-    set: Partial<TTable["$inferInsert"]>
+    set: Partial<TTable["$inferInsert"]>,
+    tsx?: ITransaction
   ) {
     try {
-      const records = await db
+      const records = await (tsx ? tsx : db)
         .update(this.table)
         .set(set)
         .where(where(this.table))
