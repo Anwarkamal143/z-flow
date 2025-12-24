@@ -13,7 +13,7 @@ type IHttpRequestNodeData = {
 }
 type IHttpRequestNodeType = Node<IHttpRequestNodeData>
 const HttpRequestNode = memo((props: NodeProps<IHttpRequestNodeType>) => {
-  const nodeData = props.data as IHttpRequestNodeData
+  const nodeData = props.data
   const description = props.data.endpoint
     ? `${nodeData.method || 'GET'}: ${nodeData.endpoint}`
     : 'Not configured'
