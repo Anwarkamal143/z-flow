@@ -1,17 +1,23 @@
 import { customerClient } from '@/models'
 import { subscriptionQueryOptions } from './query-options'
 
-export const useGetSubscriptions = () => {
+export const useGetSubscriptions = (isEnabled = true) => {
   // Implementation to get customer state
-  return customerClient.useGet(subscriptionQueryOptions)
+  return customerClient.useGet({ ...subscriptionQueryOptions, isEnabled })
 }
 
-export const useGetSuspenseSubscriptions = () => {
+export const useGetSuspenseSubscriptions = (isEnabled = true) => {
   // Implementation to get customer state
-  return customerClient.useSuspenseGet(subscriptionQueryOptions)
+  return customerClient.useSuspenseGet({
+    ...subscriptionQueryOptions,
+    isEnabled,
+  })
 }
 
-export const useHasActiveSubscription = (useSuspense = false) => {
+export const useHasActiveSubscription = (
+  isEnabled = true,
+  useSuspense = false,
+) => {
   const useHook = useSuspense
     ? useGetSuspenseSubscriptions
     : useGetSubscriptions
@@ -19,7 +25,7 @@ export const useHasActiveSubscription = (useSuspense = false) => {
     data: customerState,
     isLoading: isSubscriptionLoading,
     ...rest
-  } = useHook()
+  } = useHook(isEnabled)
   const hasActiveSubscription =
     customerState?.data?.activeSubscriptions &&
     customerState.data.activeSubscriptions.length > 0

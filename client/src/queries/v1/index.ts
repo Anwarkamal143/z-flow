@@ -524,6 +524,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       ),
       queryFn: async ({ signal }) => {
         // if (id == null) throw new Error("ID is required for useGet");
+        if (isSuspense && !isEnabled) return
 
         const response = await getRaw<ReturnModel<TEntity, Entity>>({
           id: (id as Id) || '',

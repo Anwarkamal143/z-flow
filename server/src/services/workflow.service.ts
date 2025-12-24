@@ -1,6 +1,7 @@
 import { and, eq, inArray, NodeType } from "@/db";
 import { workflows } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
+import { IOutputEdge } from "@/schema/connection";
 import { IUpdateUser } from "@/schema/user";
 import {
   InsertWorkflows,
@@ -15,6 +16,7 @@ import { cacheManager } from "@/utils/redis-cache/cache-manager";
 import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { UUID } from "ulid";
 import { BaseService } from "./base.service";
+import { connectionService } from "./connection.service";
 import { nodeService } from "./node.service";
 export type WorkflowPaginationConfig =
   typeof workflowService._types.PaginationsConfig;
@@ -66,6 +68,31 @@ export class WorkflowService extends BaseService<
       }
       return acc;
     }, {} as Record<string, (typeof nodesResp.data)[0][]>);
+  }
+  private async populateConnections(workflowIds: UUID[]) {
+    const connectionsResp = await connectionService.findMany((table) =>
+      inArray(table.workflowId, workflowIds)
+    );
+    if (!connectionsResp.data) {
+      return {};
+    }
+    return connectionsResp.data?.reduce((acc, connection) => {
+      if (!connection || !connection.workflowId) return acc;
+      const { fromNodeId, toNodeId, fromOutput, toInput, ...rest } = connection;
+      const obj = {
+        ...rest,
+        source: fromNodeId,
+        target: toNodeId,
+        sourceHandle: fromOutput,
+        targetHandle: toInput,
+      };
+      if (acc[connection.workflowId]) {
+        acc[connection.workflowId]!.push(obj);
+      } else {
+        acc[connection.workflowId] = [obj];
+      }
+      return acc;
+    }, {} as Record<string, IOutputEdge[]>);
   }
 
   async listAllPaginatedWorkflowsV2(params: WorkflowPaginationConfig) {
@@ -181,10 +208,14 @@ export class WorkflowService extends BaseService<
     );
     if (workflowClient.data) {
       const nodes = await this.populateNodes([workflowClient.data.id]);
+      const connections = await this.populateConnections([
+        workflowClient.data.id,
+      ]);
       return {
         data: {
           ...workflowClient.data,
           nodes: nodes[workflowClient.data.id] || [],
+          edges: connections[workflowClient.data.id] || [],
         },
         error: null,
       };

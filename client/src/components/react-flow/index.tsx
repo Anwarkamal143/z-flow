@@ -1,5 +1,7 @@
 'use client'
 
+import { nodeComponents } from '@/config/node-components'
+import AddNodeButton from '@/features/editor/components/add-node-button'
 import {
   Background,
   ColorMode,
@@ -10,6 +12,7 @@ import {
   MiniMap,
   Node,
   NodeChange,
+  Panel,
   ReactFlow,
   addEdge,
   applyEdgeChanges,
@@ -17,15 +20,18 @@ import {
 } from '@xyflow/react'
 import { useTheme } from 'next-themes'
 import { useCallback, useState } from 'react'
-const initialNodes = [
-  { id: 'n1', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
-  { id: 'n2', position: { x: 0, y: 100 }, data: { label: 'Node 2' } },
-]
-const initialEdges = [{ id: 'n1-n2', source: 'n1', target: 'n2' }]
 
-export default function FlowContainerr() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes)
-  const [edges, setEdges] = useState<Edge[]>(initialEdges)
+type FlowContainerProps = {
+  nodes?: Node[]
+  edges?: Edge[]
+}
+
+export default function FlowContainer({
+  nodes: nds = [],
+  edges: edgs = [],
+}: FlowContainerProps) {
+  const [nodes, setNodes] = useState<Node[]>(nds)
+  const [edges, setEdges] = useState<Edge[]>(edgs)
   const { theme } = useTheme()
   const onNodesChange = useCallback(
     (changes: NodeChange<Node>[]) =>
@@ -51,6 +57,7 @@ export default function FlowContainerr() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        nodeTypes={nodeComponents}
         fitView
         colorMode={theme as ColorMode}
         proOptions={{
@@ -60,6 +67,9 @@ export default function FlowContainerr() {
         <Background />
         <Controls />
         <MiniMap />
+        <Panel position='top-right'>
+          <AddNodeButton />
+        </Panel>
       </ReactFlow>
     </div>
   )
