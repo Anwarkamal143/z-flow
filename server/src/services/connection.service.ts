@@ -1,15 +1,19 @@
 import { eq } from "@/db";
 
 import { HTTPSTATUS } from "@/config/http.config";
-import { nodes } from "@/db/tables";
-import { INode, InsertNode, InsertNodeSchema } from "@/schema/node";
+import { connections } from "@/db/tables";
+import { IEdge, InsertEdge, InsertEdgeSchema } from "@/schema/connection";
 import { formatZodError } from "@/utils";
 import { ValidationException } from "@/utils/catch-errors";
 import { BaseService, ITransaction } from "./base.service";
 
-export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
+export class ConnectionService extends BaseService<
+  typeof connections,
+  InsertEdge,
+  IEdge
+> {
   constructor() {
-    super(nodes);
+    super(connections);
   }
 
   async listPaginatedItems(params: typeof this._types.PaginatedParams) {
@@ -34,8 +38,8 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     });
   }
 
-  async createItem(data: InsertNode, tsx?: ITransaction) {
-    const result = InsertNodeSchema.safeParse(data);
+  async createItem(data: InsertEdge, tsx?: ITransaction) {
+    const result = InsertEdgeSchema.safeParse(data);
     if (result.error) {
       const errors = formatZodError(result.error);
 
@@ -48,4 +52,4 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     return await this.create(result.data, tsx);
   }
 }
-export const nodeService = new NodeService();
+export const connectionService = new ConnectionService();

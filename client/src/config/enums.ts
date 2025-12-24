@@ -74,3 +74,7 @@ export enum DiscountType {
   FIXED_AMOUNT = 'fixed_amount',
 }
 export type IDiscountType = `${DiscountType}`
+export enum NodeType {
+  INITIAL = 'initial',
+}
+export type INodeType = `${NodeType}`

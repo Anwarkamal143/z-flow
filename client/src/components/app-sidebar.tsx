@@ -14,6 +14,7 @@ import { openWindow } from '@/lib'
 import { cn } from '@/lib/utils'
 import { checkoutClient } from '@/models'
 import { portalClient } from '@/models/v1/payments/Portal.model'
+import { useStoreUser } from '@/store/userAuthStore'
 import { LucideProps, StarIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
@@ -82,9 +83,10 @@ const AppSidebar = () => {
   const { setTheme, theme } = useTheme()
   const newTheme = theme === 'dark' ? 'light' : 'dark'
   const pathName = usePathname()
+  const user = useStoreUser()
   const { open, isMobile } = useSidebar()
   const { hasActiveSubscription, isSubscriptionLoading } =
-    useHasActiveSubscription()
+    useHasActiveSubscription(!!user?.polar_customer_id)
   const isSidebarClosed = !open && !isMobile
   return (
     <Sidebar collapsible='icon'>
