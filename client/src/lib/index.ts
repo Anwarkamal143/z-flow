@@ -4,6 +4,7 @@ import { RequestOptions } from '@/queries/v1/types'
 import { resetAllStores } from '@/store/useGlobalStore'
 import { IResponseError } from '@/types/Iquery'
 import { decodeJwt } from 'jose'
+import { ulid } from 'ulid'
 
 export function _omit<T extends Record<string, any>, K extends keyof T>(
   obj: T,
@@ -287,4 +288,8 @@ export const isAccessTokenRefresing = (params?: Record<string, any>) => {
     return true
   }
   return false
+}
+
+export function generateUlid() {
+  return ulid()
 }

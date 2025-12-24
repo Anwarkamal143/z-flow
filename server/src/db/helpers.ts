@@ -64,7 +64,11 @@ export const userStatusEnum = pgEnum("user_status", [
   UserStatus.INACTIVE,
 ]);
 
-export const nodeTypeEnum = pgEnum("node_type", [NodeType.INITIAL]);
+export const nodeTypeEnum = pgEnum("node_type", [
+  NodeType.INITIAL,
+  NodeType.MANUAL_TRIGGER,
+  NodeType.HTTP_REQUEST,
+]);
 
 // export const productVisiblityEnum = pgEnum('product_visibility', [
 //   ProductVisiblity.PUBLIC,
