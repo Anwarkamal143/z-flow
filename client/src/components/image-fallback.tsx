@@ -1,7 +1,7 @@
 'use client'
 import Placeholder from '@/assets/icons/placeholder'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Dataloader from './loaders'
 
 type ImageWithFallbackProps = {
@@ -10,6 +10,7 @@ type ImageWithFallbackProps = {
   width?: number
   height?: number
   className?: string
+  imgClassName?: string
   onLoad?: (url?: string) => void
   onLoadStart?: (url?: string) => void
   onError?: (url?: string) => void
@@ -28,43 +29,63 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   loadingImage,
   onClick,
   placeholder: FallBack,
+  imgClassName,
+
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
+  const [imgSrc, setImgSrc] = useState(src)
   const fallbackCheck = FallBack && typeof FallBack == 'string'
+
+  useEffect(() => {
+    if (src && src.trim() != '') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setImgSrc(src)
+      setHasError(false)
+      setIsLoaded(false)
+      return
+    }
+    if (fallbackCheck) {
+      setImgSrc(FallBack as string)
+      return
+    }
+    setIsLoaded(true)
+    return () => {}
+  }, [src, FallBack, fallbackCheck])
+
   const handleLoadStart = () => {
-    onLoadStart?.(src)
+    onLoadStart?.(imgSrc)
   }
 
   const handleLoad = () => {
     setIsLoaded(true)
-    onLoad?.(src)
+    onLoad?.(imgSrc)
   }
 
   const handleError = () => {
     console.log('ërror', alt)
+    if (fallbackCheck && FallBack != imgSrc) {
+      setImgSrc(FallBack as string)
+      return
+    }
     setHasError(true)
-    onError?.(src)
+    onError?.(imgSrc)
     setIsLoaded(true)
   }
 
   const handleClick = () => {
-    if (src && !hasError) onClick?.(src)
+    if (imgSrc && !hasError) onClick?.(imgSrc)
   }
 
-  const shouldShowImg = src && !hasError && isLoaded
-  const shoudShowPlaceholder = !shouldShowImg
-  const getPlaceholder = () => {
-    if (!shoudShowPlaceholder) {
-      return null
-    }
-    if (fallbackCheck) {
+  const getComponent = () => {
+    if (imgSrc && !hasError) {
       return (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={FallBack}
-          alt={alt}
-          className={cn('block h-full w-full', className)}
+          src={imgSrc}
+          alt={alt || ''}
+          className={cn('h-full w-full', imgClassName)}
           loading={loadingImage}
           onLoad={handleLoad}
           onError={handleError}
@@ -78,13 +99,14 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
         />
       )
     }
-    if (FallBack) {
+
+    if (FallBack && !fallbackCheck) {
       return FallBack
     }
 
     return (
       <Placeholder
-        className={cn('h-full w-full', className)}
+        className={cn('h-full w-full', imgClassName)}
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
@@ -93,47 +115,24 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
       />
     )
   }
+  const showLoader = !isLoaded && !!imgSrc
 
   return (
     <div
-      style={{ position: 'relative', display: 'inline-block' }}
-      className='h-full w-full'
+      style={{
+        position: 'relative',
+        display: 'inline-block',
+        width: props.width,
+        height: props.height,
+      }}
+      className={cn('h-full w-full', className)}
     >
       <>
-        {!isLoaded && !hasError && (
-          <Dataloader className='absolute top-0 h-full w-full rounded-xl bg-gray-400/40' />
+        {showLoader && (
+          <Dataloader className='absolute top-0 h-full w-full rounded-xl bg-black/50 backdrop-blur-sm' />
         )}
-        {!shouldShowImg && shoudShowPlaceholder && getPlaceholder()}
-        {/* <Placeholder
-            className={cn('h-full w-full', className)}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleClick();
-            }}
-          /> */}
+        {getComponent()}
       </>
-      {src && !hasError && (
-        <img
-          src={src}
-          alt={alt}
-          className={cn(
-            'h-full w-full',
-            className,
-            shouldShowImg ? 'block' : 'hidden',
-          )}
-          loading={loadingImage}
-          onLoad={handleLoad}
-          onError={handleError}
-          onLoadStart={handleLoadStart}
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            handleClick()
-          }}
-          {...props}
-        />
-      )}
     </div>
   )
 }

@@ -62,3 +62,9 @@ type ReturnModelType<A, B> = [B] extends [never] ? A : Merge<A, B>
 // type WithType<L extends keyof typeof ApiModelMapping, M> = [M] extends [never]
 //   ? ApiModelDataTypes[L]
 //   : ApiModelDataTypes[L] & M;
+type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never
+
+// Extract the first parameter type from a hook function
+type ExtractHookOptions<T> = T extends (...args: any) => any
+  ? ExtractHookParams<T>[0]
+  : never

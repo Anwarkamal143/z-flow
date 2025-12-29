@@ -194,6 +194,7 @@ export class BaseService<
         status: HTTPSTATUS.CREATED,
       };
     } catch (error) {
+      console.log(error, "createMany error");
       return {
         data: null,
         error: new InternalServerException(),

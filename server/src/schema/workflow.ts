@@ -7,8 +7,19 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 import z from "zod";
+import { UpdateWorkflowEdgeSchema } from "./edges";
 import { ULIDSchema } from "./helper";
+import { UpdateNodeSchema } from "./node";
 export const UpdateWorkflowsSchema = createUpdateSchema(workflows);
+export const UpdateWorkflowWithNodesEdgesSchema = z.object({
+  id: ULIDSchema("Invalid Workflow Id"),
+  nodes: z.array(
+    UpdateNodeSchema.extend({
+      id: ULIDSchema("Invalid Node Id"),
+    })
+  ),
+  edges: z.array(UpdateWorkflowEdgeSchema),
+});
 
 export const InsertWorkflowsSchema = createInsertSchema(workflows);
 export const SelectWorkflowsSchema = createSelectSchema(workflows);
@@ -16,6 +27,9 @@ export const SelectWorkflowsSchema = createSelectSchema(workflows);
 export type InsertWorkflows = InferInsertModel<typeof workflows>;
 export type SelectWorkflows = InferSelectModel<typeof workflows>;
 export type UpdateWorkflows = z.infer<typeof UpdateWorkflowsSchema>;
+export type UpdateWorkflowWithNodesEdges = z.infer<
+  typeof UpdateWorkflowWithNodesEdgesSchema
+>;
 
 export const UpdateWorkFlowNameSchema = createUpdateSchema(workflows, {
   userId: ULIDSchema("Invalid User Id"),

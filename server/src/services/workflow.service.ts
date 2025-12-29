@@ -1,22 +1,29 @@
 import { and, eq, inArray, NodeType } from "@/db";
 import { workflows } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
-import { IOutputEdge } from "@/schema/connection";
+import { IOutputEdge } from "@/schema/edges";
 import { IUpdateUser } from "@/schema/user";
 import {
   InsertWorkflows,
   InsertWorkflowsSchema,
   SelectWorkflows,
   UpdateWorkFlowNameSchema,
+  UpdateWorkflowWithNodesEdges,
+  UpdateWorkflowWithNodesEdgesSchema,
   WorkflowByIdUserIdSchema,
 } from "@/schema/workflow";
 import { formatZodError } from "@/utils";
-import { BadRequestException, ValidationException } from "@/utils/catch-errors";
+import {
+  BadRequestException,
+  NotFoundException,
+  ValidationException,
+} from "@/utils/catch-errors";
+import { toUTC } from "@/utils/date-time";
 import { cacheManager } from "@/utils/redis-cache/cache-manager";
 import drizzleCache from "@/utils/redis-cache/drizzle-cache";
 import { UUID } from "ulid";
 import { BaseService } from "./base.service";
-import { connectionService } from "./connection.service";
+import { edgeService } from "./edge.service";
 import { nodeService } from "./node.service";
 export type WorkflowPaginationConfig =
   typeof workflowService._types.PaginationsConfig;
@@ -70,7 +77,7 @@ export class WorkflowService extends BaseService<
     }, {} as Record<string, (typeof nodesResp.data)[0][]>);
   }
   private async populateConnections(workflowIds: UUID[]) {
-    const connectionsResp = await connectionService.findMany((table) =>
+    const connectionsResp = await edgeService.findMany((table) =>
       inArray(table.workflowId, workflowIds)
     );
     if (!connectionsResp.data) {
@@ -188,9 +195,9 @@ export class WorkflowService extends BaseService<
     }
     return workflows;
   }
-  public async getByIdAndUserId(id?: string, userId?: string) {
+  public async getByIdAndUserId(workflowId?: string, userId?: string) {
     const parseResult = WorkflowByIdUserIdSchema.safeParse({
-      id,
+      id: workflowId,
       userId,
     });
     if (!parseResult.success) {
@@ -221,6 +228,25 @@ export class WorkflowService extends BaseService<
       };
     }
     return workflowClient;
+  }
+  public async getWorkflowByIdAndUserId(workflowId?: string, userId?: string) {
+    const parseResult = WorkflowByIdUserIdSchema.safeParse({
+      id: workflowId,
+      userId,
+    });
+    if (!parseResult.success) {
+      return {
+        data: null,
+        error: new ValidationException(
+          "Invalid input",
+          formatZodError(parseResult.error)
+        ),
+      };
+    }
+    const parseData = parseResult.data;
+    return await this.findOne((fields) =>
+      and(eq(fields.id, parseData.id), eq(fields.userId, parseData.userId))
+    );
   }
   async softDeleteById(accountId: string) {
     return this.softDelete((table) => eq(table.id, accountId), {
@@ -339,6 +365,132 @@ export class WorkflowService extends BaseService<
     );
     await cacheManager.remove(`workflows`);
     return { ...rest, data: data?.[0] };
+  }
+  async updateWorkflowByIdAndUserId(
+    workflow: UpdateWorkflowWithNodesEdges,
+    userId?: string
+  ) {
+    if (!userId) {
+      return {
+        data: null,
+
+        error: new BadRequestException("Invalid input", {
+          errorCode: ErrorCode.VALIDATION_ERROR,
+        }),
+      };
+    }
+    const parseResult = UpdateWorkflowWithNodesEdgesSchema.safeParse({
+      ...workflow,
+      userId,
+    });
+
+    if (!parseResult.success) {
+      return {
+        data: null,
+
+        error: new ValidationException(
+          "Invalid input",
+          formatZodError(parseResult.error)
+        ),
+      };
+    }
+    const workflowData = parseResult.data;
+    const workflowtoUpdate = await this.getWorkflowByIdAndUserId(
+      workflowData.id,
+      userId
+    );
+    if (!workflowtoUpdate.data) {
+      return {
+        data: null,
+        error: new NotFoundException("Workflow not found", {
+          errorCode: ErrorCode.RESOURCE_NOT_FOUND,
+        }),
+      };
+    }
+    try {
+      return await this.withTransaction(async (tx) => {
+        const nodesResp = await nodeService.deleteByWorkflowId(
+          workflowData.id,
+          tx
+        );
+        if (nodesResp.error) {
+          throw nodesResp.error;
+        }
+        const nodesData = workflowData.nodes.filter(
+          (f) => f.type != NodeType.INITIAL
+        );
+        const nodesArray = nodesData.length
+          ? nodesData
+          : [
+              {
+                workflowId: workflow.id,
+                userId: userId,
+                name: NodeType.INITIAL,
+                type: NodeType.INITIAL,
+                position: { x: 0, y: 0 },
+              },
+            ];
+        let edgesResp;
+        const createNodesResp = await nodeService.createItems(
+          nodesArray.map((node) => ({
+            ...node,
+            name: node.type || "unknown",
+            workflowId: workflowData.id,
+            userId,
+            type: node.type as NodeType,
+            position: node.position || { x: 0, y: 0 },
+            data: node.data || {},
+          })),
+          tx
+        );
+        if (createNodesResp.error) {
+          throw createNodesResp.error;
+        }
+
+        if (workflow.edges?.length) {
+          console.log(workflow.edges);
+          edgesResp = await edgeService.createItems(
+            workflowData.edges.map((edge) => ({
+              ...edge,
+              userId: userId,
+              fromNodeId: edge.source,
+              toNodeId: edge.target,
+              fromOutput: edge.sourceHandle || "main",
+              toInput: edge.targetHandle || "main",
+              workflowId: workflowData.id,
+            })),
+            tx
+          );
+          if (edgesResp.error) {
+            throw edgesResp.error;
+          }
+        }
+        const updatedWorkflow = await this.update<IUpdateUser>(
+          (fields) => eq(fields.id, workflowData.id),
+
+          {
+            updated_at: toUTC(new Date(), false),
+          },
+          tx
+        );
+        if (updatedWorkflow.error) {
+          throw updatedWorkflow.error;
+        }
+        return {
+          data: {
+            ...updatedWorkflow.data?.[0],
+            nodes: createNodesResp?.data || [],
+            edges: edgesResp?.data || [],
+          },
+          error: null,
+        };
+      });
+    } catch (error) {
+      return {
+        data: null,
+        error,
+      };
+    }
   }
 }
 export const workflowService = new WorkflowService();

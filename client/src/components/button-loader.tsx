@@ -14,7 +14,10 @@ export default function ButtonLoader({
   ...rest
 }: Props) {
   return (
-    <Button className={cn('flex cursor-pointer gap-1', className)} {...rest}>
+    <Button
+      className={cn('flex w-full cursor-pointer gap-1', className)}
+      {...rest}
+    >
       {isloading ? <Loader2Icon className='animate-spin' /> : null}
       {isloading && loadingText ? loadingText : rest.children}{' '}
     </Button>

@@ -5,6 +5,7 @@ import { generateUlid } from '@/lib'
 import { useReactFlow } from '@xyflow/react'
 import { useCallback } from 'react'
 import { toast } from 'sonner'
+import ImageWithFallback from './image-fallback'
 import { Separator } from './ui/separator'
 import {
   Sheet,
@@ -140,7 +141,7 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
               >
                 <div className='flex w-full items-center gap-6 overflow-hidden'>
                   {typeof Icon == 'string' ? (
-                    <img
+                    <ImageWithFallback
                       src={Icon}
                       alt={node.label}
                       className='size-5 rounded-sm object-contain'

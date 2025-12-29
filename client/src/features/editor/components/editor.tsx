@@ -7,6 +7,7 @@ import {
 } from '@/components/entity-components'
 import FlowContainer from '@/components/react-flow'
 import { useGetSuspenseWorkflow } from '@/features/workflows/api'
+import { useStoreWorkflowActions } from '@/store/useEditorStore'
 import '@xyflow/react/dist/style.css'
 import { useRouter } from 'next/navigation'
 
@@ -15,11 +16,20 @@ type IEditorProps = {
 }
 
 const Editor = ({ workflowId }: IEditorProps) => {
+  const { setWorkflow } = useStoreWorkflowActions()
+
   const { data } = useGetSuspenseWorkflow({
     id: workflowId,
     isEnabled: !!workflowId,
+    queryOptions: {
+      select(data) {
+        if (data.data) {
+          setWorkflow(data.data)
+        }
+        return data
+      },
+    },
   })
-
   if (!data?.data) {
     return <EditorSingleEmptyView />
   }

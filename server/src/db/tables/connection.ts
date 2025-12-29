@@ -10,7 +10,6 @@ export const connections = pgTable(
   "connections",
   {
     id: text("id").primaryKey().$defaultFn(generateUlid), // Unique asset ID
-    name: text("name").notNull(), // Original file name
     userId: text("userId")
       .references(() => users.id, { onDelete: "cascade" })
       .notNull(),
@@ -19,23 +18,19 @@ export const connections = pgTable(
       .notNull(),
     fromNodeId: text("fromNodeId")
       .references(() => nodes.id, { onDelete: "cascade" })
-      .unique()
       .notNull(),
     toNodeId: text("toNodeId")
       .references(() => nodes.id, { onDelete: "cascade" })
-      .unique()
       .notNull(),
-    fromOutput: text("fromOutput").unique().default("main"), // Output port name
-    toInput: text("toInput").unique().default("main"), // Input port name
+    fromOutput: text("fromOutput").default("main"), // Output port name
+    toInput: text("toInput").default("main"), // Input port name
     ...baseTimestamps,
   },
   (table) => [
     // You can add indexes here if needed
-    unique("connections_unique_from_to_idx").on(
+    unique("connections_unique_from_to_idx_from_to_input_output").on(
       table.fromNodeId,
-      table.toNodeId
-    ),
-    unique("connections_unique_fromOutput_toInput_idx").on(
+      table.toNodeId,
       table.fromOutput,
       table.toInput
     ),

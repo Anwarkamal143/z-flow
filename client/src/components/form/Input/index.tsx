@@ -12,6 +12,7 @@ import {
 } from 'react'
 import {
   Controller,
+  ControllerFieldState,
   FieldValues,
   UseControllerProps,
   useFormContext,
@@ -32,7 +33,9 @@ import FieldHelperText from './FieldHelperText'
 
 // ✅ Border variants (top, bottom, left, right)
 const inputVariants = cva(
-  'border-transparent rounded-none outline-none focus-visible:border-transparent px-0 ',
+  // 'border-transparent rounded-none outline-none focus-visible:border-transparent px-0 ',
+  'rounded-none focus-visible:border-primary focus-visible:ring-primary/50 dark:focus-visible:ring-ring/50 dark:focus-visible:border-ring',
+
   {
     variants: {
       rounded: {
@@ -48,6 +51,10 @@ const inputVariants = cva(
         left: 'border-l border-l-input hover:border-l-inputActive focus-visible:border-l-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-l-ring',
         right:
           'border-r border-r-input hover:border-r-inputActive focus-visible:border-r-inputActive dark:bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-r-ring',
+      },
+      error: {
+        primary:
+          'ring-destructive/20 dark:ring-destructive/40 border-destructive',
       },
     },
   },
@@ -144,6 +151,12 @@ export function FormInput<T extends FieldValues>({
     return null
   }
 
+  const getVariants = (fieldState: ControllerFieldState) => {
+    const error = fieldState.error ? 'primary' : undefined
+    const _rounded = !border ? rounded : undefined
+
+    return inputVariants({ border, rounded: _rounded, error })
+  }
   return (
     <Controller
       name={name}
@@ -167,8 +180,7 @@ export function FormInput<T extends FieldValues>({
                   rows={3}
                   placeholder={placeholder}
                   className={cn(
-                    border && inputVariants({ border }),
-                    rounded && inputVariants({ rounded }),
+                    getVariants(fieldState),
                     {
                       'pl-8': !!leftIcon,
                       'pr-8': !!rightIcon,
@@ -176,12 +188,25 @@ export function FormInput<T extends FieldValues>({
                     rest.className,
                   )}
                   {...field}
+                  aria-invalid={!!fieldState.error}
+                  aria-errormessage={fieldState.error?.message}
                 />
               ) : isSwitch ? (
                 <Switch
                   checked={!!field.value}
                   onCheckedChange={field.onChange}
                   disabled={disabled}
+                  aria-invalid={!!fieldState.error}
+                  aria-errormessage={fieldState.error?.message}
+                  className={cn(
+                    getVariants(fieldState),
+
+                    {
+                      'pl-8': !!leftIcon,
+                      'pr-8': !!rightIcon,
+                    },
+                    rest.className,
+                  )}
                 />
               ) : (
                 <Input
@@ -189,8 +214,7 @@ export function FormInput<T extends FieldValues>({
                   placeholder={placeholder}
                   disabled={disabled}
                   className={cn(
-                    border && inputVariants({ border }),
-                    !border && rounded && inputVariants({ rounded }),
+                    getVariants(fieldState),
 
                     {
                       'pl-8': !!leftIcon,
@@ -200,6 +224,8 @@ export function FormInput<T extends FieldValues>({
                   )}
                   autoComplete={rest.autoComplete}
                   {...field}
+                  aria-invalid={!!fieldState.error}
+                  aria-errormessage={fieldState.error?.message}
                 />
               )}
             </div>
@@ -208,14 +234,14 @@ export function FormInput<T extends FieldValues>({
               {helperText && (
                 <FieldHelperText helperText={helperText} name={name} />
               )}
-              <FieldError>
-                {fieldState.error?.message && (
-                  <span className='text-destructive text-sm'>
-                    {fieldState.error.message}
-                  </span>
-                )}
-              </FieldError>
             </FieldDescription>
+            <FieldError>
+              {fieldState.error?.message && (
+                <span className='text-destructive text-sm'>
+                  {fieldState.error.message}
+                </span>
+              )}
+            </FieldError>
           </FieldContent>
         </Field>
       )}

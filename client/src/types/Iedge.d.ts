@@ -11,7 +11,7 @@ type IEdge = {
   fromOutput: string | null
   toInput: string | null
 }
-export type IOutputEdge = Omit<
+type IOutputEdge = Omit<
   IEdge,
   'fromNodeId' | 'toNodeId' | 'fromOutput' | 'toInput'
 > & {

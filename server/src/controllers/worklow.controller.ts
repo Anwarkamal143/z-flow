@@ -1,5 +1,9 @@
 import { HTTPSTATUS } from "@/config/http.config";
-import { InsertWorkflows, InsertWorkflowsSchema } from "@/schema/workflow";
+import {
+  InsertWorkflows,
+  InsertWorkflowsSchema,
+  UpdateWorkflowWithNodesEdges,
+} from "@/schema/workflow";
 import {
   WorkflowPaginationConfig,
   workflowService,
@@ -59,6 +63,24 @@ class WorkflowController {
         req.params.id,
         userId
       );
+    if (updatedWorkFlow.error) {
+      throw updatedWorkFlow.error;
+    }
+
+    return SuccessResponse(rep, {
+      message: "Workflow Name is updated",
+      data: updatedWorkFlow.data,
+    });
+  }
+  public async updateWorkflow(
+    req: FastifyRequest<{ Body: UpdateWorkflowWithNodesEdges }>,
+    rep: FastifyReply
+  ) {
+    const userId = req.user?.id;
+    const updatedWorkFlow = await workflowService.updateWorkflowByIdAndUserId(
+      req.body,
+      userId
+    );
     if (updatedWorkFlow.error) {
       throw updatedWorkFlow.error;
     }
