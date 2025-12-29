@@ -5,6 +5,7 @@ import { resetAllStores } from '@/store/useGlobalStore'
 import { IResponseError } from '@/types/Iquery'
 import { decodeJwt } from 'jose'
 import { ulid } from 'ulid'
+import z from 'zod'
 
 export function _omit<T extends Record<string, any>, K extends keyof T>(
   obj: T,
@@ -292,4 +293,10 @@ export const isAccessTokenRefresing = (params?: Record<string, any>) => {
 
 export function generateUlid() {
   return ulid()
+}
+export function formatZodError(error: z.ZodError) {
+  return error.issues.map((issue) => ({
+    path: issue.path.join('.') || '(root)',
+    message: issue.message,
+  }))
 }

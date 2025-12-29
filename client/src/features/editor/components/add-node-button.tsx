@@ -8,7 +8,7 @@ const AddNodeButton = memo(() => {
   const [isSelectorOpen, setSelectorOpen] = useState(false)
   return (
     <NodeSelector open={isSelectorOpen} onOpenChange={setSelectorOpen}>
-      <Button variant='outline' size={'icon'} onClick={() => {}}>
+      <Button variant='outline' size={'icon'}>
         <PlusIcon className='size-4' />
       </Button>
     </NodeSelector>

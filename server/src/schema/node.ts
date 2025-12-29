@@ -9,6 +9,9 @@ import z from "zod";
 export const UpdateNodeSchema = createUpdateSchema(nodes);
 
 export const InsertNodeSchema = createInsertSchema(nodes);
+export const InsertManyNodesSchema = z
+  .array(InsertNodeSchema)
+  .min(1, { error: "Provide node data" });
 export const SelectNodeschema = createSelectSchema(nodes);
 export type InsertNode = InferInsertModel<typeof nodes>;
 export type INode = InferSelectModel<typeof nodes>;

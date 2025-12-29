@@ -2,12 +2,17 @@ import { eq } from "@/db";
 
 import { HTTPSTATUS } from "@/config/http.config";
 import { connections } from "@/db/tables";
-import { IEdge, InsertEdge, InsertEdgeSchema } from "@/schema/connection";
+import {
+  IEdge,
+  InsertEdge,
+  InsertEdgeSchema,
+  InsertManyEdgeSchema,
+} from "@/schema/edges";
 import { formatZodError } from "@/utils";
 import { ValidationException } from "@/utils/catch-errors";
 import { BaseService, ITransaction } from "./base.service";
 
-export class ConnectionService extends BaseService<
+export class EdgeService extends BaseService<
   typeof connections,
   InsertEdge,
   IEdge
@@ -51,5 +56,20 @@ export class ConnectionService extends BaseService<
     }
     return await this.create(result.data, tsx);
   }
+  async createItems(data: InsertEdge[], tsx?: ITransaction) {
+    const result = InsertManyEdgeSchema.safeParse(data);
+    if (result.error) {
+      const errors = formatZodError(result.error);
+
+      return {
+        error: new ValidationException("Validatoin error", errors),
+        data: null,
+        status: HTTPSTATUS.BAD_REQUEST,
+      };
+    }
+    console.log(result.data, "result");
+
+    return await this.createMany(result.data, tsx);
+  }
 }
-export const connectionService = new ConnectionService();
+export const edgeService = new EdgeService();

@@ -1,3 +1,4 @@
+import { toUTC } from "@/utils/date-time";
 import { boolean, pgEnum, timestamp } from "drizzle-orm/pg-core";
 import {
   AccountType,
@@ -81,10 +82,12 @@ export const isActive = boolean("is_active").default(true);
    COMMON: timestamps + soft delete
    ========================= */
 export const baseTimestamps = {
-  updated_at: timestamp("updated_at")
+  updated_at: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
-    .$onUpdate(() => new Date())
+    .$onUpdate(() => toUTC(new Date(), false))
     .notNull(),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  deleted_at: timestamp("deleted_at"),
+  created_at: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  deleted_at: timestamp("deleted_at", { withTimezone: true }),
 };

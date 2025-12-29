@@ -1,5 +1,6 @@
 import {
   AlertTriangleIcon,
+  CheckCircle2Icon,
   ChevronDownIcon,
   CreditCardIcon,
   EyeIcon,
@@ -25,6 +26,7 @@ import {
   SunIcon,
   TrashIcon,
   WorkflowIcon,
+  XCircleIcon,
 } from 'lucide-react'
 import EmailIcon from './EmailIcon'
 import GithubIcon from './GithubIcon'
@@ -33,6 +35,7 @@ import InfoIcon from './info-icon'
 
 export {
   AlertTriangleIcon,
+  CheckCircle2Icon,
   ChevronDownIcon,
   CreditCardIcon,
   EmailIcon,
@@ -62,4 +65,5 @@ export {
   SunIcon,
   TrashIcon,
   WorkflowIcon,
+  XCircleIcon,
 }

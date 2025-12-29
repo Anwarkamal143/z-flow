@@ -1,9 +1,8 @@
 'use client'
-import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { useGetSuspenseWorkflow } from '@/features/workflows/api'
 
 import { SaveIcon } from '@/assets/icons'
+import ButtonLoader from '@/components/button-loader'
 import InputComponent from '@/components/Input'
 import {
   Breadcrumb,
@@ -13,7 +12,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { useUpdateWorkflowName } from '@/features/workflows/api/mutation-hooks'
+import { NodeType } from '@/config/enums'
+import {
+  useUpdateWorkflow,
+  useUpdateWorkflowName,
+} from '@/features/workflows/api'
+import { useActiveWorkflow, useEditorInstance } from '@/store/useEditorStore'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -23,28 +27,45 @@ type IEditorHeaderProps = {
 }
 
 export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
+  const editor = useEditorInstance()
+  const { updateWorkflow, isPending } = useUpdateWorkflow()
+  const activeWorkflow = useActiveWorkflow()
+  const handleSave = async () => {
+    if (!editor) {
+      return
+    }
+    const nodes = editor.getNodes()
+    const edges = editor.getEdges()
+    const filteredNodes = nodes.filter((n) => n.type != NodeType.INITIAL)
+    const resp = await updateWorkflow({
+      id: workflowId,
+      nodes: filteredNodes,
+      edges,
+    })
+    if (resp.success) {
+      toast.success(`Workflow "${activeWorkflow?.name}" saved`)
+    }
+    console.log(resp, 'resp')
+  }
   return (
     <div className='ml-auto'>
-      <Button
+      <ButtonLoader
         size={'sm'}
-        onClick={() => {
-          console.log('Saving  workflow')
-        }}
+        onClick={handleSave}
+        isloading={isPending}
+        disabled={isPending || !editor}
       >
         <SaveIcon className='size-4' />
         Save
-      </Button>
+      </ButtonLoader>
     </div>
   )
 }
 
-export const EditorNameInput = ({ workflowId }: { workflowId: string }) => {
-  const { data } = useGetSuspenseWorkflow({
-    id: workflowId,
-    isEnabled: !!workflowId,
-  })
+export const EditorNameInput = () => {
+  const workflow = useActiveWorkflow()
   const { updateWorkflowName, isPending } = useUpdateWorkflowName()
-  const workflowName = data?.data?.name
+  const workflowName = workflow?.name
   const [name, setName] = useState(workflowName)
   const [isEditing, setIsEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -54,7 +75,7 @@ export const EditorNameInput = ({ workflowId }: { workflowId: string }) => {
       // eslint-disable-next-line
       setName(name)
     }
-  }, [data?.data?.name])
+  }, [workflowName])
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -67,7 +88,7 @@ export const EditorNameInput = ({ workflowId }: { workflowId: string }) => {
       setIsEditing(false)
       return
     }
-    const res = await updateWorkflowName(workflowId, name)
+    const res = await updateWorkflowName(workflow!.id, name)
     if (res?.data) {
       toast.success(`Workflow "${res.data.name}" updated`)
     }
@@ -122,18 +143,16 @@ export const EditorBreadcrumbs = ({ workflowId }: { workflowId: string }) => {
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
-        <EditorNameInput workflowId={workflowId} />
+        <EditorNameInput />
       </BreadcrumbList>
     </Breadcrumb>
   )
 }
 
 function EditorHeader({ workflowId }: IEditorHeaderProps) {
-  const { data } = useGetSuspenseWorkflow({
-    id: workflowId,
-    isEnabled: !!workflowId,
-  })
-  const isExist = !!data?.data?.id
+  const workflow = useActiveWorkflow()
+
+  const isExist = !!workflow?.id
   return (
     <div className='bg-background flex h-14 shrink-0 items-center gap-2 border-b px-4'>
       <SidebarTrigger />

@@ -1,4 +1,9 @@
-import { useCreateWorkflow, useDeleteWorkflows } from './mutation-hooks'
+import {
+  useCreateWorkflow,
+  useDeleteWorkflows,
+  useUpdateWorkflow,
+  useUpdateWorkflowName,
+} from './mutation-hooks'
 import {
   useGetSuspenseWorkflow,
   useSuspenseOffsetWorkflows,
@@ -9,4 +14,6 @@ export {
   useDeleteWorkflows,
   useGetSuspenseWorkflow,
   useSuspenseOffsetWorkflows,
+  useUpdateWorkflow,
+  useUpdateWorkflowName,
 }

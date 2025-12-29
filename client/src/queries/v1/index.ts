@@ -538,7 +538,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         callOptions?.onSuccess?.(response)
         return response
       },
-      ...(isSuspense ? {} : { enabled: isEnabled }),
+      enabled: isEnabled,
       ...(queryoptions || {}),
     })
   }
@@ -581,7 +581,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           },
 
           retry: false,
-          ...(isSuspense ? {} : { enabled: isEnabled }),
+          enabled: isEnabled,
           ...(queryoptions || {}),
         }
       }),

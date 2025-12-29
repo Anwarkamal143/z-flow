@@ -142,6 +142,12 @@ const InputComponent = ({
     return null
   }
 
+  const getVariants = () => {
+    const _error = error ? 'primary' : undefined
+    const _rounded = !border ? rounded : undefined
+
+    return inputVariants({ border, rounded: _rounded, error: _error })
+  }
   return (
     <Field data-invalid={!!error} className={cn('w-full', className)}>
       {label && (
@@ -160,14 +166,12 @@ const InputComponent = ({
               disabled={disabled}
               rows={3}
               placeholder={placeholder}
-              className={cn(
-                border && inputVariants({ border }),
-                rounded && inputVariants({ rounded }),
-                {
-                  'pl-8': !!leftIcon,
-                  'pr-8': !!rightIcon,
-                },
-              )}
+              className={cn(getVariants(), {
+                'pl-8': !!leftIcon,
+                'pr-8': !!rightIcon,
+              })}
+              aria-invalid={!!error}
+              aria-errormessage={error}
             />
           ) : (
             /*: isSwitch ? (
@@ -182,14 +186,12 @@ const InputComponent = ({
               placeholder={placeholder}
               disabled={disabled}
               className={cn(
-                border && inputVariants({ border }),
-                !border && rounded && inputVariants({ rounded }),
+                getVariants(),
 
                 {
                   'pl-8': !!leftIcon,
                   'pr-8': !!rightIcon,
                 },
-                !!error && inputVariants({ error: 'primary' }),
               )}
               autoComplete={rest.autoComplete}
               {...rest}
@@ -203,12 +205,10 @@ const InputComponent = ({
           {helperText && !error && (
             <span className={`field-helper-text text-xs`}>{helperText}</span>
           )}
-          <FieldError>
-            {!!error && (
-              <span className='text-destructive text-sm'>{error}</span>
-            )}
-          </FieldError>
         </FieldDescription>
+        <FieldError>
+          {!!error && <span className='text-destructive text-sm'>{error}</span>}
+        </FieldError>
       </FieldContent>
     </Field>
   )

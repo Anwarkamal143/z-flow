@@ -1,8 +1,8 @@
 'use client'
 
-import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
+import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -128,7 +128,7 @@ function DialogDescription({
     />
   )
 }
-
+export type IDialogProps = DialogPrimitive.DialogProps
 export {
   Dialog,
   DialogClose,

@@ -19,5 +19,6 @@ export default async function workflowRoutes(fastify: FastifyInstance) {
   fastify.get("/:id", worklowController.getById);
 
   fastify.delete("/:id", worklowController.deleteById);
-  fastify.put("/:id", worklowController.updateName);
+  fastify.put("/name/:id", worklowController.updateName);
+  fastify.put("/:id", worklowController.updateWorkflow);
 }
