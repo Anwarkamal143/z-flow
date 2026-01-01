@@ -38,6 +38,7 @@ import {
   AnyPgTable,
   getTableConfig,
   IndexColumn,
+  PgTable,
   PgTransaction,
 } from "drizzle-orm/pg-core";
 import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
@@ -85,13 +86,21 @@ type PaginationCursortOptions<TCursorValue, TTable extends AnyPgTable> = {
 };
 
 // Update the queryTable function to be more specific about the return type
-
+type ColumnKey<T> = Extract<keyof T, string>;
+/**
+ * Build a proxy object where each property access returns its **key name as a string literal**
+ */
+type KeyProxy<T> = {
+  [K in ColumnKey<T>]: K;
+};
+type ColumnSelector<T> = (fields: KeyProxy<T>) => ColumnKey<T>;
 export class BaseService<
   TTable extends AnyPgTable,
   TInsert extends Record<string, any>,
   TSelect,
   TUpdate = Partial<TInsert> // Add update type
 > {
+  public readonly columns = getTableColumns(this.table);
   // ⭐ This is the type helper
   public readonly _types!: {
     PaginatedParams: IPaginatedParams & {
@@ -101,10 +110,12 @@ export class BaseService<
     OffsetPaginationConfig: OffsetPaginationConfig<TTable>;
     CursorPaginationConfig: CursorPaginationConfig<TTable>;
     PaginationsConfig: PaginationsConfig<TTable>;
+    coloumn:
+      | ColumnKey<TTable["$inferSelect"]>
+      | ColumnSelector<TTable["$inferSelect"]>;
   };
 
   public transaction = db.transaction;
-  public readonly columns = getTableColumns(this.table);
   public _singular!: string;
   public _plural!: string;
 
@@ -143,6 +154,24 @@ export class BaseService<
     }) => Promise<TTable["$inferSelect"][]>;
   } {
     return dbb.query[key] as any; // We need to cast here because of Drizzle's complex types
+  }
+
+  getColumnObject() {
+    const keys = Object.keys(this.columns) as Array<ColumnKey<TTable>>;
+    const obj = {} as Record<ColumnKey<TTable>, ColumnKey<TTable>>;
+    keys.forEach((key) => {
+      obj[key] = key;
+    });
+    return obj as KeyProxy<TTable["$inferSelect"]>;
+  }
+  getTableColumn(
+    field:
+      | ColumnKey<TTable["$inferSelect"]>
+      | ColumnSelector<TTable["$inferSelect"]>
+  ) {
+    const col =
+      typeof field == "string" ? field : field(this.getColumnObject());
+    return this.columns[col];
   }
 
   async withTransaction<T>(fn: (tx: ITransaction) => Promise<T>): Promise<T> {
@@ -218,6 +247,12 @@ export class BaseService<
         error: new InternalServerException(),
       };
     }
+  }
+  findOneQuery(where: (table: TTable) => SQL<unknown> | undefined) {
+    return db
+      .select()
+      .from(this.table as PgTable)
+      .where(where(this.table));
   }
 
   async findMany(where?: (table: TTable) => SQL<unknown> | undefined) {

@@ -1,6 +1,7 @@
 import {
   useCreateWorkflow,
   useDeleteWorkflows,
+  useExecuteWorkflow,
   useUpdateWorkflow,
   useUpdateWorkflowName,
 } from './mutation-hooks'
@@ -12,6 +13,7 @@ import {
 export {
   useCreateWorkflow,
   useDeleteWorkflows,
+  useExecuteWorkflow,
   useGetSuspenseWorkflow,
   useSuspenseOffsetWorkflows,
   useUpdateWorkflow,

@@ -1,4 +1,4 @@
-import { eq } from "@/db";
+import { eq, inArray } from "@/db";
 
 import { HTTPSTATUS } from "@/config/http.config";
 import { connections } from "@/db/tables";
@@ -7,9 +7,11 @@ import {
   InsertEdge,
   InsertEdgeSchema,
   InsertManyEdgeSchema,
+  IOutputEdge,
 } from "@/schema/edges";
 import { formatZodError } from "@/utils";
 import { ValidationException } from "@/utils/catch-errors";
+import { UUID } from "ulid";
 import { BaseService, ITransaction } from "./base.service";
 
 export class EdgeService extends BaseService<
@@ -70,6 +72,38 @@ export class EdgeService extends BaseService<
     console.log(result.data, "result");
 
     return await this.createMany(result.data, tsx);
+  }
+  async populateConnections<T extends boolean = true>(
+    workflowIds: UUID[],
+    transform: T = true as T
+  ) {
+    const connectionsResp = await edgeService.findMany((table) =>
+      inArray(table.workflowId, workflowIds)
+    );
+    if (!connectionsResp.data) {
+      return {};
+    }
+    return connectionsResp.data?.reduce((acc, connection) => {
+      if (!connection || !connection.workflowId) return acc;
+      const { fromNodeId, toNodeId, fromOutput, toInput, ...rest } = connection;
+      const obj = {
+        ...rest,
+        ...(transform
+          ? {
+              source: fromNodeId,
+              target: toNodeId,
+              sourceHandle: fromOutput,
+              targetHandle: toInput,
+            }
+          : { fromNodeId, toNodeId, fromOutput, toInput }),
+      } as T extends true ? IOutputEdge : IEdge;
+      if (acc[connection.workflowId]) {
+        acc[connection.workflowId]!.push(obj);
+      } else {
+        acc[connection.workflowId] = [obj];
+      }
+      return acc;
+    }, {} as Record<string, (T extends true ? IOutputEdge : IEdge)[]>);
   }
 }
 export const edgeService = new EdgeService();

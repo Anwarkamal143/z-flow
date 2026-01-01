@@ -25,25 +25,29 @@ type IInitialValues = {
   endpoint?: string
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: string
-  // defaultEndpoint?: string
-  // defaultMethod?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  // defaultBody?: string
 }
-export type IFormType = z.infer<typeof formSchema>
+export type HttpRequestFormValues = z.infer<typeof formSchema>
 type Props = {
-  onSubmit: (values: IFormType) => void
-  initialValues: IInitialValues
+  onSubmit: (values: HttpRequestFormValues) => void
+  defaultValues?: Partial<HttpRequestFormValues>
   open: boolean
   onOpenChange: (isOpen: boolean) => void
 }
-const HttpRequestDialog = ({ initialValues, onSubmit, ...rest }: Props) => {
+const HttpRequestDialog = ({
+  defaultValues = {},
+  onSubmit,
+  ...rest
+}: Props) => {
+  const formDefaultValues = {
+    ...defaultValues,
+    method: defaultValues.method || 'GET',
+    endpoint: defaultValues.endpoint || '',
+    body: defaultValues.body || '',
+  }
   const form = useZodForm({
     schema: formSchema,
     defaultValues: {
-      ...initialValues,
-      method: initialValues.method || 'GET',
-      endpoint: initialValues.endpoint || '',
-      body: initialValues.body || '',
+      ...formDefaultValues,
     },
   })
   const { data } = form.useWatchValues({
@@ -53,18 +57,18 @@ const HttpRequestDialog = ({ initialValues, onSubmit, ...rest }: Props) => {
   useEffect(() => {
     if (rest.open) {
       form.reset({
-        ...initialValues,
+        ...formDefaultValues,
       })
     }
     return () => {}
   }, [
     rest.open,
-    initialValues.body,
-    initialValues.endpoint,
-    initialValues.method,
+    defaultValues.body,
+    defaultValues.endpoint,
+    defaultValues.method,
   ])
 
-  const handleSubmit = (values: IFormType) => {
+  const handleSubmit = (values: HttpRequestFormValues) => {
     onSubmit(values)
     rest.onOpenChange(false)
     form.reset()
@@ -114,7 +118,9 @@ const HttpRequestDialog = ({ initialValues, onSubmit, ...rest }: Props) => {
             />
           )}
           <DialogFooter className='mt-4'>
-            <ButtonLoader type='submit'>Save</ButtonLoader>
+            <ButtonLoader type='submit' className='w-full'>
+              Save
+            </ButtonLoader>
           </DialogFooter>
         </Form>
       </DialogContent>

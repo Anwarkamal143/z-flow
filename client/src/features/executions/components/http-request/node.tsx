@@ -4,7 +4,7 @@ import { GlobeIcon } from '@/assets/icons'
 import { Node, NodeProps, useReactFlow } from '@xyflow/react'
 import { memo, useState } from 'react'
 import BaseExecutionNode from '../base-execution-node'
-import HttpRequestDialog, { IFormType } from './dialog'
+import HttpRequestDialog, { HttpRequestFormValues } from './dialog'
 
 type IHttpRequestNodeData = {
   endpoint?: string
@@ -23,7 +23,7 @@ const HttpRequestNode = memo((props: NodeProps<IHttpRequestNodeType>) => {
   const nodeStatus = 'initial'
 
   const handleOpenSettings = () => onOpenChange(true)
-  const handleSubmit = (values: IFormType) => {
+  const handleSubmit = (values: HttpRequestFormValues) => {
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id == props.id) {
@@ -39,7 +39,7 @@ const HttpRequestNode = memo((props: NodeProps<IHttpRequestNodeType>) => {
         open={open}
         onOpenChange={onOpenChange}
         onSubmit={handleSubmit}
-        initialValues={nodeData}
+        defaultValues={nodeData}
       />
       <BaseExecutionNode
         {...props}

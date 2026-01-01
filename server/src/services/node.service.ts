@@ -1,4 +1,4 @@
-import { eq } from "@/db";
+import { eq, inArray } from "@/db";
 
 import { HTTPSTATUS } from "@/config/http.config";
 import { nodes } from "@/db/tables";
@@ -10,6 +10,7 @@ import {
 } from "@/schema/node";
 import { formatZodError } from "@/utils";
 import { ValidationException } from "@/utils/catch-errors";
+import { UUID } from "ulid";
 import { BaseService, ITransaction } from "./base.service";
 
 export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
@@ -77,6 +78,24 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
       };
     }
     return await this.createMany(result.data, tsx);
+  }
+
+  async populateNodes(workflowIds: UUID[]) {
+    const nodesResp = await nodeService.findMany((table) =>
+      inArray(table.workflowId, workflowIds)
+    );
+    if (!nodesResp.data) {
+      return {};
+    }
+    return nodesResp.data?.reduce((acc, node) => {
+      if (!node || !node.workflowId) return acc;
+      if (acc[node.workflowId]) {
+        acc[node.workflowId]!.push(node);
+      } else {
+        acc[node.workflowId] = [node];
+      }
+      return acc;
+    }, {} as Record<string, INode[]>);
   }
 }
 export const nodeService = new NodeService();

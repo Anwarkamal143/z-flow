@@ -13,8 +13,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint-dev.sh
 RUN chmod +x /usr/local/bin/inngest-entrypoint-dev.sh
 EXPOSE 4983
 COPY . .
-# ENTRYPOINT ["docker-entrypoint-dev.sh"]
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint-dev.sh", "/usr/local/bin/inngest-entrypoint-dev.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint-dev.sh"]
+# ENTRYPOINT ["/usr/local/bin/docker-entrypoint-dev.sh", "/usr/local/bin/inngest-entrypoint-dev.sh"]
 CMD ["bun", "run", "dev:local"]
 
 

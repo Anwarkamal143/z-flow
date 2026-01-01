@@ -9,9 +9,10 @@ class InngestController {
   public async sendDemo(_req: FastifyRequest, rep: FastifyReply) {
     try {
       await inngestService.send({
-        name: EVENT_NAMES.DEMO_SENT,
+        name: EVENT_NAMES.WORKFLOW_EXECUTE,
         data: {
-          message: "Hello from server with resolve 2",
+          userId: _req.user?.id!,
+          email: "soem email",
         },
       });
 

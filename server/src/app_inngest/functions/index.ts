@@ -1,4 +1,3 @@
-import helloWorld from "./helloWorld";
+import workflowExecute from "./workflow-execute.function";
 
-import ai from "./ai.generate.function";
-export const functions = [helloWorld, ai];
+export const functions = [workflowExecute];
