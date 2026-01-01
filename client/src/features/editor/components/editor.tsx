@@ -35,7 +35,11 @@ const Editor = ({ workflowId }: IEditorProps) => {
   }
   return (
     <div className='h-full w-full'>
-      <FlowContainer nodes={data.data.nodes} edges={data.data.edges} />
+      <FlowContainer
+        nodes={data.data.nodes}
+        edges={data.data.edges}
+        workflowId={workflowId}
+      />
     </div>
   )
 }

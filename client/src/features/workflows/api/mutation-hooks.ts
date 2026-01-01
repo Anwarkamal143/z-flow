@@ -1,5 +1,6 @@
 import { formatZodError } from '@/lib'
 import { workflowClient } from '@/models/v1/Workflow.model'
+import { toast } from 'sonner'
 import {
   IUpdateWorkflowWithNodesEdges,
   UpdateWorkflowWithNodesEdgesSchema,
@@ -90,5 +91,23 @@ export function useDeleteWorkflows() {
         exact: false,
       },
     ],
+  })
+}
+
+export function useExecuteWorkflow() {
+  return workflowClient.useCreate({
+    options: {
+      path: 'execute',
+    },
+    mutationOptions: {
+      onSuccess: (data) => {
+        toast.success(`Workflow "${data.data?.name}" executed`)
+      },
+      onError(error, variables, onMutateResult, context) {
+        toast.error(
+          `Failed to execute workflow: ${error.message || error.data.message}`,
+        )
+      },
+    },
   })
 }

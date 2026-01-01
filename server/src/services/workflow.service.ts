@@ -1,7 +1,8 @@
-import { and, eq, inArray, NodeType } from "@/db";
+import { and, eq, NodeType } from "@/db";
 import { workflows } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
-import { IOutputEdge } from "@/schema/edges";
+import { WORKFLOW_EVENT_NAMES } from "@/flow-executions/events/workflow";
+import { ULIDSchema } from "@/schema/helper";
 import { IUpdateUser } from "@/schema/user";
 import {
   InsertWorkflows,
@@ -21,9 +22,9 @@ import {
 import { toUTC } from "@/utils/date-time";
 import { cacheManager } from "@/utils/redis-cache/cache-manager";
 import drizzleCache from "@/utils/redis-cache/drizzle-cache";
-import { UUID } from "ulid";
 import { BaseService } from "./base.service";
 import { edgeService } from "./edge.service";
+import { inngestService } from "./inngest.service";
 import { nodeService } from "./node.service";
 export type WorkflowPaginationConfig =
   typeof workflowService._types.PaginationsConfig;
@@ -57,49 +58,6 @@ export class WorkflowService extends BaseService<
         ? params.cursorColumn
         : (table) => table.id,
     });
-  }
-
-  private async populateNodes(workflowIds: UUID[]) {
-    const nodesResp = await nodeService.findMany((table) =>
-      inArray(table.workflowId, workflowIds)
-    );
-    if (!nodesResp.data) {
-      return {};
-    }
-    return nodesResp.data?.reduce((acc, node) => {
-      if (!node || !node.workflowId) return acc;
-      if (acc[node.workflowId]) {
-        acc[node.workflowId]!.push(node);
-      } else {
-        acc[node.workflowId] = [node];
-      }
-      return acc;
-    }, {} as Record<string, (typeof nodesResp.data)[0][]>);
-  }
-  private async populateConnections(workflowIds: UUID[]) {
-    const connectionsResp = await edgeService.findMany((table) =>
-      inArray(table.workflowId, workflowIds)
-    );
-    if (!connectionsResp.data) {
-      return {};
-    }
-    return connectionsResp.data?.reduce((acc, connection) => {
-      if (!connection || !connection.workflowId) return acc;
-      const { fromNodeId, toNodeId, fromOutput, toInput, ...rest } = connection;
-      const obj = {
-        ...rest,
-        source: fromNodeId,
-        target: toNodeId,
-        sourceHandle: fromOutput,
-        targetHandle: toInput,
-      };
-      if (acc[connection.workflowId]) {
-        acc[connection.workflowId]!.push(obj);
-      } else {
-        acc[connection.workflowId] = [obj];
-      }
-      return acc;
-    }, {} as Record<string, IOutputEdge[]>);
   }
 
   async listAllPaginatedWorkflowsV2(params: WorkflowPaginationConfig) {
@@ -167,6 +125,41 @@ export class WorkflowService extends BaseService<
       }
     );
   }
+  public async getByFieldWithNodesAndConnections(
+    fieldValue: string | undefined,
+    field: typeof this._types.coloumn
+  ) {
+    if (!fieldValue || !field) {
+      return {
+        data: null,
+
+        error: new BadRequestException(`${field} is not provided`, {
+          errorCode: ErrorCode.VALIDATION_ERROR,
+        }),
+      };
+    }
+
+    const fd = this.getTableColumn(field);
+
+    const workflow = await this.findOne(() => eq(fd, fieldValue));
+
+    if (workflow.data) {
+      const nodesMap = await nodeService.populateNodes([workflow.data.id]);
+      const edges = await edgeService.populateConnections(
+        [workflow.data.id],
+        false
+      );
+      return {
+        data: {
+          ...workflow.data,
+          nodes: nodesMap[workflow.data.id] || [],
+          edges: edges[workflow.data.id] || [],
+        },
+        error: null,
+      };
+    }
+    return workflow;
+  }
   public async getByUserId(userId?: string) {
     if (!userId) {
       return {
@@ -182,7 +175,7 @@ export class WorkflowService extends BaseService<
       eq(fields.userId, userId)
     );
     if (workflows.data?.length) {
-      const nodesMap = await this.populateNodes(
+      const nodesMap = await nodeService.populateNodes(
         workflows.data.map((w) => w.id)
       );
       return {
@@ -214,8 +207,8 @@ export class WorkflowService extends BaseService<
       and(eq(fields.id, parseData.id), eq(fields.userId, parseData.userId))
     );
     if (workflowClient.data) {
-      const nodes = await this.populateNodes([workflowClient.data.id]);
-      const connections = await this.populateConnections([
+      const nodes = await nodeService.populateNodes([workflowClient.data.id]);
+      const connections = await edgeService.populateConnections([
         workflowClient.data.id,
       ]);
       return {
@@ -489,6 +482,37 @@ export class WorkflowService extends BaseService<
       return {
         data: null,
         error,
+      };
+    }
+  }
+  async executeWorkflow(workflowId: string, userId) {
+    try {
+      const resultData = ULIDSchema("Id is not valid").safeParse(workflowId);
+      if (!resultData.success) {
+        throw new ValidationException(
+          "Invalid Id",
+          formatZodError(resultData.error)
+        );
+      }
+      const workflowdata = await this.getWorkflowByIdAndUserId(
+        workflowId,
+        userId
+      );
+      if (!workflowdata.data) {
+        throw new BadRequestException("Workflow not found to execute");
+      }
+      const workflow = workflowdata.data;
+      await inngestService.send({
+        name: WORKFLOW_EVENT_NAMES.WORKFLOW_EXECUTE,
+        data: {
+          workflowId: workflow.id,
+        },
+      });
+      return { data: workflowdata.data, error: null };
+    } catch (error) {
+      return {
+        error,
+        data: null,
       };
     }
   }

@@ -164,36 +164,27 @@ class WorkflowController {
       data: result.data,
     });
   }
-
-  // public async getAllv2(
-  //   req: FastifyRequest<{
-  //     Querystring: WorkflowPaginationConfig;
-  //   }>,
-  //   _rep: FastifyReply
-  // ) {
-  //   const userId = req.user!.id;
-
-  //   const validationResult = workflowService.validatePagination(req.query);
-  //   console.log(validationResult, "ValidateResult");
-  //   if (validationResult.error) {
-  //     throw validationResult.error;
-  //   }
-  //   const config = validationResult.data;
-  //   const result = await workflowService.listAllPaginatedWorkflowsV2({
-  //     ...config,
-  //     filters: [
-  //       ...(config.filters || []),
-  //       { column: "userId", operator: "eq", value: userId },
-  //     ],
-  //   });
-  //   if (result.error) {
-  //     throw result.error;
-  //   }
-  //   return SuccessResponse(_rep, {
-  //     message: "workflows found",
-  //     data: result.data,
-  //   });
-  // }
+  public async executeWorkflow(
+    req: FastifyRequest<{ Body: { id: string } }>,
+    rep: FastifyReply
+  ) {
+    try {
+      const resp = await workflowService.executeWorkflow(
+        req.body.id,
+        req.user?.id
+      );
+      if (resp.error) {
+        throw resp.error;
+      }
+      return SuccessResponse(rep, {
+        data: resp.data,
+        message: "Worklow is executing",
+      });
+    } catch (error) {
+      console.error("Error executing workflow:", error);
+      rep.status(500).send({ error: "Failed to execute workflow" });
+    }
+  }
 }
 
 // Export a singleton instance

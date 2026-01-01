@@ -1,7 +1,9 @@
 'use client'
 
+import { NodeType } from '@/config/enums'
 import { nodeComponents } from '@/config/node-components'
 import AddNodeButton from '@/features/editor/components/add-node-button'
+import ExecuteWorkflowButton from '@/features/editor/components/execute-workflow-button'
 import { useStoreWorkflowActions } from '@/store/useEditorStore'
 import {
   addEdge,
@@ -22,13 +24,14 @@ import {
   ReactFlowProps,
 } from '@xyflow/react'
 import { useTheme } from 'next-themes'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 type FlowContainerProps = ReactFlowProps & {
   nodes?: Node[]
   edges?: Edge[]
   onAutoSave?: (nodes: Node[], edges: Edge[]) => void | Promise<void>
   autoSaveMs?: number
+  workflowId: string
 }
 
 export default function FlowContainer({
@@ -37,6 +40,7 @@ export default function FlowContainer({
   onInit,
   onAutoSave,
   autoSaveMs = 1000,
+  workflowId,
   ...rest
 }: FlowContainerProps) {
   const { setEditor } = useStoreWorkflowActions()
@@ -94,6 +98,9 @@ export default function FlowContainer({
       editor.current = e
     }
   }
+  const hasManualTrigger = useMemo(() => {
+    return nodes.some((node) => node.type == NodeType.MANUAL_TRIGGER)
+  }, [nodes])
   return (
     <div className='h-full w-full'>
       <ReactFlow
@@ -122,6 +129,11 @@ export default function FlowContainer({
         <Panel position='top-right'>
           <AddNodeButton />
         </Panel>
+        {hasManualTrigger && (
+          <Panel position='bottom-center'>
+            <ExecuteWorkflowButton workflowId={workflowId} />
+          </Panel>
+        )}
       </ReactFlow>
     </div>
   )

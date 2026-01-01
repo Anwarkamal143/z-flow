@@ -24,7 +24,7 @@
     "db:pull": "npx drizzle-kit pull",
     "db:up": "npx drizzle-kit up",
     "db:studio": "npx drizzle-kit studio",
-    "inngest:dev": "npx inngest-cli@latest dev -u http://localhost:4000/api/inngest"
+    "inngest:dev": "npx --ignore-scripts=false inngest-cli@latest dev -u http://app:4000/api/inngest"
   },
   "keywords": [],
   "author": "",
@@ -44,6 +44,7 @@
     "@socket.io/redis-streams-adapter": "^0.2.2",
     "ai": "^5.0.98",
     "arctic": "^3.7.0",
+    "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
@@ -62,6 +63,7 @@
     "random-word-slugs": "^0.1.7",
     "rate-limiter-flexible": "^8.2.1",
     "socket.io": "^4.8.1",
+    "toposort": "^2.0.2",
     "ulid": "^3.0.1",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
@@ -70,6 +72,7 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@types/pluralize": "^0.0.33",
+    "@types/toposort": "^2.0.7",
     "drizzle-kit": "^0.31.7",
     "pino-pretty": "^13.1.2",
     "ts-node-dev": "^2.0.0",
