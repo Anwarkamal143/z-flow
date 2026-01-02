@@ -19,9 +19,9 @@ function FieldHelperText({
   }
   if (!name) return null
 
-  const error = errors[name]
+  // const error = errors[name]
 
-  if (error) return null
+  // if (error) return null
 
   return (
     <span className={`field-helper-text text-xs ${className}`}>

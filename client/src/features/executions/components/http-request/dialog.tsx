@@ -3,6 +3,7 @@ import ButtonLoader from '@/components/button-loader'
 import Form from '@/components/form/Form'
 import FormInput from '@/components/form/Input'
 import SelectComp from '@/components/form/Input/select'
+
 import {
   DialogContent,
   DialogDescription,
@@ -19,13 +20,16 @@ const formSchema = z.object({
   endpoint: z.url({ error: 'Please enter a valid URL' }),
   method: z.enum(METHODS),
   body: z.string().optional(),
+  variableName: z
+    .string()
+    .min(1, { error: 'Variable name is required' })
+    .regex(/^[A-Za-z_$][A-za-z0-9_$]*$/, {
+      error:
+        'Variable name must start with letter or underscore and contain only letters, numbers and underscores',
+    }),
   // .refine() TODO
 })
-type IInitialValues = {
-  endpoint?: string
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  body?: string
-}
+
 export type HttpRequestFormValues = z.infer<typeof formSchema>
 type Props = {
   onSubmit: (values: HttpRequestFormValues) => void
@@ -38,11 +42,12 @@ const HttpRequestDialog = ({
   onSubmit,
   ...rest
 }: Props) => {
-  const formDefaultValues = {
+  const formDefaultValues: HttpRequestFormValues = {
     ...defaultValues,
     method: defaultValues.method || 'GET',
     endpoint: defaultValues.endpoint || '',
     body: defaultValues.body || '',
+    variableName: defaultValues.variableName || '',
   }
   const form = useZodForm({
     schema: formSchema,
@@ -51,7 +56,7 @@ const HttpRequestDialog = ({
     },
   })
   const { data } = form.useWatchValues({
-    name: ['method'],
+    name: ['method', 'variableName'],
   })
   const showBodyField = ['POST', 'PUT', 'PATCH'].includes(data.method)
   useEffect(() => {
@@ -66,6 +71,7 @@ const HttpRequestDialog = ({
     defaultValues.body,
     defaultValues.endpoint,
     defaultValues.method,
+    defaultValues.variableName,
   ])
 
   const handleSubmit = (values: HttpRequestFormValues) => {
@@ -87,6 +93,13 @@ const HttpRequestDialog = ({
           onSubmit={handleSubmit}
           className='mt-4 max-w-full space-y-8'
         >
+          <FormInput
+            label='VariableName'
+            name='variableName'
+            placeholder='myApiCall'
+            helperText={`Use this name to refrence the result in other nodes: {{${data.variableName || 'myApiCall'}.httpResponse.data}}`}
+            // key={vaules.variableName}
+          />
           <SelectComp
             placeholder={{ title: 'Select a method', icon: GlobeIcon }}
             name='method'

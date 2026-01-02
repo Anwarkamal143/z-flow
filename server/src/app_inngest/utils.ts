@@ -13,20 +13,19 @@ export const topologicalSort = (
   if (!connections.length) {
     return nodes;
   }
-  // Create Edges array for toposort
-  const edges: [string, string][] = connections.map((conn) => [
-    conn.fromNodeId,
-    conn.toNodeId,
-  ]);
-
-  // Add nodes with no connections as self-edges to ensure they're included
+  // unique ids of the nodes that are connected
   const connectedNodeIds = new Set<string>();
-
-  for (const conn of connections) {
+  // Create Edges array for toposort
+  const edges: [string, string][] = connections.map((conn) => {
     connectedNodeIds.add(conn.fromNodeId);
     connectedNodeIds.add(conn.toNodeId);
-  }
+    return [conn.fromNodeId, conn.toNodeId];
+  });
 
+  // for (const conn of connections) {
+  // }
+
+  // Add nodes with no connections as self-edges to ensure they're included
   for (const node of nodes) {
     if (!connectedNodeIds.has(node.id)) {
       edges.push([node.id, node.id]);
