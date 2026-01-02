@@ -10,7 +10,7 @@ type IHttpRequestNodeData = {
   endpoint?: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   body?: string
-  [key: string]: unknown
+  variableName?: string
 }
 type IHttpRequestNodeType = Node<IHttpRequestNodeData>
 const HttpRequestNode = memo((props: NodeProps<IHttpRequestNodeType>) => {

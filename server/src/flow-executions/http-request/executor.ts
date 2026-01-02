@@ -7,6 +7,7 @@ type HttpRequestExecutor = {
   endpoint?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: string;
+  variableName?: string;
 };
 export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
   data,
@@ -20,6 +21,10 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
     // TODO: Publish "error" state for http request
     throw new NonRetriableError("HTTP Request node: No endpoint configured");
   }
+  if (data.variableName == null || data.variableName.trim() == "") {
+    // TODO: Publish "error" state for http request
+    throw new NonRetriableError("Variable name not configured");
+  }
   const result = await step.run("http-request", async () => {
     const endpoint = data.endpoint;
     const method = data.method || "GET";
@@ -27,14 +32,18 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
       method,
       url: endpoint,
       timeout: 6000,
+      // headers: {
+      //   "Content-Type": "application/json"
+      // }
     };
     if (["POST", "PUT", "PATCH"].includes(method)) {
       options.data = data.body;
     }
+    const variableName = data.variableName as string;
+    let responsePayload = {};
     try {
       const response = await axios(options);
-      return {
-        ...context,
+      responsePayload = {
         httpResponse: {
           status: response.status,
           statusText: response.statusText,
@@ -43,18 +52,37 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
       };
     } catch (error: any) {
       const errorStatus = error.status || HTTPSTATUS.INTERNAL_SERVER_ERROR;
-      return {
-        ...context,
-        httpResponse: {
-          status: errorStatus,
-          statusText:
-            error.statusText ||
-            getPrimaryErrorCodeForStatus(errorStatus) ||
-            ErrorCode.INTERNAL_SERVER_ERROR,
-          data: null,
-        },
-      };
+      if (axios.isAxiosError(error) && error.response) {
+        responsePayload = {
+          httpResponse: {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data,
+          },
+        };
+      } else {
+        responsePayload = {
+          httpResponse: {
+            status: errorStatus,
+            statusText:
+              getPrimaryErrorCodeForStatus(errorStatus) ||
+              ErrorCode.INTERNAL_SERVER_ERROR,
+            data: null,
+          },
+        };
+      }
     }
+    // if (variableName) {
+    return {
+      ...context,
+      [variableName]: responsePayload,
+    };
+    // }
+    // return {
+    //   ...context,
+
+    //   ...responsePayload,
+    // };
   });
   // TODO: Publish "success" state for http request
   return result;
