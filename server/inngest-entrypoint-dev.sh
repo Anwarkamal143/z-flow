@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -e
 
 if [[ "${ENABLE_INNGEST:-false}" != "true" ]]; then
   echo "Skipping Inngest — ENABLE_INNGEST is not true."
