@@ -145,9 +145,7 @@ export const EntitySearch = ({
       <InputComponent
         autoFocus={autoFocus}
         className='max-w-[200px]'
-        rightIcon={{
-          Icon: <SearchIcon />,
-        }}
+        rightIcon={<SearchIcon />}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}

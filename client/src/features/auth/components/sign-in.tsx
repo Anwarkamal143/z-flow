@@ -109,9 +109,7 @@ const SignInScreen = ({}) => {
           name='email'
           type='email'
           placeholder='you@example.com'
-          leftIcon={{
-            Icon: EmailIcon,
-          }}
+          leftIcon={{ Comp: <EmailIcon /> }}
         />
 
         <FormInput
@@ -120,7 +118,7 @@ const SignInScreen = ({}) => {
           type={showPassword ? 'text' : 'password'}
           placeholder='********'
           rightIcon={{
-            Icon: !showPassword ? EyeIcon : EyeOffIcon,
+            Comp: !showPassword ? EyeIcon : EyeOffIcon,
             onClick: () => setShowPassword(!showPassword),
           }}
         />
