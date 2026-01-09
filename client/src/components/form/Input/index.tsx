@@ -68,19 +68,20 @@ type IconProps = {
     className?: string
     onClick: (e: MouseEvent) => void
   }) => ReactNode
-  Icon?: ElementType | ReactElement
+  Comp?: ElementType | ReactElement
 }
 
-type InputFormProps = InputProps & {
+export type InputFormProps = InputProps & {
   label?: ReactNode
   labelClass?: string
   helperText?: ReactNode
-  leftIcon?: IconProps
-  rightIcon?: IconProps
+  leftIcon?: IconProps | ReactNode
+  rightIcon?: IconProps | ReactNode
   border?: VariantProps<typeof inputVariants>['border']
   rounded?: VariantProps<typeof inputVariants>['rounded']
   isSwitch?: boolean
   isTextArea?: boolean
+  prefixTopComponent?: IconProps | ReactNode
 }
 
 type FormInputProps<T extends FieldValues> = UseControllerProps<T> &
@@ -104,15 +105,42 @@ export function FormInput<T extends FieldValues>({
   isSwitch = false,
   isTextArea = false,
   disabled = false,
+  prefixTopComponent,
   ...rest
 }: FormInputProps<T>) {
   const { control, getValues } = useFormContext<T>()
+  const isIconProps = (value: unknown): value is IconProps =>
+    typeof value === 'object' &&
+    value !== null &&
+    ('render' in value || 'Comp' in value)
+  const withClassName = (
+    node: ReactNode,
+    // className: string,
+    // onClick?: (e: MouseEvent) => void,
+    position?: string,
+  ) => {
+    // const pointer = onClick ? 'cursor-pointer pointer-events-auto' : ''
+    if (!isValidElement(node)) return node
 
-  const renderIcon = (icon?: IconProps, position?: string) => {
+    return cloneElement(node, {
+      className: cn(
+        ICON_COMMON_CLASSES(position || ''),
+        // pointer,
+        // className,
+        (node as any)?.props?.className,
+      ),
+      // onClick,
+    } as any)
+  }
+  const renderIcon = (icon?: IconProps | ReactNode, position?: string) => {
     if (!icon) return null
-    const { render, Icon, onClick, className, meta } = icon
+    /** ✅ Plain ReactNode → render directly */
+    if (!isIconProps(icon)) {
+      return withClassName(icon, position)
+    }
+    const { render, Comp, onClick, className, meta } = icon
     const handleClick = (e: MouseEvent) => {
-      onClick?.(e, { value: getValues(name), name })
+      onClick?.(e, { value: rest.value, name: name as string })
     }
     const pointer = onClick ? 'cursor-pointer pointer-events-auto' : ''
 
@@ -123,9 +151,9 @@ export function FormInput<T extends FieldValues>({
       })
     }
 
-    if (Icon) {
-      if (isValidElement(Icon)) {
-        return cloneElement(Icon, {
+    if (Comp) {
+      if (isValidElement(Comp)) {
+        return cloneElement(Comp, {
           className: cn(
             ICON_COMMON_CLASSES(position || ''),
             pointer,
@@ -135,7 +163,7 @@ export function FormInput<T extends FieldValues>({
           ...meta,
         } as any)
       }
-      const Comp = Icon as ElementType
+      // const Component = Comp as ElementType
       return (
         <Comp
           className={cn(
@@ -150,7 +178,51 @@ export function FormInput<T extends FieldValues>({
     }
     return null
   }
+  const renderComponent = (comp?: IconProps | ReactNode) => {
+    if (!comp) return null
 
+    /** ✅ Plain ReactNode → render directly */
+    if (!isIconProps(comp)) {
+      return comp
+    }
+
+    const { render, Comp, onClick, className, meta } = comp
+
+    const handleClick = (e: MouseEvent) => {
+      onClick?.(e, { value: rest.value, name: name as string })
+    }
+
+    const pointer = onClick ? 'cursor-pointer pointer-events-auto' : ''
+
+    if (render) {
+      return render({
+        className: cn(pointer, className),
+        onClick: handleClick,
+      })
+    }
+
+    if (!Comp) return null
+
+    /** ✅ Comp as JSX element */
+    if (isValidElement(Comp)) {
+      return cloneElement(Comp, {
+        className: cn(pointer, className, (Comp as any)?.props?.className),
+        onClick: handleClick,
+        ...meta,
+      } as any)
+    }
+
+    /** ✅ Comp as component type */
+    const Component = Comp
+
+    return (
+      <Component
+        className={cn(pointer, className)}
+        onClick={handleClick}
+        {...meta}
+      />
+    )
+  }
   const getVariants = (fieldState: ControllerFieldState) => {
     const error = fieldState.error ? 'primary' : undefined
     const _rounded = !border ? rounded : undefined
@@ -209,24 +281,27 @@ export function FormInput<T extends FieldValues>({
                   )}
                 />
               ) : (
-                <Input
-                  type={type}
-                  placeholder={placeholder}
-                  disabled={disabled}
-                  className={cn(
-                    getVariants(fieldState),
+                <>
+                  {renderComponent(prefixTopComponent)}
+                  <Input
+                    type={type}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    className={cn(
+                      getVariants(fieldState),
 
-                    {
-                      'pl-8': !!leftIcon,
-                      'pr-8': !!rightIcon,
-                    },
-                    rest.className,
-                  )}
-                  autoComplete={rest.autoComplete}
-                  {...field}
-                  aria-invalid={!!fieldState.error}
-                  aria-errormessage={fieldState.error?.message}
-                />
+                      {
+                        'pl-8': !!leftIcon,
+                        'pr-8': !!rightIcon,
+                      },
+                      rest.className,
+                    )}
+                    autoComplete={rest.autoComplete}
+                    {...field}
+                    aria-invalid={!!fieldState.error}
+                    aria-errormessage={fieldState.error?.message}
+                  />
+                </>
               )}
             </div>
 

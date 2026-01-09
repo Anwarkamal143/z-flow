@@ -60,15 +60,16 @@ type IconProps = {
     className?: string
     onClick: (e: MouseEvent) => void
   }) => ReactNode
-  Icon?: ElementType | ReactElement
+  Comp?: ElementType | ReactElement
 }
 
 type InputFormProps = {
   label?: ReactNode
   labelClass?: string
   helperText?: ReactNode
-  leftIcon?: IconProps
-  rightIcon?: IconProps
+  prefixTopComponent?: IconProps | ReactNode
+  leftIcon?: IconProps | ReactNode
+  rightIcon?: IconProps | ReactNode
   border?: VariantProps<typeof inputVariants>['border']
   rounded?: VariantProps<typeof inputVariants>['rounded']
 
@@ -95,13 +96,41 @@ const InputComponent = ({
   error: erroMessage = '',
   placeholder,
   className,
+  prefixTopComponent,
   ...rest
 }: FormInputProps) => {
   const isTextArea = type == 'textarea'
   const error = erroMessage != null ? erroMessage.trim() : undefined
-  const renderIcon = (icon?: IconProps, position?: string) => {
+  const isIconProps = (value: unknown): value is IconProps =>
+    typeof value === 'object' &&
+    value !== null &&
+    ('render' in value || 'Comp' in value)
+  const withClassName = (
+    node: ReactNode,
+    // className: string,
+    // onClick?: (e: MouseEvent) => void,
+    position?: string,
+  ) => {
+    // const pointer = onClick ? 'cursor-pointer pointer-events-auto' : ''
+    if (!isValidElement(node)) return node
+
+    return cloneElement(node, {
+      className: cn(
+        ICON_COMMON_CLASSES(position || ''),
+        // pointer,
+        // className,
+        (node as any)?.props?.className,
+      ),
+      // onClick,
+    } as any)
+  }
+  const renderIcon = (icon?: IconProps | ReactNode, position?: string) => {
     if (!icon) return null
-    const { render, Icon, onClick, className, meta } = icon
+    /** ✅ Plain ReactNode → render directly */
+    if (!isIconProps(icon)) {
+      return withClassName(icon, position)
+    }
+    const { render, Comp, onClick, className, meta } = icon
     const handleClick = (e: MouseEvent) => {
       onClick?.(e, { value: rest.value, name: name as string })
     }
@@ -114,9 +143,9 @@ const InputComponent = ({
       })
     }
 
-    if (Icon) {
-      if (isValidElement(Icon)) {
-        return cloneElement(Icon, {
+    if (Comp) {
+      if (isValidElement(Comp)) {
+        return cloneElement(Comp, {
           className: cn(
             ICON_COMMON_CLASSES(position || ''),
             pointer,
@@ -126,7 +155,7 @@ const InputComponent = ({
           ...meta,
         } as any)
       }
-      const Comp = Icon as ElementType
+      // const Component = Comp as ElementType
       return (
         <Comp
           className={cn(
@@ -141,7 +170,51 @@ const InputComponent = ({
     }
     return null
   }
+  const renderComponent = (comp?: IconProps | ReactNode) => {
+    if (!comp) return null
 
+    /** ✅ Plain ReactNode → render directly */
+    if (!isIconProps(comp)) {
+      return comp
+    }
+
+    const { render, Comp, onClick, className, meta } = comp
+
+    const handleClick = (e: MouseEvent) => {
+      onClick?.(e, { value: rest.value, name: name as string })
+    }
+
+    const pointer = onClick ? 'cursor-pointer pointer-events-auto' : ''
+
+    if (render) {
+      return render({
+        className: cn(pointer, className),
+        onClick: handleClick,
+      })
+    }
+
+    if (!Comp) return null
+
+    /** ✅ Comp as JSX element */
+    if (isValidElement(Comp)) {
+      return cloneElement(Comp, {
+        className: cn(pointer, className, (Comp as any)?.props?.className),
+        onClick: handleClick,
+        ...meta,
+      } as any)
+    }
+
+    /** ✅ Comp as component type */
+    const Component = Comp
+
+    return (
+      <Component
+        className={cn(pointer, className)}
+        onClick={handleClick}
+        {...meta}
+      />
+    )
+  }
   const getVariants = () => {
     const _error = error ? 'primary' : undefined
     const _rounded = !border ? rounded : undefined
@@ -181,23 +254,26 @@ const InputComponent = ({
               disabled={disabled}
             />
           ) : ( */
-            <Input
-              type={type}
-              placeholder={placeholder}
-              disabled={disabled}
-              className={cn(
-                getVariants(),
+            <>
+              {renderComponent(prefixTopComponent)}
+              <Input
+                type={type}
+                placeholder={placeholder}
+                disabled={disabled}
+                className={cn(
+                  getVariants(),
 
-                {
-                  'pl-8': !!leftIcon,
-                  'pr-8': !!rightIcon,
-                },
-              )}
-              autoComplete={rest.autoComplete}
-              {...rest}
-              aria-invalid={!!error}
-              aria-errormessage={error}
-            />
+                  {
+                    'pl-8': !!leftIcon,
+                    'pr-8': !!rightIcon,
+                  },
+                )}
+                autoComplete={rest.autoComplete}
+                {...rest}
+                aria-invalid={!!error}
+                aria-errormessage={error}
+              />
+            </>
           )}
         </div>
 

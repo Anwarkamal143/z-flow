@@ -4,21 +4,22 @@ import setUpSentry from "./instrument";
 import { buildApp } from "./app";
 import { setupShutdownHandlers } from "./utils/shutdown";
 
-const fastify = buildApp();
-setUpSentry(fastify);
 const port = Number(APP_CONFIG.PORT || 4000);
 
+let fastify = buildApp();
 const start = async () => {
+  const server = await fastify;
+  setUpSentry(server);
   try {
-    await fastify.listen({ port, host: "0.0.0.0" });
-    fastify.log.info(`Server listening on ${port}`);
+    await server.listen({ port, host: "0.0.0.0" });
+    server.log.info(`Server listening on ${port}`);
     // handle graceful shutdown
-    setupShutdownHandlers(fastify);
+    setupShutdownHandlers(server);
   } catch (err) {
-    fastify.log.error(err);
+    server.log.error(err);
     process.exit(1);
   }
+  return server;
 };
-
 start();
 export default fastify;

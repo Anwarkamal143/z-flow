@@ -25,7 +25,6 @@ const obj = {
     street: 'Main',
     city: 'Lahore',
   },
-  new: () => {},
 }
 
 // Utils

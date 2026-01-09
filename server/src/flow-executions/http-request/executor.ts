@@ -42,7 +42,17 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
   }
   const result = await step.run("http-request", async () => {
     const method = data.method;
-    const endpoint = Handlebars.compile(data.endpoint)(context);
+    let endpoint;
+    try {
+      endpoint = Handlebars.compile(data.endpoint)(context);
+      if (!endpoint || typeof endpoint != "string") {
+        throw new Error("Endpoint template must resolve to a non-empty string");
+      }
+    } catch (error) {
+      throw new NonRetriableError(
+        `HTTP Request node: Failed to resolve endpoint template: ${endpoint}`
+      );
+    }
     const options: AxiosRequestConfig = {
       method,
       url: endpoint,
@@ -52,9 +62,15 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
       // }
     };
     if (["POST", "PUT", "PATCH"].includes(method)) {
-      const resolved = Handlebars.compile(data.body || "{}")(context);
-      JSON.parse(resolved);
-      options.data = resolved;
+      try {
+        const resolved = Handlebars.compile(data.body || "{}")(context);
+        const resolvedData = JSON.parse(resolved);
+        options.data = resolvedData;
+      } catch (error) {
+        throw new NonRetriableError(
+          `HTTP Request node: Failed to resolve body template: ${data.body}`
+        );
+      }
     }
     const variableName = data.variableName;
     let responsePayload = {};

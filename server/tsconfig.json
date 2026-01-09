@@ -56,6 +56,9 @@
       "@/db": ["db"]
     }
   },
-  "include": ["./src/**/*"],
+  "include": [
+    "./src/**/*",
+    "types/**/*" // Make sure types folder is included
+  ],
   "exclude": ["node_modules"]
 }

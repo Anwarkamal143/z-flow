@@ -3,6 +3,7 @@ import ButtonLoader from '@/components/button-loader'
 import Form from '@/components/form/Form'
 import FormInput from '@/components/form/Input'
 import SelectComp from '@/components/form/Input/select'
+import ObjectTemplateInput from '@/components/object-template-input'
 
 import {
   DialogContent,
@@ -75,10 +76,12 @@ const HttpRequestDialog = ({
   ])
 
   const handleSubmit = (values: HttpRequestFormValues) => {
+    console.log(values, 'values')
     onSubmit(values)
     rest.onOpenChange(false)
     form.reset()
   }
+  const formValues = form.getValues()
   return (
     <Dialog {...rest}>
       <DialogContent>
@@ -113,11 +116,21 @@ const HttpRequestDialog = ({
             label='Method'
             helperText='The HTTP method use for this request'
           />
-          <FormInput
+          {/* <FormInput
             label='Endpoint URL'
             name='endpoint'
             placeholder='https://api.example.com/users/{{httpResponse.data.id}}'
             helperText='Static URL or ues "{{variables}}" for simple values or "{{json variable}}" to stringify objects'
+          /> */}
+          <ObjectTemplateInput
+            label='Endpoint URL'
+            name='endpoint'
+            placeholder='https://api.example.com/users/{{httpResponse.data.id}}'
+            helperText='Static URL or ues "{{variables}}" for simple values or "{{json variable}}" to stringify objects'
+            value={formValues.endpoint}
+            onChange={(value) => {
+              form.setValue('endpoint', value)
+            }}
           />
           {showBodyField && (
             <FormInput

@@ -18,10 +18,10 @@ type Props = {
 
 const WorkFlowPage = async (props: Props) => {
   const params = await props.searchParams
-  await authSession(params)
   if (isAccessTokenRefresing(params)) {
     return <Dataloader />
   }
+  await authSession(params)
 
   void prefetchServerWorkflows({
     params: {

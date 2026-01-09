@@ -21,7 +21,6 @@ export default inngest.createFunction(
         workflowId,
         (fields) => fields.id
       );
-      console.log(workflow.data, "Workflow Data");
       if (!workflow.data) {
         throw new NonRetriableError("Workflow doesn't exist");
       }
