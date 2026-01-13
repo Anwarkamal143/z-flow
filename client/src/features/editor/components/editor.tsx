@@ -7,9 +7,11 @@ import {
 } from '@/components/entity-components'
 import FlowContainer from '@/components/react-flow'
 import { useGetSuspenseWorkflow } from '@/features/workflows/api'
+import useSocket from '@/hooks/useSocket'
 import { useStoreWorkflowActions } from '@/store/useEditorStore'
 import '@xyflow/react/dist/style.css'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 type IEditorProps = {
   workflowId: string
@@ -17,7 +19,7 @@ type IEditorProps = {
 
 const Editor = ({ workflowId }: IEditorProps) => {
   const { setWorkflow } = useStoreWorkflowActions()
-
+  const { socket, isConnected } = useSocket()
   const { data } = useGetSuspenseWorkflow({
     id: workflowId,
     isEnabled: !!workflowId,
@@ -30,9 +32,18 @@ const Editor = ({ workflowId }: IEditorProps) => {
       },
     },
   })
+  useEffect(() => {
+    if (workflowId) {
+      socket?.emit('join', workflowId)
+    }
+    return () => {
+      socket?.emit('leave', workflowId)
+    }
+  }, [workflowId, isConnected])
   if (!data?.data) {
     return <EditorSingleEmptyView />
   }
+
   return (
     <div className='h-full w-full'>
       <FlowContainer

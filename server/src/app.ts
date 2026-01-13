@@ -5,6 +5,7 @@ import fastifyFormbody from "@fastify/formbody";
 import rateLimit from "@fastify/rate-limit";
 import Fastify from "fastify";
 import drizzlePlugin from "./plugins/drizzle-plugin";
+import redisPlugin from "./plugins/redis";
 import socketPlugin from "./plugins/socket";
 
 import { HTTPSTATUS } from "./config/http.config";
@@ -13,7 +14,6 @@ import { ErrorCode } from "./enums/error-code.enum";
 import errorPlugin from "./plugins/catch-error";
 import inngest from "./plugins/inngest";
 import registerLogger from "./plugins/logger";
-import redisPlugin from "./plugins/redis";
 import v1Routes from "./routes";
 import AppError from "./utils/app-error";
 const CORS_OPTIONS = {

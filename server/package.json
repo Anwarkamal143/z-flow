@@ -38,6 +38,7 @@
     "@fastify/cors": "^11.1.0",
     "@fastify/formbody": "^8.0.2",
     "@fastify/rate-limit": "^10.3.0",
+    "@inngest/realtime": "^0.4.5",
     "@polar-sh/fastify": "^0.5.0",
     "@polar-sh/sdk": "^0.41.5",
     "@sentry/node": "^10.26.0",

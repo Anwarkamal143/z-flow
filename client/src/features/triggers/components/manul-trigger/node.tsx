@@ -1,3 +1,4 @@
+import useNodeStatus from '@/features/executions/hooks/use-realtime-node'
 import { NodeProps } from '@xyflow/react'
 import { MousePointer } from 'lucide-react'
 import { memo, useState } from 'react'
@@ -6,9 +7,9 @@ import ManualTriggerSettings from './dialog'
 
 const ManualTriggerNode = memo((props: NodeProps) => {
   const [open, onOpenChagne] = useState(false)
-
+  const status = useNodeStatus({ nodeId: props.id, event: 'status' })
   const handleOpenSettings = () => onOpenChagne(true)
-  const nodeStatus = 'initial'
+  const nodeStatus = status
   return (
     <>
       <ManualTriggerSettings open={open} onOpenChange={onOpenChagne} />

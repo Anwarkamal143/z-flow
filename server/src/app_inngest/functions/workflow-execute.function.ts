@@ -4,12 +4,15 @@ import { workflowService } from "@/services/workflow.service";
 import { NonRetriableError } from "inngest";
 import { inngest } from "../client";
 
+import redisClient from "@/config/redis";
 import { WORKFLOW_EVENT_NAMES } from "@/flow-executions/events/workflow";
 import { topologicalSort } from "../utils";
 
 export default inngest.createFunction(
-  { id: "execute-workflow" },
-  { event: WORKFLOW_EVENT_NAMES.WORKFLOW_EXECUTE },
+  { id: "execute-workflow", retries: 1 },
+  {
+    event: WORKFLOW_EVENT_NAMES.WORKFLOW_EXECUTE,
+  },
   async ({ event, step }) => {
     const workflowId = event.data.workflowId;
     if (!workflowId) {
@@ -39,6 +42,8 @@ export default inngest.createFunction(
         nodeId: node.id,
         context,
         step,
+        workflowId,
+        publish: redisClient.publish,
       });
     }
 

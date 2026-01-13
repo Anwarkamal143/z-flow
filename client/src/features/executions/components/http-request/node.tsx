@@ -3,6 +3,7 @@
 import { GlobeIcon } from '@/assets/icons'
 import { Node, NodeProps, useReactFlow } from '@xyflow/react'
 import { memo, useState } from 'react'
+import useNodeStatus from '../../hooks/use-realtime-node'
 import BaseExecutionNode from '../base-execution-node'
 import HttpRequestDialog, { HttpRequestFormValues } from './dialog'
 
@@ -20,7 +21,10 @@ const HttpRequestNode = memo((props: NodeProps<IHttpRequestNodeType>) => {
   const description = props.data.endpoint
     ? `${nodeData.method || 'GET'}: \n ${nodeData.endpoint}`
     : 'Not configured'
-  const nodeStatus = 'initial'
+  const status = useNodeStatus({
+    nodeId: props.id,
+    event: 'status',
+  })
 
   const handleOpenSettings = () => onOpenChange(true)
   const handleSubmit = (values: HttpRequestFormValues) => {
@@ -49,7 +53,7 @@ const HttpRequestNode = memo((props: NodeProps<IHttpRequestNodeType>) => {
         name='HTTP Request'
         onDoubleClick={handleOpenSettings}
         onSettings={handleOpenSettings}
-        status={nodeStatus}
+        status={status}
       />
     </>
   )

@@ -1,12 +1,36 @@
+import { publishEvent } from "@/app_inngest/channels/manual-trigger";
 import { NodeExecutor, NodeExecutorParams } from "../types";
 type ManualTriggerData = Record<string, unknown>;
 export const manualTriggerExecutor: NodeExecutor<ManualTriggerData> = async ({
   nodeId,
   context,
   step,
+  workflowId,
+  publish,
 }: NodeExecutorParams<ManualTriggerData>) => {
-  // TODO Publish "loading" state for manual trigger
-  const result = await step.run("manual-trigger", async () => context);
+  const event = {
+    nodeId,
+    jobId: nodeId,
+    step: "initial",
+    status: "loading",
+    event: "status",
+    channel: workflowId,
+  };
+
+  const result = await step.run("manual-trigger", async () => {
+    await publishEvent({ publish, event });
+
+    await publishEvent({
+      publish,
+      event: {
+        ...event,
+        step: "processing",
+        status: "success",
+      },
+    });
+
+    return context;
+  });
   // TODO: Publish "success" state for manual trigger
   return result;
 };

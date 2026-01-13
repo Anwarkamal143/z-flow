@@ -1,4 +1,11 @@
+import redisClient from "@/config/redis";
+import redisSocket from "@/config/socket";
 import type { FastifyInstance } from "fastify";
+
+async function shutdownServices() {
+  await redisSocket.disconnect();
+  await redisClient.disconnect();
+}
 
 function gracefulShutdown(fastify: FastifyInstance) {
   const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGQUIT"];
@@ -8,6 +15,7 @@ function gracefulShutdown(fastify: FastifyInstance) {
       fastify.log.info(`🛑 Received ${signal} - shutting down gracefully...`);
 
       try {
+        await shutdownServices();
         await fastify.close(); // closes routes, plugins, http server
 
         fastify.log.info("✅ Fastify closed. Exiting now.");

@@ -3,7 +3,6 @@ import { UnauthorizedException } from "@/utils/catch-errors";
 import { toUTC } from "@/utils/date-time";
 import { verifyAccessToken } from "@/utils/jwt";
 
-import fastify from "@/server";
 import { createAdapter } from "@socket.io/redis-streams-adapter";
 import { Server as HttpServer } from "http";
 import CircuitBreaker from "opossum";
@@ -22,6 +21,8 @@ const config = {
   MAX_MISSED_HEARTBEATS: 3,
   REDIS_SOCKET_KEY_PREFIX: "sockets",
   NODE_ENV: APP_CONFIG.NODE_ENV,
+  SOCKET_CONNECTION_TIMEOUT: 60000, // 1 minute
+
   //   ALLOWED_NAMESPACES: (process.env.SOCKET_ALLOWED_NAMESPACES || '/default,/chat,/admin').split(','),
   //   IP_WHITELIST: (process.env.SOCKET_IP_WHITELIST || '').split(',').filter(Boolean),
 };
@@ -61,37 +62,33 @@ redisCircuitBreaker.fallback(() => {
 /**
  * Enhanced RedisSocket class with production improvements
  */
-class RedisSocket {
+export class RedisSocket {
   private _io!: Server;
   private _redis!: RedisClient;
-  private _timeInterval!: NodeJS.Timeout;
+  private _monitoringInterval!: NodeJS.Timeout;
   // private socket!: ISocket;
-  private metrics = {
+  public metrics = {
     connections: 0,
     disconnections: 0,
     rateLimited: 0,
     errors: 0,
   };
   private rateLimiter: RateLimiterRedis;
+  private connectionTimeout: number;
   /**
    *
    */
   constructor() {
     this.redis = IoRedis;
+    this.connectionTimeout = config.SOCKET_CONNECTION_TIMEOUT;
+
+    // Rate limit per user instead of per socket
     this.rateLimiter = new RateLimiterRedis({
-      storeClient: this.redis.getRedis,
+      storeClient: this.redis.client,
       points: config.MAX_EVENTS_PER_MINUTE,
       duration: 60,
-      keyPrefix: "socket_rate_limit",
+      keyPrefix: "socket_user_rate_limit",
     });
-  }
-  static instance: RedisSocket;
-
-  public static getInstance(): RedisSocket {
-    if (!RedisSocket.instance) {
-      RedisSocket.instance = new RedisSocket();
-    }
-    return RedisSocket.instance;
   }
   public get redis() {
     return this._redis;
@@ -117,7 +114,7 @@ class RedisSocket {
    */
 
   private async safeRedisCommand<T>(
-    command: (client: typeof fastify.redis) => Promise<T>
+    command: (client: RedisClient) => Promise<T>
   ): Promise<T> {
     try {
       return await redisCircuitBreaker.fire(command, this.redis);
@@ -133,16 +130,19 @@ class RedisSocket {
       this.io = new Server(httpServer, {
         cors: {
           origin: config.CORS_ORIGIN,
-          methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+          methods: ["GET", "POST"],
           credentials: config.NODE_ENV === "production",
         },
-        adapter: createAdapter(this.redis.getRedis),
+        adapter: createAdapter(this.redis.client),
         serveClient: false,
-        pingTimeout: config.HEARTBEAT_INTERVAL * 2,
+        pingTimeout:
+          config.HEARTBEAT_INTERVAL * (config.MAX_MISSED_HEARTBEATS + 1),
         pingInterval: config.HEARTBEAT_INTERVAL,
+        connectTimeout: this.connectionTimeout,
+        transports: ["websocket", "polling"], // Explicit transport order
       });
-
       this.setupConnection(this.io);
+      this.setupRedisEmitter();
       this.setupMonitoring();
     }
     return this.io;
@@ -151,70 +151,91 @@ class RedisSocket {
   /**
    * Setup monitoring and metrics collection
    */
-  private setupMonitoring() {
-    clearInterval(this._timeInterval);
-    this._timeInterval = setInterval(() => {
-      logger.info("Socket Metrics", {
-        metrics: this.metrics,
-        connectionsCount: this.io?.engine?.clientsCount || 0,
-      });
-    }, 60000); // Log metrics every minute
-  }
 
+  private setupMonitoring() {
+    if (this._monitoringInterval) {
+      clearInterval(this._monitoringInterval);
+    }
+
+    this._monitoringInterval = setInterval(() => {
+      const connectionsCount = this.io?.engine?.clientsCount || 0;
+      logger.info("Socket Metrics", {
+        ...this.metrics,
+        connectionsCount,
+        uptime: process.uptime(),
+      });
+    }, 60000);
+  }
   public authenticate(io: Server) {
     io.use(async (socket: ISocket, next) => {
       try {
-        // IP based access control
-        socket.ipAddress = (socket.handshake.headers["x-forwarded-for"] ||
-          socket.handshake.address) as string;
+        // Extract IP address safely
+        const xForwardedFor =
+          socket.handshake.headers["x-forwarded-for"] ||
+          socket.handshake.address;
+        socket.ipAddress = Array.isArray(xForwardedFor)
+          ? xForwardedFor[0]
+          : ((xForwardedFor || socket.handshake.address) as string);
 
         const token = socket.handshake.auth.token;
         if (!token) {
           this.metrics.errors++;
-          socket.disconnect();
           return next(
             new UnauthorizedException("Authentication error: Token required")
           );
         }
 
         const decoded = await verifyAccessToken(token);
-        if (!decoded.data) {
+        if (!decoded?.data?.user) {
           this.metrics.errors++;
           return next(
             new UnauthorizedException("Authentication error: Invalid token")
           );
         }
-        // const namespace = socket.nsp.name;
-        // if (!config.ALLOWED_NAMESPACES.includes(namespace)) {
-        //   this.metrics.errors++;
-        //   return next(new Error(`Namespace not allowed: ${namespace}`));
-        // }
 
-        socket.user = decoded?.data?.user;
+        // Validate user has required fields
+        if (!decoded.data.user.id) {
+          this.metrics.errors++;
+          return next(
+            new UnauthorizedException("Authentication error: Invalid user data")
+          );
+        }
+
+        socket.user = decoded.data.user;
         socket.connectTime = Date.now();
+
         next();
-      } catch (error) {
+      } catch (error: any) {
         this.metrics.errors++;
-        socket.user = null;
-        socket.disconnect(true);
-        next(new Error("Authentication error: Invalid token"));
+        logger.error("Socket authentication failed:", {
+          error: error.message,
+          ip: socket.ipAddress,
+        });
+        next(new UnauthorizedException("Authentication error"));
       }
     });
   }
-  private heartBeat(socket: ISocket) {
-    // let missedHeartbeats = 0;
 
-    // Socket middleware for rate limiting
+  private socketRateLimitter(socket: ISocket) {
     socket.use(async (_packet, next) => {
+      if (!socket.user?.id) {
+        return next(new Error("User not authenticated"));
+      }
+
       try {
-        await this.rateLimiter.consume(socket.id);
+        // Rate limit per user, not per socket
+        await this.rateLimiter.consume(`user:${socket.user.id}`);
         next();
       } catch (err) {
         this.metrics.rateLimited++;
-        logger.warn(`Rate limit exceeded for socket: ${socket.id}`);
-        socket.emit("error", { message: "Rate limit exceeded" });
+        logger.warn(`Rate limit exceeded for user: ${socket.user.id}`, {
+          socketId: socket.id,
+        });
+        socket.emit("error", {
+          message: "Rate limit exceeded",
+          code: "RATE_LIMIT",
+        });
         socket.disconnect(true);
-        // this.disconnectUser();
       }
     });
 
@@ -228,14 +249,23 @@ class RedisSocket {
         socket.disconnect(true);
         return;
       }
+      socket.emit("app:ping", "OK", (val) => {
+        console.log(val);
+      });
 
       this.metrics.connections++;
 
       try {
+        // Store socket ID in Redis with user ID
         await this.safeRedisCommand((client) =>
-          client.sadd(this.getkey(socket.user?.id), [socket.id])
+          client.sadd(this.getkey(socket.user!.id), [socket.id])
         );
-        await this.safeRedisCommand((client) => client.set("user", socket.id));
+
+        // Set expiration for automatic cleanup (e.g., 1 day)
+
+        // await this.safeRedisCommand((client) =>
+        //   client.expire(this.getkey(socket.user.id), 86400)
+        // );
       } catch (err) {
         logger.error("Failed to store socket ID in Redis:", err);
         this.metrics.errors++;
@@ -246,21 +276,35 @@ class RedisSocket {
         namespace: socket.nsp.name,
       });
 
-      // Track missed heartbeats
-      // const heartbeat = this.heartBeat(socket);
-      this.heartBeat(socket);
+      // Setup rate limiting middleware
+
+      this.socketRateLimitter(socket);
+
       // Join default rooms
       this.joinDefaultRooms(socket);
 
-      // Disconnection handler
+      // Event handlers
+      socket.on("join", async (room: string) => {
+        console.log("Server joining room:", socket.user?.id, room);
+        if (!socket.user?.id) return;
+        await this.joinRoom(socket.user.id, room);
+      });
+
+      socket.on("leave", async (room: string) => {
+        console.log("Server leaving room:", socket.user?.id, room);
+        if (!socket.user?.id) return;
+        await this.leaveRoom(socket.user.id, room);
+      });
+
       socket.on("disconnect", async (reason) => {
-        // clearInterval(heartbeat);
         this.metrics.disconnections++;
 
         try {
-          await this.safeRedisCommand((client) =>
-            client.srem(this.getkey(socket.user?.id), [socket.id])
-          );
+          if (socket.user?.id) {
+            await this.safeRedisCommand((client) =>
+              client.srem(this.getkey(socket.user!.id), [socket.id])
+            );
+          }
         } catch (err) {
           logger.error("Failed to remove socket ID from Redis:", err);
           this.metrics.errors++;
@@ -274,14 +318,44 @@ class RedisSocket {
         socket.user = null;
       });
 
-      // Error handler
       socket.on("error", (err) => {
         this.metrics.errors++;
         logger.error(`Socket error: ${socket.id}`, {
           error: err.message,
           userId: socket.user?.id,
+          stack: err.stack,
         });
       });
+
+      // Send initial connection acknowledgement
+      socket.emit("connected", {
+        socketId: socket.id,
+        timestamp: Date.now(),
+      });
+    });
+  }
+
+  async setupRedisEmitter() {
+    const sub = this.redis.client?.duplicate();
+    await sub?.connect();
+    const channelKey = APP_CONFIG.REDIS_SOCKET_EMITTER;
+    await sub?.subscribe(channelKey);
+
+    sub?.on("message", (channel: string, message: string) => {
+      if (channel != channelKey) return;
+      console.log(channel, message, "subscribe");
+      try {
+        const { channel: room, event, ...rest } = JSON.parse(message || "{}");
+        this.io.sockets.sockets.forEach((e) => {
+          console.log(e.id, "socket ID in emitter");
+          console.log(e.rooms, "socket ID in rooms");
+        });
+        if (!room || !event) return;
+        this.io.to(room).emit(event, { ...rest, channel: room });
+      } catch (err) {
+        logger.error("Failed to process socket emit event", err);
+        this.metrics.errors++;
+      }
     });
   }
 
@@ -335,43 +409,44 @@ class RedisSocket {
   }
 
   public async getUserSockets(userId: string): Promise<ISocket[]> {
-    try {
-      let socketIds =
-        (await this.safeRedisCommand((client) =>
-          client.smembers(this.getkey(userId))
-        )) || [];
+    if (!this.io) return [];
 
-      //   // Ensure socketIds is always an array
-      //   if (!Array.isArray(socketIds)) {
-      //     socketIds = [];
-      //   }
+    try {
+      const socketIds =
+        ((await this.safeRedisCommand((client) =>
+          client.smembers(this.getkey(userId))
+        )) as string[]) || [];
 
       const activeSockets: ISocket[] = [];
       const cleanupIds: string[] = [];
 
+      // Check each socket ID
       for (const id of socketIds) {
-        const socket = this.io.sockets.sockets.get(id) as ISocket;
-        if (socket) {
-          activeSockets.push(socket);
-        } else {
+        try {
+          const socket = this.io.sockets.sockets.get(id) as ISocket;
+          if (socket && socket.connected) {
+            activeSockets.push(socket);
+          } else {
+            cleanupIds.push(id);
+          }
+        } catch (err) {
           cleanupIds.push(id);
+          logger.error(`Error checking socket ${id}:`, err);
         }
       }
 
-      // Cleanup stale socket IDs in background
+      // Cleanup stale IDs asynchronously
       if (cleanupIds.length > 0) {
         this.safeRedisCommand((client) =>
           client.srem(this.getkey(userId), cleanupIds)
         ).catch((err) => {
           logger.error("Failed to cleanup stale socket IDs:", err);
-          this.metrics.errors++;
         });
       }
 
       return activeSockets;
     } catch (err) {
       logger.error("Failed to get user sockets from Redis:", err);
-      this.metrics.errors++;
       return [];
     }
   }
@@ -388,8 +463,9 @@ class RedisSocket {
     });
   }
 
-  public broadcastToRoom(room: string, event: string, data: any) {
+  public broadcastToRoom(room?: string, event?: string, data: any = null) {
     try {
+      if (!room || !event) return;
       this.io.to(room).emit(event, data);
     } catch (err) {
       logger.error(`Failed to broadcast to room ${room}:`, err);
@@ -429,14 +505,15 @@ class RedisSocket {
   }
   public async disconnect() {
     try {
-      logger.warn("Closing Socket connection: " + toUTC(new Date()));
+      logger.info("Closing Socket connection: " + toUTC(new Date()));
       await this.io.close();
       this.io.disconnectSockets(true);
-      clearInterval(this._timeInterval);
+      clearInterval(this._monitoringInterval);
     } catch (error) {
       logger.error("Error on closing Socket connection: " + toUTC(new Date()));
     }
   }
 }
 
-export default RedisSocket;
+// export default RedisSocket;
+export default new RedisSocket();
