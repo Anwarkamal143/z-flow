@@ -27,7 +27,7 @@ export const APP_CONFIG = {
   REDIS_PORT: stringToNumber(process.env.REDIS_PORT!) || 6379,
   REDIS_PATH: process.env.REDIS_PATH,
   REDIS_DB: stringToNumber(process.env.REDIS_DB) || 0,
-  REDIS_KEY_PREFIX: process.env.REDIS_KEY_PREFIX || "x",
+  REDIS_KEY_PREFIX: process.env.REDIS_KEY_PREFIX,
   JWT_SECRET: process.env.JWT_SECRET || "xLDL9bqmNO:PI9Q5O`+#GnGFTukFKl",
   JWT_REFRESH_SECRET:
     process.env.JWT_REFRESH_SECRET ||
@@ -70,4 +70,6 @@ export const APP_CONFIG = {
   POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN || "",
   ENABLE_INNGEST: process.env.ENABLE_INNGEST === "true" || false,
   INNGEST_MODE: process.env.INNGEST_MODE || "dev",
+  INNGEST_LOG_LEVEL: process.env.INNGEST_LOG_LEVEL || "error",
+  REDIS_SOCKET_EMITTER: `socket:emit`,
 };

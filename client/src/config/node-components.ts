@@ -1,4 +1,5 @@
 import { InitialNode } from '@/components/initial-node'
+import { NodeStatus } from '@/components/react-flow/node-status-indicator'
 import { NodeType } from '@/config/enums'
 import HttpRequestNode from '@/features/executions/components/http-request/node'
 import ManualTriggerNode from '@/features/triggers/components/manul-trigger/node'
@@ -11,3 +12,9 @@ export const nodeComponents = {
 } as const satisfies NodeTypes
 
 export type RegisterNodeType = keyof typeof nodeComponents
+export const NODE_STATUSES: Record<NodeStatus, NodeStatus> = {
+  error: 'error',
+  loading: 'loading',
+  initial: 'initial',
+  success: 'success',
+}

@@ -1,5 +1,4 @@
-import { getPrimaryErrorCodeForStatus, HTTPSTATUS } from "@/config/http.config";
-import { ErrorCode } from "@/enums/error-code.enum";
+import { publishEvent } from "@/app_inngest/channels/http-request";
 import axios, { AxiosRequestConfig } from "axios";
 import Handlebars from "handlebars";
 import { NonRetriableError } from "inngest";
@@ -18,63 +17,106 @@ type HttpRequestExecutor = {
   body?: string;
   variableName: string;
 };
+
 export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
   data,
   nodeId,
+  workflowId,
   context,
   step,
+  publish,
 }: NodeExecutorParams<HttpRequestExecutor>) => {
-  // TODO Publish "loading" state for http request
+  const event = {
+    nodeId,
+    jobId: nodeId,
+    step: "initial",
+    status: "loading",
+    event: "status",
+    channel: workflowId,
+  };
 
-  if (!data.endpoint) {
-    // TODO: Publish "error" state for http request
-    throw new NonRetriableError("HTTP Request node: No endpoint configured");
-  }
-  if (data.variableName == null || data.variableName.trim() == "") {
-    // TODO: Publish "error" state for http request
-    throw new NonRetriableError(
-      "HTTP Request node: Variable name not configured"
-    );
-  }
-  if (data.method == null || !METHODS.includes(data.method)) {
-    // TODO: Publish "error" state for http request
-    throw new NonRetriableError("HTTP Request node: Method  not configured");
-  }
-  const result = await step.run("http-request", async () => {
-    const method = data.method;
-    let endpoint;
-    try {
-      endpoint = Handlebars.compile(data.endpoint)(context);
-      if (!endpoint || typeof endpoint != "string") {
-        throw new Error("Endpoint template must resolve to a non-empty string");
-      }
-    } catch (error) {
-      throw new NonRetriableError(
-        `HTTP Request node: Failed to resolve endpoint template: ${endpoint}`
-      );
-    }
-    const options: AxiosRequestConfig = {
-      method,
-      url: endpoint,
-      timeout: 6000,
-      // headers: {
-      //   "Content-Type": "application/json"
-      // }
-    };
-    if (["POST", "PUT", "PATCH"].includes(method)) {
+  const result = await step
+    .run(`http-request-${nodeId}`, async () => {
+      await publishEvent({ publish, event });
       try {
-        const resolved = Handlebars.compile(data.body || "{}")(context);
-        const resolvedData = JSON.parse(resolved);
-        options.data = resolvedData;
+        if (!data.endpoint) {
+          throw new Error("HTTP Request node: No endpoint configured");
+        }
+        if (data.variableName == null || data.variableName.trim() == "") {
+          throw new Error("HTTP Request node: Variable name not configured");
+        }
+        if (data.method == null || !METHODS.includes(data.method)) {
+          throw new Error("HTTP Request node: Method  not configured");
+        }
+      } catch (error: any) {
+        await publishEvent({
+          publish,
+          event: {
+            ...event,
+            step: "validating",
+            status: "error",
+            error: error.message,
+          },
+        });
+
+        throw new NonRetriableError(error.message);
+      }
+      const method = data.method;
+      let endpoint;
+      try {
+        endpoint = Handlebars.compile(data.endpoint)(context);
+        if (!endpoint || typeof endpoint != "string") {
+          throw new Error(
+            "Endpoint template must resolve to a non-empty string"
+          );
+        }
       } catch (error) {
+        await publishEvent({
+          publish,
+          event: {
+            ...event,
+            step: "validating",
+            status: "error",
+            error: `HTTP Request node: Failed to resolve endpoint template: ${endpoint}`,
+          },
+        });
+
         throw new NonRetriableError(
-          `HTTP Request node: Failed to resolve body template: ${data.body}`
+          `HTTP Request node: Failed to resolve endpoint template: ${endpoint}`
         );
       }
-    }
-    const variableName = data.variableName;
-    let responsePayload = {};
-    try {
+
+      const options: AxiosRequestConfig = {
+        method,
+        url: endpoint,
+        timeout: 6000,
+        // headers: {
+        //   "Content-Type": "application/json"
+        // }
+      };
+      if (["POST", "PUT", "PATCH"].includes(method)) {
+        try {
+          const resolved = Handlebars.compile(data.body || "{}")(context);
+          const resolvedData = JSON.parse(resolved);
+          options.data = resolvedData;
+        } catch (error) {
+          await publishEvent({
+            publish,
+            event: {
+              ...event,
+              step: "validating",
+              status: "error",
+              error: `HTTP Request node: Failed to resolve body template: ${data.body}`,
+            },
+          });
+
+          throw new NonRetriableError(
+            `HTTP Request node: Failed to resolve body template: ${data.body}`
+          );
+        }
+      }
+      const variableName = data.variableName;
+      let responsePayload = {};
       const response = await axios(options);
       responsePayload = {
         httpResponse: {
@@ -83,33 +125,35 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
           data: response.data,
         },
       };
-    } catch (error: any) {
-      const errorStatus = error.status || HTTPSTATUS.INTERNAL_SERVER_ERROR;
-      if (axios.isAxiosError(error) && error.response) {
-        responsePayload = {
-          httpResponse: {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            data: error.response.data,
-          },
-        };
-      } else {
-        responsePayload = {
-          httpResponse: {
-            status: errorStatus,
-            statusText:
-              getPrimaryErrorCodeForStatus(errorStatus) ||
-              ErrorCode.INTERNAL_SERVER_ERROR,
-            data: null,
-          },
-        };
-      }
-    }
-    return {
-      ...context,
-      [variableName]: responsePayload,
-    };
-  });
-  // TODO: Publish "success" state for http request
+
+      await publishEvent({
+        publish,
+        event: {
+          ...event,
+          step: "processing",
+          status: "success",
+        },
+      });
+
+      return {
+        ...context,
+        [variableName]: responsePayload,
+      };
+    })
+    .catch(async (e) => {
+      await publishEvent({
+        publish,
+        event: {
+          ...event,
+          step: "processing",
+          status: "error",
+          stepId: e.stepId,
+          error: e.message,
+        },
+      });
+
+      throw e;
+    });
+
   return result;
 };

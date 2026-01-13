@@ -5,7 +5,16 @@ export const REDIS_KEYS = {
   REFRESH_TOKEN_JTI: (jti?: string) => "refresh-token-jit:" + jti,
 };
 export const createRedisKey = (key: string) => {
-  return `${APP_CONFIG.REDIS_KEY_PREFIX}:${key}`;
+  return `${APP_CONFIG.REDIS_KEY_PREFIX}${key}`;
+};
+export const replaceRedisPrefix = (
+  key: string = "",
+  withString: string = ""
+) => {
+  if (key == null || key?.trim() == "") {
+    return "";
+  }
+  return key.replace(APP_CONFIG.REDIS_KEY_PREFIX || "", withString);
 };
 export const getRefreshTokenByJTI = async (jti?: string) => {
   if (!jti) {

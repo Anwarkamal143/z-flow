@@ -1,6 +1,6 @@
 import { APP_CONFIG } from "@/config/app.config";
 import { toUTC } from "@/utils/date-time";
-import { createRedisKey } from "@/utils/redis";
+import { createRedisKey, replaceRedisPrefix } from "@/utils/redis";
 import { Cluster, Redis } from "ioredis";
 import CircuitBreaker from "opossum";
 import * as promClient from "prom-client";
@@ -71,7 +71,6 @@ interface IRedisHealthStatus {
 }
 
 export class RedisClient {
-  private static _instance: RedisClient;
   private _client: Redis | Cluster | null = null;
   private _config: IRedisConfig;
   private _isConnected = false;
@@ -87,7 +86,7 @@ export class RedisClient {
   private _connectionPool: Map<string, Redis> = new Map();
   private _readReplicas: Redis[] = [];
 
-  private constructor(config?: Partial<IRedisConfig>) {
+  constructor(config?: Partial<IRedisConfig>) {
     this._config = this.mergeConfig(config);
     // Fix circuit breaker to accept a function without parameters
     this._circuitBreaker = new CircuitBreaker(
@@ -104,6 +103,7 @@ export class RedisClient {
 
     this.setupCircuitBreakerEvents();
     this.setupMetrics();
+    this.connect();
   }
   public get isConnected(): boolean {
     return this._isConnected;
@@ -118,15 +118,11 @@ export class RedisClient {
     return this._isReady;
   }
 
-  public get getRedis(): Redis | Cluster | null {
+  public get client(): Redis | Cluster | null {
     return this._client;
   }
-
-  public static getInstance(config?: Partial<IRedisConfig>): RedisClient {
-    if (!RedisClient._instance) {
-      RedisClient._instance = new RedisClient(config);
-    }
-    return RedisClient._instance;
+  public set client(redis: Redis | Cluster | null) {
+    this._client = redis;
   }
 
   private mergeConfig(config?: Partial<IRedisConfig>): IRedisConfig {
@@ -135,7 +131,7 @@ export class RedisClient {
       port: APP_CONFIG.REDIS_PORT!,
       password: APP_CONFIG.REDIS_PASSWORD,
       db: APP_CONFIG.REDIS_DB,
-      keyPrefix: APP_CONFIG.REDIS_KEY_PREFIX || "app",
+      keyPrefix: APP_CONFIG.REDIS_KEY_PREFIX,
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,
       connectTimeout: 10000,
@@ -199,25 +195,27 @@ export class RedisClient {
   }
 
   public async connect(): Promise<void> {
-    if (this.isConnected && this._client) {
+    if (this.isConnected && this.client) {
       logger.warn("Redis already connected");
       return;
     }
 
     try {
       if (this._config.cluster && this._config.nodes) {
-        this._client = new Cluster(this._config.nodes, {
+        this.client = new Cluster(this._config.nodes, {
+          keyPrefix: this._config.keyPrefix,
+
           redisOptions: {
             password: this._config.password,
             db: this._config.db,
           },
-          clusterRetryStrategy: (times) => {
-            const delay = Math.min(100 * Math.pow(2, times), 30000);
-            return delay;
-          },
+          clusterRetryStrategy: this._config.retryStrategy,
+
+          enableReadyCheck: this._config.enableReadyCheck,
+          lazyConnect: this._config.lazyConnect,
         });
       } else {
-        this._client = new Redis({
+        this.client = new Redis({
           host: this._config.host,
           port: this._config.port,
           password: this._config.password,
@@ -241,15 +239,15 @@ export class RedisClient {
       // Explicitly connect if not lazyConnect
       if (this._config.lazyConnect) {
         // Start the connection
-        await this._client.connect();
+        await this.client.connect();
 
         // Wait for the 'ready' event
         await this.waitForReady();
       } else {
         // For lazyConnect: true, just wait for connection if already started
         if (
-          this._client.status === "connecting" ||
-          this._client.status === "connect"
+          this.client.status === "connecting" ||
+          this.client.status === "connect"
         ) {
           await this.waitForReady();
         }
@@ -265,7 +263,7 @@ export class RedisClient {
         host: this._config.host,
         port: this._config.port,
         mode: this._config.cluster ? "cluster" : "standalone",
-        status: this._client?.status,
+        status: this.client?.status,
       });
     } catch (error) {
       logger.error("Failed to connect to Redis:", error);
@@ -277,12 +275,12 @@ export class RedisClient {
    * Wait for Redis to be ready
    */
   private async waitForReady(): Promise<void> {
-    if (!this._client) {
+    if (!this.client) {
       throw new Error("Redis client not initialized");
     }
 
     // If already ready, return immediately
-    if (this._client.status === "ready") {
+    if (this.client.status === "ready") {
       this.isConnected = true;
       this.isReady = true;
       return;
@@ -305,8 +303,8 @@ export class RedisClient {
       };
 
       const cleanup = () => {
-        this._client?.removeListener("ready", onReady);
-        this._client?.removeListener("error", onError);
+        this.client?.removeListener("ready", onReady);
+        this.client?.removeListener("error", onError);
       };
 
       // Set timeout
@@ -320,33 +318,33 @@ export class RedisClient {
       }, this._config.connectTimeout || 10000);
 
       // Listen for events
-      this._client?.once("ready", onReady);
-      this._client?.once("error", onError);
+      this.client?.once("ready", onReady);
+      this.client?.once("error", onError);
     });
   }
   private setupEventListeners(): void {
-    if (!this._client) return;
+    if (!this.client) return;
 
-    this._client.on("connect", () => {
+    this.client.on("connect", () => {
       this.isConnected = true;
       logger.info("Redis connected at " + toUTC(new Date()));
       redisMetrics.connections.set({ type: "primary" }, 1);
     });
 
-    this._client.on("ready", () => {
+    this.client.on("ready", () => {
       this.isReady = true;
       logger.info("Redis ready for commands");
       redisMetrics.connections.set({ type: "ready" }, 1);
     });
 
-    this._client.on("error", (error) => {
+    this.client.on("error", (error) => {
       logger.error("Redis error:", error);
       this.isReady = false;
       redisMetrics.errors.inc({ type: "client-error" });
       redisMetrics.connections.set({ type: "ready" }, 0);
     });
 
-    this._client.on("close", () => {
+    this.client.on("close", () => {
       this.isConnected = false;
       this.isReady = false;
       logger.warn("Redis connection closed");
@@ -354,11 +352,11 @@ export class RedisClient {
       redisMetrics.connections.set({ type: "ready" }, 0);
     });
 
-    this._client.on("reconnecting", (delay) => {
+    this.client.on("reconnecting", (delay) => {
       logger.warn(`Redis reconnecting in ${delay}ms`);
     });
 
-    this._client.on("end", () => {
+    this.client.on("end", () => {
       this.isConnected = false;
       this.isReady = false;
       logger.warn("Redis connection ended");
@@ -372,11 +370,14 @@ export class RedisClient {
       for (const replica of replicas) {
         const [host, port] = replica.split(":");
         const replicaClient = new Redis({
+          ...this._config,
           host,
           port: parseInt(port + ""),
           password: this._config.password,
           db: this._config.db,
           role: "slave",
+          keyPrefix: this._config.keyPrefix,
+          lazyConnect: this._config.lazyConnect,
         });
 
         this._readReplicas.push(replicaClient);
@@ -392,7 +393,7 @@ export class RedisClient {
         ];
       return replica as Redis;
     }
-    return this._client!;
+    return this.client!;
   }
 
   private async executeCommand<T>(
@@ -404,13 +405,15 @@ export class RedisClient {
     const timer = redisMetrics.latency.startTimer({ operation });
 
     try {
-      if (!this._client || !this._isReady) {
+      if (!this.client || !this._isReady) {
         throw new Error("Redis client not ready");
       }
       const client =
-        operation.startsWith("get") || operation === "mget"
+        operation.startsWith("get") ||
+        operation === "mget" ||
+        operation == "scan"
           ? this.getReadClient()
-          : this._client;
+          : this.client;
 
       const result = await fn?.(client);
 
@@ -466,10 +469,9 @@ export class RedisClient {
     options: IRedisOperationOptions = {}
   ): Promise<number | null> {
     if (!key) return null;
-    const redisKey = createRedisKey(key);
     return await this.safeOperation(
       "sadd",
-      async (client) => await client.sadd(redisKey, ...members),
+      async (client) => await client.sadd(key, ...members),
       options
     );
   }
@@ -480,10 +482,9 @@ export class RedisClient {
     options: IRedisOperationOptions = {}
   ): Promise<number | null> {
     if (!key) return null;
-    const redisKey = createRedisKey(key);
     return await this.safeOperation(
       "srem",
-      async (client) => await client.srem(redisKey, ...members),
+      async (client) => await client.srem(key, ...members),
       { fallback: 0, ...options }
     );
   }
@@ -493,10 +494,9 @@ export class RedisClient {
     options: IRedisOperationOptions = {}
   ): Promise<string[] | null> {
     if (!key) return null;
-    const redisKey = createRedisKey(key);
     return await this.safeOperation(
       "smembers",
-      async (client) => await client.smembers(redisKey),
+      async (client) => await client.smembers(key),
       { fallback: [], ...options }
     );
   }
@@ -508,21 +508,44 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<boolean> {
     if (!key) return false;
-    const redisKey = createRedisKey(key);
+
     const valueToStore =
       typeof value === "string" ? value : JSON.stringify(value);
 
-    const result = await this.safeOperation<string>(
+    const result = await this.safeOperation<"OK" | null>(
       "set",
       async (client) => {
         if (ttl) {
-          return await client.set(redisKey, valueToStore, "EX", ttl);
+          return await client.set(key, valueToStore, "EX", ttl);
         }
-        return await client.set(redisKey, valueToStore);
+        return await client.set(key, valueToStore);
       },
       options
     );
-    return result === "OK";
+    return result == "OK";
+  }
+  public async setnx(
+    key: string,
+    value: any,
+    ttl: number | null | undefined = null,
+    options?: IRedisOperationOptions
+  ): Promise<boolean> {
+    if (!key) return false;
+
+    const valueToStore =
+      typeof value === "string" ? value : JSON.stringify(value);
+
+    const result = await this.safeOperation<"OK" | null>(
+      "set",
+      async (client) => {
+        if (ttl != null) {
+          return await client.set(key, valueToStore, "EX", ttl, "NX");
+        }
+        return await client.set(key, valueToStore, "NX");
+      },
+      options
+    );
+    return result == "OK";
   }
 
   public async get<T = any>(
@@ -545,10 +568,9 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<string | null> {
     if (!key) return null;
-    const redisKey = createRedisKey(key);
     return await this.safeOperation(
       "get",
-      async (client) => await client.get(redisKey),
+      async (client) => await client.get(key),
       options
     );
   }
@@ -558,9 +580,7 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<number> {
     if (!key) return 0;
-    const keys = Array.isArray(key)
-      ? key.map((k) => createRedisKey(k))
-      : [createRedisKey(key)];
+    const keys = Array.isArray(key) ? key : [key];
 
     return await this.safeOperation<number>(
       "del",
@@ -574,10 +594,9 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<(T | null)[]> {
     if (!keys) return [];
-    const redisKeys = keys.map((k) => createRedisKey(k));
     const results = await this.safeOperation<(string | null)[]>(
       "mget",
-      async (client) => await client.mget(redisKeys),
+      async (client) => await client.mget(keys),
       { fallback: [], ...options }
     );
 
@@ -607,10 +626,9 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<boolean> {
     if (!key) return false;
-    const redisKey = createRedisKey(key);
     const result = await this.safeOperation<number>(
       "expire",
-      async (client) => await client.expire(redisKey, seconds),
+      async (client) => await client.expire(key, seconds),
       options
     );
     return result === 1;
@@ -621,10 +639,9 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<boolean> {
     if (!key) return false;
-    const redisKey = createRedisKey(key);
     const result = await this.safeOperation<number>(
       "exists",
-      async (client) => await client.exists(redisKey),
+      async (client) => await client.exists(key),
       options
     );
     return result === 1;
@@ -635,10 +652,9 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<number> {
     if (!key) return 0;
-    const redisKey = createRedisKey(key);
     return await this.safeOperation<number>(
       "incr",
-      async (client) => await client.incr(redisKey),
+      async (client) => await client.incr(key),
       { fallback: 0, ...options }
     );
   }
@@ -648,10 +664,9 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<number> {
     if (!key) return 0;
-    const redisKey = createRedisKey(key);
     return await this.safeOperation(
       "decr",
-      async (client) => await client.decr(redisKey),
+      async (client) => await client.decr(key),
       { fallback: 0, ...options }
     );
   }
@@ -663,13 +678,13 @@ export class RedisClient {
     options: IRedisOperationOptions = {}
   ): Promise<number> {
     if (!key) return 0;
-    const redisKey = createRedisKey(key);
+
     const valueToStore =
       typeof value === "string" ? value : JSON.stringify(value);
 
     return await this.safeOperation<number>(
       "hset",
-      async (client) => await client.hset(redisKey, field, valueToStore),
+      async (client) => await client.hset(key, field, valueToStore),
       { fallback: 0, ...options }
     );
   }
@@ -680,10 +695,9 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<T | null> {
     if (!key) return null;
-    const redisKey = createRedisKey(key);
     const result = await this.safeOperation<string | null>(
       "hget",
-      async (client) => await client.hget(redisKey, field),
+      async (client) => await client.hget(key, field),
       options
     );
 
@@ -700,9 +714,8 @@ export class RedisClient {
     ...fields: (string | Buffer<ArrayBufferLike>)[]
   ): Promise<number | null> {
     if (!key) return null;
-    const redisKey = createRedisKey(key);
     return await this.safeOperation("hdel", async (client) => {
-      return await client.hdel(redisKey, ...fields);
+      return await client.hdel(key, ...fields);
     });
   }
 
@@ -711,10 +724,9 @@ export class RedisClient {
     options?: IRedisOperationOptions
   ): Promise<Record<string, T> | null> {
     if (!key) return null;
-    const redisKey = createRedisKey(key);
     const result = await this.safeOperation(
       "hgetall",
-      async (client) => await client.hgetall(redisKey),
+      async (client) => await client.hgetall(key),
       options
     );
 
@@ -730,31 +742,38 @@ export class RedisClient {
     return parsed;
   }
 
-  public async publish(
-    channel: string,
-    message: any,
-    options: IRedisOperationOptions = {}
-  ): Promise<number> {
+  public publish = async ({
+    channel,
+    message,
+    options = {},
+  }: {
+    channel?: string;
+    message?: Record<string, unknown> | string | number;
+    options?: IRedisOperationOptions;
+  }): Promise<number> => {
     if (!channel) return 0;
     const messageToSend =
-      typeof message === "string" ? message : JSON.stringify(message);
-
+      typeof message == "string"
+        ? message
+        : typeof message == "number"
+        ? `${message}`
+        : JSON.stringify(message || {});
     return await this.safeOperation<number>(
       "publish",
       async (client) => await client.publish(channel, messageToSend),
       { fallback: 0, ...options }
     );
-  }
+  };
 
   public async subscribe(
     channel: string,
     callback: (message: string, channel: string) => void
   ): Promise<void> {
     if (!channel) return;
-    if (!this._client) throw new Error("Redis client not connected");
+    if (!this.client) throw new Error("Redis client not connected");
 
-    await this._client.subscribe(channel);
-    this._client.on("message", (ch, message) => {
+    await this.client.subscribe(channel);
+    this.client.on("message", (ch, message) => {
       if (ch === channel) {
         callback(message, channel);
       }
@@ -763,42 +782,75 @@ export class RedisClient {
 
   public async keys(key?: string): Promise<string[] | null> {
     if (!key) return null;
-    const redisKey = createRedisKey(key);
     return await this.safeOperation("keys", async (client) => {
-      return await client.keys(redisKey);
+      return await client.keys(key);
+    });
+  }
+  public async removeStream(
+    pattern: string,
+    batchSize = 500
+  ): Promise<boolean> {
+    if (!pattern) return false;
+    let deleted = 0;
+    const stream = (this.client! as Redis).scanStream({
+      match: createRedisKey(pattern),
+      count: batchSize,
+    });
+    stream.on("data", async (keys) => {
+      stream.pause();
+      if (keys.length) {
+        deleted += 1;
+        const pipeline = this.pipeline();
+        keys.forEach((k: string) => pipeline.del(replaceRedisPrefix(k)));
+        await pipeline.exec();
+      }
+      stream.resume();
+    });
+    return new Promise<boolean>((resolve, reject) => {
+      stream.on("error", () => {
+        reject(false);
+      });
+      stream.on("end", () => {
+        resolve(deleted > 0);
+      });
     });
   }
 
-  public async remove(pattern: string, batchSize = 500): Promise<void> {
+  public async remove(pattern: string, batchSize = 500): Promise<boolean> {
     let cursor = "0";
-    if (!pattern) return;
-    const redisKey = createRedisKey(pattern);
+    if (!pattern) return false;
+    if (!this._config.cluster) {
+      return await this.removeStream(pattern, batchSize);
+    }
+    let deleted = 0;
 
     do {
-      const scanResult = await this.safeOperation("remove", async () => {
-        return await this.scan(cursor, redisKey, batchSize);
+      const scanResult = await this.safeOperation("scan", async () => {
+        return await this.scan(cursor, pattern, batchSize);
       });
-
       if (!scanResult) break;
       const [nextCursor, keys] = scanResult;
       cursor = nextCursor;
 
-      if (keys && keys.length > 0) {
+      if (keys.length) {
+        deleted += 1;
+
         const pipeline = this.pipeline();
-        keys.forEach((key) => pipeline.del(key));
+        keys.forEach((k: string) => pipeline.del(replaceRedisPrefix(k)));
         await pipeline.exec();
       }
-    } while (cursor !== "0");
+    } while (cursor != "0");
+    return deleted > 0;
   }
 
   public pipeline() {
-    if (!this._client) throw new Error("Redis client not connected");
-    return this._client.pipeline();
+    if (!this.client) throw new Error("Redis client not connected");
+    return this.client.pipeline();
   }
 
   public multi() {
-    if (!this._client) throw new Error("Redis client not connected");
-    return this._client.multi();
+    if (!this.client) throw new Error("Redis client not connected");
+    return this.client.multi();
   }
 
   public async scan(
@@ -807,15 +859,17 @@ export class RedisClient {
     count: number = 500
   ): Promise<[string, string[]] | null> {
     if (!pattern) return null;
+    const key = createRedisKey(pattern);
     return await this.safeOperation("scan", async (client) => {
-      return await client.scan(cursor, "MATCH", pattern, "COUNT", count);
+      const result = await client.scan(cursor, "MATCH", key, "COUNT", count);
+      return result;
     });
   }
 
   private startHealthChecks(): void {
     this._healthCheckInterval = setInterval(async () => {
       try {
-        await this._client?.ping();
+        await this.client?.ping();
         logger.debug("Redis health check passed");
       } catch (error: any) {
         logger.error("Redis health check failed:", error);
@@ -865,19 +919,19 @@ export class RedisClient {
       }
     }
 
-    if (this._client) {
+    if (this.client) {
       try {
-        await this._client.quit();
+        await this.client.quit();
         logger.info("Redis connection closed gracefully");
       } catch (error) {
         logger.error("Error closing Redis connection:", error);
         try {
-          await this._client.disconnect();
+          await this.client.disconnect();
         } catch (disconnectError) {
           logger.error("Error disconnecting Redis:", disconnectError);
         }
       } finally {
-        this._client = null;
+        this.client = null;
         this.isConnected = false;
         this.isReady = false;
       }
@@ -922,5 +976,4 @@ export class RedisClient {
 }
 
 // Default export with singleton access
-export const redisClient = RedisClient.getInstance();
-export default redisClient;
+export default new RedisClient();

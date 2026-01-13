@@ -22,15 +22,15 @@ export const cacheManager = {
   // Lock mechanism
   async acquireLock(
     key: string,
-    ttl: number = 10000,
+    ttl: number | null | undefined = 10, //Seconds
     retryDelay: number = 100,
-    maxRetries: number = 10
+    maxRetries: number = 1
   ): Promise<string | null> {
     const lockId =
       Math.random().toString(36).substring(2) + Date.now().toString(36);
 
     for (let i = 0; i < maxRetries; i++) {
-      const acquired = await redisClient.set(`lock:${key}`, lockId, ttl, {
+      const acquired = await redisClient.setnx(`lock:${key}`, lockId, ttl, {
         circuitBreaker: false,
       });
 
@@ -55,6 +55,10 @@ export const cacheManager = {
     }
 
     return false;
+  },
+  async releasePatternLock(key: string, batchSize = 100): Promise<boolean> {
+    await this.remove(`lock:${key}`, batchSize);
+    return true;
   },
 
   // Rate limiting

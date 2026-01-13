@@ -1,10 +1,10 @@
 import fp from "fastify-plugin";
 
-import { redisClient } from "@/config/redis";
+import redisClient from "@/config/redis";
 import type { FastifyPluginAsync } from "fastify";
 
 const redisPlugin: FastifyPluginAsync = async (fastify) => {
-  await redisClient.connect();
+  // await redisClient.connect();
 
   fastify.decorate("redis", redisClient);
 
