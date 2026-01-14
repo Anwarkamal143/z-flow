@@ -1,3 +1,5 @@
+import { INodeType } from '@/config/enums'
+
 type INode = {
   id: string
   name: string
@@ -6,7 +8,7 @@ type INode = {
   updated_at: Date
   created_at: Date
   deleted_at?: Date | null | undefined
-  type: NodeType | null
+  type?: INodeType | undefined
   workflowId: string
   position: { x: number; y: number }
 }
@@ -18,7 +20,7 @@ type IUpdateNode = {
   name?: string | undefined
   userId?: string | undefined
   workflowId?: string | undefined
-  type?: NodeType | null | undefined
+  type?: INodeType | undefined
   position?: Json | undefined
   data?: Json | undefined
 }

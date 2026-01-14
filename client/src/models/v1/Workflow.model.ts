@@ -1,5 +1,6 @@
 import { createCrudClient } from '@/queries/v1'
 import { IListCallOptions, IPaginationModes } from '@/queries/v1/types'
+import { IWorkflow } from '@/types/Iworkflow'
 import { Model } from '.'
 
 class WorkflowModel extends Model<IWorkflow> {

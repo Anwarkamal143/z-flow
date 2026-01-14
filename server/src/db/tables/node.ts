@@ -1,7 +1,7 @@
 import { generateUlid } from "@/utils";
 import { relations } from "drizzle-orm";
 import { jsonb, pgTable, text } from "drizzle-orm/pg-core";
-import { NodeType } from "../enumTypes";
+import { INodeType, NodeType } from "../enumTypes";
 import { baseTimestamps, nodeTypeEnum } from "../helpers";
 import { connections } from "../schema";
 import { users } from "./user";
@@ -16,7 +16,7 @@ export const nodes = pgTable("nodes", {
   workflowId: text("workflowId")
     .references(() => workflows.id, { onDelete: "cascade" })
     .notNull(),
-  type: nodeTypeEnum().default(NodeType.INITIAL), // Node type
+  type: nodeTypeEnum().default(NodeType.INITIAL).$type<INodeType>(), // Node type
   position: jsonb("position").notNull(), // Node position
   data: jsonb("data").default("{}"), // Node data
   ...baseTimestamps,

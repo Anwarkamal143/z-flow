@@ -109,7 +109,7 @@ const SignInScreen = ({}) => {
           name='email'
           type='email'
           placeholder='you@example.com'
-          leftIcon={{ Comp: <EmailIcon /> }}
+          leftIcon={EmailIcon}
         />
 
         <FormInput

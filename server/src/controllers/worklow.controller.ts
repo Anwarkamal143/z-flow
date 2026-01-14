@@ -9,7 +9,11 @@ import {
   workflowService,
 } from "@/services/workflow.service";
 import { formatZodError } from "@/utils";
-import { BadRequestException, ValidationException } from "@/utils/catch-errors";
+import {
+  BadRequestException,
+  InternalServerException,
+  ValidationException,
+} from "@/utils/catch-errors";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { generateSlug } from "random-word-slugs";
@@ -182,7 +186,7 @@ class WorkflowController {
       });
     } catch (error) {
       console.error("Error executing workflow:", error);
-      rep.status(500).send({ error: "Failed to execute workflow" });
+      throw new InternalServerException("Failed to execute workflow");
     }
   }
 }

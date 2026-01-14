@@ -1,3 +1,5 @@
+import { INode } from './Inode'
+
 type IWorkflow = {
   id: string
   name: string

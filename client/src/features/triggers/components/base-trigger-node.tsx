@@ -10,10 +10,10 @@ import WorkflowNode from '@/components/workflow-node'
 import useInitialNode from '@/hooks/useInitialNode'
 import { NodeProps, Position, useReactFlow } from '@xyflow/react'
 import { LucideIcon } from 'lucide-react'
-import { memo } from 'react'
+import { JSX, memo } from 'react'
 
 type IBaseTriggerProps = NodeProps & {
-  icon: LucideIcon | string
+  icon: LucideIcon | string | JSX.ElementType
   name: string
   description?: string
   children?: React.ReactNode

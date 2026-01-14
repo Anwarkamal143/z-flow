@@ -516,5 +516,39 @@ export class WorkflowService extends BaseService<
       };
     }
   }
+  async executeGoogleFormWorkflow(
+    workflowId: string,
+    initialData: Record<string, any>
+  ) {
+    try {
+      const resultData = ULIDSchema("Id is not valid").safeParse(workflowId);
+      if (!resultData.success) {
+        throw new ValidationException(
+          "Invalid Id",
+          formatZodError(resultData.error)
+        );
+      }
+      const workflowdata = await this.getById(workflowId);
+      if (!workflowdata.data) {
+        throw new BadRequestException("Workflow not found to execute");
+      }
+      const workflow = workflowdata.data;
+      await inngestService.send({
+        name: WORKFLOW_EVENT_NAMES.WORKFLOW_EXECUTE,
+        data: {
+          workflowId: workflow.id,
+          initialData: {
+            googleForm: initialData,
+          },
+        },
+      });
+      return { data: workflowdata.data, error: null };
+    } catch (error) {
+      return {
+        error,
+        data: null,
+      };
+    }
+  }
 }
 export const workflowService = new WorkflowService();

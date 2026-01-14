@@ -1,4 +1,5 @@
 import { publishEvent } from "@/app_inngest/channels/http-request";
+import { parseAndNormalizeUrl } from "@/utils";
 import axios, { AxiosRequestConfig } from "axios";
 import Handlebars from "handlebars";
 import { NonRetriableError } from "inngest";
@@ -70,6 +71,11 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestExecutor> = async ({
             "Endpoint template must resolve to a non-empty string"
           );
         }
+        const url = parseAndNormalizeUrl(endpoint);
+        if (url == null) {
+          throw new Error("Endpoint is not a vaild URL");
+        }
+        endpoint = url;
       } catch (error) {
         await publishEvent({
           publish,

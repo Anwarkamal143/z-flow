@@ -62,6 +62,7 @@ services:
       - CLOUDINARY_URL=${CLOUDINARY_URL}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+      - NGROK_AUTH_TOKEN=${NGROK_AUTH_TOKEN}
 
   inngest:
     image: inngest/inngest
@@ -141,6 +142,22 @@ services:
       - "6379:6379"
     volumes:
       - dev_fastify_valkey_data:/data
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: unless-stopped
+    env_file:
+      - .env.development
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTH_TOKEN}
+    command:
+      - http
+      - "app:$PORT"
+      - --url=https://default.internal
+    # stdin_open: true
+    # tty: true
+    depends_on:
+      - app
 
 volumes:
   dev_fastify_valkey_data:
