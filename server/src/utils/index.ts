@@ -87,3 +87,38 @@ export const isNotEmpty = (value: unknown): boolean => {
 
   return false;
 };
+export function isValidUrl(value: string) {
+  try {
+    new URL(value.startsWith("http") ? value : `https://${value}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+export function parseAndNormalizeUrl(input) {
+  if (typeof input !== "string") return null;
+
+  try {
+    const trimmed = input.trim();
+
+    // Add protocol if missing
+    const url = new URL(
+      trimmed.startsWith("http://") || trimmed.startsWith("https://")
+        ? trimmed
+        : `https://${trimmed}`
+    );
+
+    // Allow only http/https
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return null;
+    }
+
+    // Normalize
+    url.hash = ""; // remove #
+    url.pathname = url.pathname.replace(/\/+$/, ""); // remove trailing slash
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}

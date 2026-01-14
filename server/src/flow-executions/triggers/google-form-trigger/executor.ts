@@ -1,13 +1,15 @@
 import { publishEvent } from "@/app_inngest/channels/manual-trigger";
-import { NodeExecutor, NodeExecutorParams } from "../types";
-type ManualTriggerData = Record<string, unknown>;
-export const manualTriggerExecutor: NodeExecutor<ManualTriggerData> = async ({
+import { NodeExecutor, NodeExecutorParams } from "@/flow-executions/types";
+type GoogleFormTriggerData = Record<string, unknown>;
+export const GoogleFormTriggerExecutor: NodeExecutor<
+  GoogleFormTriggerData
+> = async ({
   nodeId,
   context,
   step,
   workflowId,
   publish,
-}: NodeExecutorParams<ManualTriggerData>) => {
+}: NodeExecutorParams<GoogleFormTriggerData>) => {
   const event = {
     nodeId,
     jobId: nodeId,
@@ -17,7 +19,7 @@ export const manualTriggerExecutor: NodeExecutor<ManualTriggerData> = async ({
     channel: workflowId,
   };
 
-  const result = await step.run("manual-trigger", async () => {
+  const result = await step.run("google-form-trigger", async () => {
     await publishEvent({ publish, event });
 
     await publishEvent({
@@ -31,6 +33,5 @@ export const manualTriggerExecutor: NodeExecutor<ManualTriggerData> = async ({
 
     return context;
   });
-  // TODO: Publish "success" state for manual trigger
   return result;
 };

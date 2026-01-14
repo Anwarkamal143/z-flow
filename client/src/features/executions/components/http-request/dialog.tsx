@@ -18,7 +18,7 @@ import { useEffect } from 'react'
 import z from 'zod'
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 const formSchema = z.object({
-  endpoint: z.url({ error: 'Please enter a valid URL' }),
+  endpoint: z.string().min(1, { error: 'Please enter a valid URL' }),
   method: z.enum(METHODS),
   body: z.string().optional(),
   variableName: z
@@ -135,7 +135,7 @@ const HttpRequestDialog = ({
           {showBodyField && (
             <FormInput
               name='body'
-              isTextArea
+              type='textarea'
               placeholder={
                 '{ \n "userId": "{{httpResponse.data.id}}", \n "name": "{{httpResponse.data.name}}", \n "items": "{{httpResponse.data.items}}"\n }'
               }

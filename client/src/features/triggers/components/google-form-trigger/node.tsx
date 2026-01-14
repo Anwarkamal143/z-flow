@@ -1,23 +1,23 @@
-import { MousePointerIcon } from '@/assets/icons'
+import { GoogleFormIcon } from '@/assets/icons'
 import useNodeStatus from '@/features/executions/hooks/use-realtime-node'
 import { NodeProps } from '@xyflow/react'
 import { memo, useState } from 'react'
 import BaseTriggerNode from '../base-trigger-node'
-import ManualTriggerSettings from './dialog'
+import GoogleFormTriggerSettings from './dialog'
 
-const ManualTriggerNode = memo((props: NodeProps) => {
+const GoogleFormTriggerNode = memo((props: NodeProps) => {
   const [open, onOpenChagne] = useState(false)
   const status = useNodeStatus({ nodeId: props.id, event: 'status' })
   const handleOpenSettings = () => onOpenChagne(true)
   const nodeStatus = status
   return (
     <>
-      <ManualTriggerSettings open={open} onOpenChange={onOpenChagne} />
+      <GoogleFormTriggerSettings open={open} onOpenChange={onOpenChagne} />
       <BaseTriggerNode
         {...props}
-        icon={MousePointerIcon}
-        name="When clicking  'Execute workflow'"
-        description='Triggered manually'
+        icon={GoogleFormIcon}
+        name='Google Form'
+        description='When form is submitted'
         status={nodeStatus}
         onSettings={handleOpenSettings}
         onDoubleClick={handleOpenSettings}
@@ -26,5 +26,5 @@ const ManualTriggerNode = memo((props: NodeProps) => {
   )
 })
 
-ManualTriggerNode.displayName = 'ManualTriggerNode'
-export default ManualTriggerNode
+GoogleFormTriggerNode.displayName = 'GoogleFormTriggerNode'
+export default GoogleFormTriggerNode

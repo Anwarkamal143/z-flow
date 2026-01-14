@@ -18,7 +18,7 @@ export const db = drizzle(client, {
 export const connectDB = async () => {
   try {
     // Simple query to test connection
-    const result = await db.execute(sql`SELECT NOW()`);
+    await db.execute(sql`SELECT NOW()`);
     // logger.info(
     //   'DB connected successfully: ' + toUTC(result?.[0]?.now as Date)
     // );

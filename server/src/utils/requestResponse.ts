@@ -130,5 +130,6 @@ export class ResponseUtils {
 // Legacy-compatible exports
 export const SuccessResponse = ResponseUtils.success;
 export const ErrorResponse = ResponseUtils.error;
+export const APIResponse = ResponseUtils.success;
 export const getFingerPrint = ResponseUtils.getFingerprint;
 export const NoContentResponse = ResponseUtils.noContent;

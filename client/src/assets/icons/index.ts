@@ -2,6 +2,7 @@ import {
   AlertTriangleIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
+  CopyIcon,
   CreditCardIcon,
   EyeIcon,
   EyeOffIcon,
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react'
 import EmailIcon from './EmailIcon'
 import GithubIcon from './GithubIcon'
+import GoogleFormIcon from './GoogleFormIcon'
 import GoogleIcon from './GoogleIcon'
 import InfoIcon from './info-icon'
 
@@ -38,6 +40,7 @@ export {
   AlertTriangleIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
+  CopyIcon,
   CreditCardIcon,
   EmailIcon,
   EyeIcon,
@@ -47,6 +50,7 @@ export {
   FolderOpenIcon,
   GithubIcon,
   GlobeIcon,
+  GoogleFormIcon,
   GoogleIcon,
   HistoryIcon,
   ImageIcon,

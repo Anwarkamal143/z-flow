@@ -5,6 +5,7 @@ import { FastifyInstance } from "fastify";
 
 export default async function workflowRoutes(fastify: FastifyInstance) {
   // Optional: apply middleware to all routes in this module
+  fastify.post("/google-form", worklowController.executeWorkflow);
   fastify.addHook("preHandler", authMiddleware.isAuthenticated);
 
   // POST / → create workflow

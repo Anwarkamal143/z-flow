@@ -285,13 +285,13 @@ export class RedisSocket {
 
       // Event handlers
       socket.on("join", async (room: string) => {
-        console.log("Server joining room:", socket.user?.id, room);
+        console.log("joining room:", room);
         if (!socket.user?.id) return;
         await this.joinRoom(socket.user.id, room);
       });
 
       socket.on("leave", async (room: string) => {
-        console.log("Server leaving room:", socket.user?.id, room);
+        console.log("leaving room:", room);
         if (!socket.user?.id) return;
         await this.leaveRoom(socket.user.id, room);
       });
@@ -343,13 +343,8 @@ export class RedisSocket {
 
     sub?.on("message", (channel: string, message: string) => {
       if (channel != channelKey) return;
-      console.log(channel, message, "subscribe");
       try {
         const { channel: room, event, ...rest } = JSON.parse(message || "{}");
-        this.io.sockets.sockets.forEach((e) => {
-          console.log(e.id, "socket ID in emitter");
-          console.log(e.rooms, "socket ID in rooms");
-        });
         if (!room || !event) return;
         this.io.to(room).emit(event, { ...rest, channel: room });
       } catch (err) {

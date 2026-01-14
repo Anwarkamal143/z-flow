@@ -25,7 +25,6 @@ import {
 } from '@xyflow/react'
 import { useTheme } from 'next-themes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
 type FlowContainerProps = ReactFlowProps & {
   nodes?: Node[]
   edges?: Edge[]

@@ -42,16 +42,14 @@ export default function SocketContextProvider({
     setIsConnected(false)
     reconnectAttemptsRef.current = 0
   }, [])
-
+  console.log(isConnected, 'isConnected')
   const initializeSocket = useCallback(() => {
     // Don't initialize if already connected or no token
     if (socketRef.current?.connected) {
       return
     }
-
     // Cleanup existing socket
     cleanupSocket()
-
     // Create new socket connection
     const newSocket = io(SOCKET_URL, {
       auth: { token: accessToken },

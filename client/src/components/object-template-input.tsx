@@ -14,8 +14,8 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import * as React from 'react'
-import InputComponent from './Input'
 import { InputFormProps } from './form/Input'
+import InputComponent from './form/Input/Input'
 
 // Utils
 function getValueAtPath(data: any, path: string[]) {
@@ -370,7 +370,7 @@ export default function ObjectTemplateInput({
         placeholder={placeholder}
         onClick={handleInputClick}
         onSelect={handleCursor}
-        prefixTopComponent={{
+        prefixComponent={{
           Comp: (
             <div className='pointer-events-none absolute inset-0 -z-1 px-3 py-2 text-sm text-transparent'>
               {renderHighlighted()}
@@ -399,7 +399,7 @@ export default function ObjectTemplateInput({
           onKeyUp={handleCursor}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          prefixTopComponent={
+          prefixComponent={
             <div className='pointer-events-none absolute inset-0 -z-1 px-3 py-2 text-sm text-transparent'>
               {renderHighlighted()}
             </div>

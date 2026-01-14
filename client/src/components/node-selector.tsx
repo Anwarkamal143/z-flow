@@ -1,5 +1,5 @@
 'use client'
-import { GlobeIcon, MousePointerIcon } from '@/assets/icons'
+import { GlobeIcon, GoogleFormIcon, MousePointerIcon } from '@/assets/icons'
 import { NodeType } from '@/config/enums'
 import { generateUlid } from '@/lib'
 import { useReactFlow } from '@xyflow/react'
@@ -28,6 +28,12 @@ const triggerNodes: NodeTypeOptions[] = [
     description:
       'Runs the flow on clicking a button. Good for testing started quickly.',
     icon: MousePointerIcon,
+  },
+  {
+    type: NodeType.GOOGLE_FORM_TRIGGER,
+    label: 'Google Form',
+    description: 'Runs the flow when a Google form is submitted.',
+    icon: GoogleFormIcon,
   },
 ]
 
@@ -104,7 +110,7 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
             return (
               <div
                 key={node.type}
-                className='hover:border-l-primary flex h-auto w-full cursor-pointer justify-start rounded-none border-l-2 border-transparent px-4 py-5'
+                className='hover:border-l-primary flex h-auto w-full cursor-pointer justify-start rounded-none border-l-2 border-transparent px-4 py-5 hover:shadow-xs'
                 onClick={() => handleNodeSelect(node)}
               >
                 <div className='flex w-full items-center gap-6 overflow-hidden'>
@@ -136,7 +142,7 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
             return (
               <div
                 key={node.type}
-                className='hover:border-l-primary flex h-auto w-full cursor-pointer justify-start rounded-none border-l-2 border-transparent px-4 py-5'
+                className='hover:border-l-primary flex h-auto w-full cursor-pointer justify-start rounded-none border-l-2 border-transparent px-4 py-5 hover:shadow-xs'
                 onClick={() => handleNodeSelect(node)}
               >
                 <div className='flex w-full items-center gap-6 overflow-hidden'>

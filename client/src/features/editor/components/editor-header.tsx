@@ -3,7 +3,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 
 import { SaveIcon } from '@/assets/icons'
 import ButtonLoader from '@/components/button-loader'
-import InputComponent from '@/components/Input'
+import InputComponent from '@/components/form/Input/Input'
 import {
   Breadcrumb,
   BreadcrumbItem,
