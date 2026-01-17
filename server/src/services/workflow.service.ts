@@ -352,7 +352,7 @@ export class WorkflowService extends BaseService<
       id: workflowId,
       name: workflowName,
     } = parseResult.data;
-    const { data, ...rest } = await this.update<IUpdateUser>(
+    const { data, ...rest } = await this.update(
       (fields) => and(eq(fields.id, workflowId), eq(fields.userId, uId)),
       { name: workflowName }
     );
@@ -516,8 +516,9 @@ export class WorkflowService extends BaseService<
       };
     }
   }
-  async executeGoogleFormWorkflow(
+  async executeWebhookWorkflow(
     workflowId: string,
+    secret: string,
     initialData: Record<string, any>
   ) {
     try {
@@ -532,14 +533,15 @@ export class WorkflowService extends BaseService<
       if (!workflowdata.data) {
         throw new BadRequestException("Workflow not found to execute");
       }
+      if (workflowdata.data?.secret != secret) {
+        throw new BadRequestException("Secret is incorrect");
+      }
       const workflow = workflowdata.data;
       await inngestService.send({
         name: WORKFLOW_EVENT_NAMES.WORKFLOW_EXECUTE,
         data: {
           workflowId: workflow.id,
-          initialData: {
-            googleForm: initialData,
-          },
+          initialData,
         },
       });
       return { data: workflowdata.data, error: null };

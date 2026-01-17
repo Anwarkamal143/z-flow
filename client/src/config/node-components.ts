@@ -4,6 +4,7 @@ import { NodeType } from '@/config/enums'
 import HttpRequestNode from '@/features/executions/components/http-request/node'
 import GoogleFormTriggerNode from '@/features/triggers/components/google-form-trigger/node'
 import ManualTriggerNode from '@/features/triggers/components/manul-trigger/node'
+import StripeTriggerNode from '@/features/triggers/components/stripe-trigger/node'
 import { NodeTypes } from '@xyflow/react'
 
 export const nodeComponents = {
@@ -11,6 +12,7 @@ export const nodeComponents = {
   [NodeType.HTTP_REQUEST]: HttpRequestNode,
   [NodeType.MANUAL_TRIGGER]: ManualTriggerNode,
   [NodeType.GOOGLE_FORM_TRIGGER]: GoogleFormTriggerNode,
+  [NodeType.STRIPE_TRIGGER]: StripeTriggerNode,
 } as const satisfies NodeTypes
 
 export type RegisterNodeType = keyof typeof nodeComponents

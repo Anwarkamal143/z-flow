@@ -16,6 +16,7 @@ export async function publishEvent({
     error?: string;
     channel: string | undefined;
     stepId?: string;
+    data?: Record<string, any>;
   };
 }) {
   const publishObj = {

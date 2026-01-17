@@ -34,15 +34,15 @@ export default function SocketContextProvider({
   }, [isAuthenticated, accessToken, isTokenRefreshing])
   const cleanupSocket = useCallback(() => {
     if (socketRef.current) {
+      socketRef.current.disconnect()
       socketRef.current.off('connect')
       socketRef.current.off('disconnect')
-      socketRef.current.disconnect()
       socketRef.current = null
     }
     setIsConnected(false)
     reconnectAttemptsRef.current = 0
   }, [])
-  console.log(isConnected, 'isConnected')
+
   const initializeSocket = useCallback(() => {
     // Don't initialize if already connected or no token
     if (socketRef.current?.connected) {
@@ -60,6 +60,11 @@ export default function SocketContextProvider({
     })
     newSocket.on('connect', () => {
       console.log('Socket connected:', newSocket.id)
+      // setIsConnected(true)
+      reconnectAttemptsRef.current = 0
+    })
+    // Must implement on the backend
+    newSocket.on('connected', () => {
       setIsConnected(true)
       reconnectAttemptsRef.current = 0
     })
@@ -67,11 +72,10 @@ export default function SocketContextProvider({
     newSocket.on('disconnect', (reason) => {
       console.log('Socket disconnected:', reason)
       setIsConnected(false)
-
       // Prevent infinite reconnection when unauthorized
       if (
-        reason === 'io server disconnect' ||
-        reason === 'io client disconnect'
+        reason == 'io server disconnect' ||
+        reason == 'io client disconnect'
       ) {
         reconnectAttemptsRef.current = maxReconnectAttempts
       }

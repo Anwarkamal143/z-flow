@@ -1,4 +1,4 @@
-import { generateUlid } from "@/utils";
+import { generateJti, generateUlid } from "@/utils";
 import { relations } from "drizzle-orm";
 import { pgTable, text } from "drizzle-orm/pg-core";
 import { baseTimestamps } from "../helpers";
@@ -12,6 +12,7 @@ export const workflows = pgTable("workflows", {
   userId: text("userId")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
+  secret: text("secret").$defaultFn(generateJti), // Original file name
   ...baseTimestamps,
 });
 

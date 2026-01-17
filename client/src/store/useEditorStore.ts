@@ -1,3 +1,4 @@
+import { IWorkflow } from '@/types/Iworkflow'
 import { ReactFlowInstance } from '@xyflow/react'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'

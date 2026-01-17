@@ -1,10 +1,12 @@
 import { FastifyInstance } from "fastify";
-import googleFormRoutes from "./google-form";
+import googleFormWebhooksRoutes from "./google-form";
+import stripeWebhooksRoutes from "./stripe-events";
 
 export default async function webHooksRoutes(fastify: FastifyInstance) {
   // POST /webhooks/google-form → current user
 
-  fastify.register(googleFormRoutes);
+  fastify.register(googleFormWebhooksRoutes);
+  fastify.register(stripeWebhooksRoutes);
 
   // healthcheck
 

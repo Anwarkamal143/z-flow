@@ -74,5 +74,6 @@ export enum NodeType {
   MANUAL_TRIGGER = "manual_trigger",
   HTTP_REQUEST = "http_request",
   GOOGLE_FORM_TRIGGER = "google_form_trigger",
+  STRIPE_TRIGGER = "stripe_trigger",
 }
 export type INodeType = `${NodeType}`;

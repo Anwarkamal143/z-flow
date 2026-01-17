@@ -23,7 +23,7 @@ export default function useRealtimeNode({
     [nodeId],
   )
   useEffect(() => {
-    if (nodeId && event && socket) {
+    if (nodeId && event) {
       socket?.on(event, responseHandler)
     }
 

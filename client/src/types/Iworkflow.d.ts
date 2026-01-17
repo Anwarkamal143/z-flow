@@ -7,6 +7,7 @@ type IWorkflow = {
   updated_at: Date
   created_at: Date
   deleted_at: Date | null
+  secret?: string
   nodes?: INode[]
   edges?: IOutputEdge[]
 }

@@ -300,3 +300,17 @@ export function formatZodError(error: z.ZodError) {
     message: issue.message,
   }))
 }
+
+export const removeVersionFromApiURL = (url: string) => {
+  if (!url) {
+    return null
+  }
+  try {
+    const newUrl = new URL(url)
+
+    newUrl.pathname = newUrl.pathname.replace(/\/v\d+$/, '')
+    return newUrl
+  } catch (error) {
+    return null
+  }
+}
