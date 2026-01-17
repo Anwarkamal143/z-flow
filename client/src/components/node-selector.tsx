@@ -1,5 +1,10 @@
 'use client'
-import { GlobeIcon, GoogleFormIcon, MousePointerIcon } from '@/assets/icons'
+import {
+  GlobeIcon,
+  GoogleFormIcon,
+  MousePointerIcon,
+  StripeIcon,
+} from '@/assets/icons'
 import { NodeType } from '@/config/enums'
 import { generateUlid } from '@/lib'
 import { useReactFlow } from '@xyflow/react'
@@ -34,6 +39,12 @@ const triggerNodes: NodeTypeOptions[] = [
     label: 'Google Form',
     description: 'Runs the flow when a Google form is submitted.',
     icon: GoogleFormIcon,
+  },
+  {
+    type: NodeType.STRIPE_TRIGGER,
+    label: 'Stripe',
+    description: 'Runs the flow when a Stripe event captured.',
+    icon: StripeIcon,
   },
 ]
 
@@ -115,7 +126,7 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
               >
                 <div className='flex w-full items-center gap-6 overflow-hidden'>
                   {typeof Icon == 'string' ? (
-                    <img
+                    <ImageWithFallback
                       src={Icon}
                       alt={node.label}
                       className='size-5 rounded-sm object-contain'

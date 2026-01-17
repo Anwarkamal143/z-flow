@@ -1,6 +1,7 @@
 import { APP_CONFIG } from "@/config/app.config";
 import { HTTPSTATUS } from "@/config/http.config";
 import { ErrorCode } from "@/enums/error-code.enum";
+import { removeVersionFromBasePath } from "@/utils";
 import AppError from "@/utils/app-error";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -30,7 +31,6 @@ async function v1RoutesV1(fastify: FastifyInstance) {
       instance.register(paymentRoutes, { prefix: "/payments" });
       instance.register(workflowRoutes, { prefix: "/workflows" });
       // webhooks
-      instance.register(webHooksRoutes, { prefix: "/webhooks" });
       // healthcheck
 
       // simple ready check
@@ -52,9 +52,14 @@ async function v1RoutesV1(fastify: FastifyInstance) {
     },
     { prefix: APP_CONFIG.BASE_API_PATH }
   );
-
-  // Optional: Mount Google callback routes outside base path
-  fastify.register(socialRoutes, { prefix: "/api/google" });
+  fastify.register(
+    async (instance) => {
+      instance.register(webHooksRoutes, { prefix: "/webhooks" });
+      // Optional: Mount Google callback routes outside base path
+      instance.register(socialRoutes, { prefix: "/google" });
+    },
+    { prefix: removeVersionFromBasePath(APP_CONFIG.BASE_API_PATH) }
+  );
 
   // Catch-all for undefined routes
   fastify.setNotFoundHandler((_req: FastifyRequest, _rep: FastifyReply) => {

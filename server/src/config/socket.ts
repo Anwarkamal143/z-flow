@@ -275,23 +275,26 @@ export class RedisSocket {
         ip: socket.ipAddress,
         namespace: socket.nsp.name,
       });
-
-      // Setup rate limiting middleware
-
-      this.socketRateLimitter(socket);
-
-      // Join default rooms
-      this.joinDefaultRooms(socket);
-
       // Event handlers
       socket.on("join", async (room: string) => {
         console.log("joining room:", room);
         if (!socket.user?.id) return;
-        await this.joinRoom(socket.user.id, room);
+        socket.join(room);
       });
 
       socket.on("leave", async (room: string) => {
         console.log("leaving room:", room);
+        if (!socket.user?.id) return;
+        socket.leave(room);
+      });
+      socket.on("join:all", async (room: string) => {
+        console.log("join:all joining room:", room);
+        if (!socket.user?.id) return;
+        await this.joinRoom(socket.user.id, room);
+      });
+      socket.on("leave:all", async (room: string) => {
+        console.log("leave:all leaving room:", room);
+
         if (!socket.user?.id) return;
         await this.leaveRoom(socket.user.id, room);
       });
@@ -301,6 +304,9 @@ export class RedisSocket {
 
         try {
           if (socket.user?.id) {
+            socket.rooms.forEach((room) => {
+              if (room != socket.id) socket.leave(room);
+            });
             await this.safeRedisCommand((client) =>
               client.srem(this.getkey(socket.user!.id), [socket.id])
             );
@@ -332,6 +338,12 @@ export class RedisSocket {
         socketId: socket.id,
         timestamp: Date.now(),
       });
+      // Setup rate limiting middleware
+
+      this.socketRateLimitter(socket);
+
+      // Join default rooms
+      this.joinDefaultRooms(socket);
     });
   }
 

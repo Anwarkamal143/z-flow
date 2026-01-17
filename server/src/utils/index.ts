@@ -122,3 +122,14 @@ export function parseAndNormalizeUrl(input) {
     return null;
   }
 }
+
+export const removeVersionFromBasePath = (path: string) => {
+  if (!path) {
+    return "";
+  }
+  try {
+    return path.replace(/\/v\d+$/, "");
+  } catch (error) {
+    return "";
+  }
+};

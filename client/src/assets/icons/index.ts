@@ -35,6 +35,7 @@ import GithubIcon from './GithubIcon'
 import GoogleFormIcon from './GoogleFormIcon'
 import GoogleIcon from './GoogleIcon'
 import InfoIcon from './info-icon'
+import StripeIcon from './StripeIcon'
 
 export {
   AlertTriangleIcon,
@@ -68,6 +69,7 @@ export {
   SettingsIcon,
   SmileIcon,
   StarIcon,
+  StripeIcon,
   SunIcon,
   TrashIcon,
   WorkflowIcon,

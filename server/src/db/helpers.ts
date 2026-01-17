@@ -70,6 +70,7 @@ export const nodeTypeEnum = pgEnum("node_type", [
   NodeType.MANUAL_TRIGGER,
   NodeType.HTTP_REQUEST,
   NodeType.GOOGLE_FORM_TRIGGER,
+  NodeType.STRIPE_TRIGGER,
 ]);
 
 // export const productVisiblityEnum = pgEnum('product_visibility', [

@@ -11,12 +11,16 @@ class WebhooksController {
   public async googleForm(
     req: FastifyRequest<{
       Body: Record<string, any>;
-      Querystring: { workflowId: string };
+      Querystring: { workflowId: string; secret: string };
     }>,
     rep: FastifyReply
   ) {
     try {
       const workflowId = req.query.workflowId;
+      const secret = req.query.secret;
+      if (!workflowId || !secret) {
+        throw new BadRequestException("Missing required query parameters");
+      }
       const body = req.body;
       const formData = {
         formId: body.formId,
@@ -32,9 +36,12 @@ class WebhooksController {
           "Missing required query parameter: workflowId"
         );
       }
-      const resp = await workflowService.executeGoogleFormWorkflow(
+      const resp = await workflowService.executeWebhookWorkflow(
         workflowId,
-        formData
+        secret,
+        {
+          googleForm: formData,
+        }
       );
       if (resp.error) {
         throw resp.error;
@@ -52,6 +59,52 @@ class WebhooksController {
       throw new InternalServerException(
         "Failed to process Google Form submission"
       );
+    }
+  }
+  public async stripeEvent(
+    req: FastifyRequest<{
+      Body: Record<string, any>;
+      Querystring: { workflowId: string; secret: string };
+    }>,
+    rep: FastifyReply
+  ) {
+    try {
+      const body = req.body;
+      const workflowId = req.query.workflowId;
+      const secret = req.query.secret;
+      if (!workflowId || !secret) {
+        throw new BadRequestException("Missing required query parameters");
+      }
+
+      const formData = {
+        eventId: body.id,
+        eventType: body.type,
+        timestamp: body.created,
+        livemode: body.livemode,
+        raw: body.data?.object,
+      };
+
+      const resp = await workflowService.executeWebhookWorkflow(
+        workflowId,
+        secret,
+        {
+          stripe: formData,
+        }
+      );
+      if (resp.error) {
+        throw resp.error;
+      }
+      return SuccessResponse(rep, {
+        data: resp.data,
+        message: "Worklow is executing",
+      });
+    } catch (error: any) {
+      console.log(error.messae, "errorMessage");
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Stripe webhook error:", error);
+      throw new InternalServerException("Failed to process Stripe event");
     }
   }
 }
