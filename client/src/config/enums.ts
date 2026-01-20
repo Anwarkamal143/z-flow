@@ -85,3 +85,10 @@ export enum NodeType {
   OPENAI = 'openai',
 }
 export type INodeType = `${NodeType}`
+export enum CredentialType {
+  ANTHROPIC = NodeType.ANTHROPIC,
+  GEMINI = NodeType.GEMINI,
+  OPENAI = NodeType.OPENAI,
+}
+
+export type ICredentialType = `${CredentialType}`

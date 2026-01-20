@@ -3,6 +3,7 @@ import { boolean, pgEnum, timestamp } from "drizzle-orm/pg-core";
 import {
   AccountType,
   AssetType,
+  CredentialType,
   DiscountType,
   NodeType,
   PaymentMethod,
@@ -74,6 +75,11 @@ export const nodeTypeEnum = pgEnum("node_type", [
   NodeType.ANTHROPIC,
   NodeType.GEMINI,
   NodeType.OPENAI,
+]);
+export const credentialsTypeEnum = pgEnum("credential_type", [
+  CredentialType.ANTHROPIC,
+  CredentialType.GEMINI,
+  CredentialType.OPENAI,
 ]);
 
 // export const productVisiblityEnum = pgEnum('product_visibility', [

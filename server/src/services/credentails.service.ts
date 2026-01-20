@@ -1,37 +1,41 @@
-import { and, eq, inArray } from "@/db";
+import { CredentialType, eq, ICredentialType, inArray } from "@/db";
 
 import { BaseService, ITransaction } from "./base.service";
 
-import { secrets } from "@/db/tables";
+import { credentials } from "@/db/tables";
 import {
-  InsertSecrets,
-  InsertSecretsSchema,
-  ISecrets,
-  UpdateSecrets,
-} from "@/schema/secrets";
+  ICredentials,
+  InsertCredentials,
+  UpdateCredentials,
+} from "@/schema/credentials";
 import { formatZodError } from "@/utils";
 import { NotFoundException, ValidationException } from "@/utils/catch-errors";
 import encryption from "@/utils/encryption";
+import z from "zod";
 
 export interface CreateWorkflowSecretInput {
-  workflowId?: string;
-  nodeId?: string;
   userId?: string;
   secret: string; // plaintext only at input time
   metadata?: Record<string, any>;
+  type: ICredentialType;
 }
-
-export class SecretService extends BaseService<
-  typeof secrets,
-  InsertSecrets,
-  ISecrets,
-  UpdateSecrets
+export const createWorkflowSecretSchema = z.object({
+  userId: z.string().optional(),
+  secret: z.string().min(1, "Secret cannot be empty"),
+  metadata: z.record(z.any(), z.unknown()).optional(),
+  type: z.enum(CredentialType),
+});
+export class Credentialservice extends BaseService<
+  typeof credentials,
+  InsertCredentials,
+  ICredentials,
+  UpdateCredentials
 > {
   constructor() {
-    super(secrets);
+    super(credentials);
   }
 
-  async decryptSecretData(rows: ISecrets[]) {
+  async decryptSecretData(rows: ICredentials[]) {
     // 1. Map each row to a decryption promise
     const decryptedData = await Promise.all(
       rows.map(async (r) => {
@@ -57,7 +61,7 @@ export class SecretService extends BaseService<
       }),
     );
 
-    // 2. Return decrypted secrets
+    // 2. Return decrypted credentials
     return {
       data: decryptedData,
       error: null,
@@ -66,9 +70,9 @@ export class SecretService extends BaseService<
 
   /* ---------------- Create Secret ---------------- */
 
-  async createSecret(input: CreateWorkflowSecretInput, tx?: ITransaction) {
-    const { workflowId, nodeId, userId, secret, metadata } = input;
-    const parseResult = InsertSecretsSchema.safeParse(input);
+  async createCredentail(input: CreateWorkflowSecretInput, tx?: ITransaction) {
+    const { userId, secret, type, metadata } = input;
+    const parseResult = createWorkflowSecretSchema.safeParse(input);
     if (!parseResult.success) {
       return {
         error: new ValidationException(
@@ -90,8 +94,6 @@ export class SecretService extends BaseService<
 
     return this.create(
       {
-        workflowId,
-        nodeId,
         userId,
         metadata,
 
@@ -104,6 +106,7 @@ export class SecretService extends BaseService<
         dekAuthTag: encryptedDEK.authTag,
         dekSalt: encryptedDEK.salt,
         keyVersion: encryptedDEK.keyVersion,
+        type,
       },
       tx,
     );
@@ -111,7 +114,7 @@ export class SecretService extends BaseService<
 
   /* ---------------- Resolve Secret ---------------- */
 
-  async resolveSecret(secretId: string) {
+  async resolveCredential(secretId: string) {
     if (!secretId) {
       throw new ValidationException("SecretId is requried", [
         { path: "secretId", message: "missing secretId" },
@@ -130,37 +133,30 @@ export class SecretService extends BaseService<
 
   /* -------- Resolve by workflow + node -------- */
 
-  async resolveByWorkflow_Node(workflowId: string, nodeId: string) {
-    const res = await this.findOne((t) =>
-      and(eq(t.workflowId, workflowId), eq(t.nodeId, nodeId)),
-    );
-
-    if (!res.data)
-      return { error: new NotFoundException("secret not found"), data: null };
-
-    return await this.decryptSecretData([res.data]);
-  }
-  async resolveByNodeId(nodeId: string) {
-    if (!nodeId) {
+  async resolveById(id: string) {
+    if (!id) {
       return {
-        error: new ValidationException("NodeId is required", [
-          { path: "nodeId", message: "nodeId is required" },
+        error: new ValidationException("id is required", [
+          { path: "id", message: "id is required" },
         ]),
         data: null,
       };
     }
-    const res = await this.findMany((t) => eq(t.nodeId, nodeId));
+    const res = await this.findMany((t) => eq(t.id, id));
 
     if (!res.data)
-      return { error: new NotFoundException("secret not found"), data: null };
+      return {
+        error: new NotFoundException("credential not found"),
+        data: null,
+      };
 
     return {
       data: await this.decryptSecretData(res.data),
       error: null,
     };
   }
-  async resolveByNodeIds(nodeIds: string[]) {
-    if (!nodeIds || !nodeIds.length) {
+  async resolveByIds(ids?: string[]) {
+    if (!ids || !ids.length) {
       return {
         error: new ValidationException("NodeIds are required", [
           { path: "nodeIds", message: "nodeId is required" },
@@ -168,7 +164,7 @@ export class SecretService extends BaseService<
         data: null,
       };
     }
-    const res = await this.findMany((t) => inArray(t.nodeId, nodeIds));
+    const res = await this.findMany((t) => inArray(t.id, ids));
 
     if (!res.data)
       return { error: new NotFoundException("secret not found"), data: null };
@@ -180,4 +176,4 @@ export class SecretService extends BaseService<
   }
 }
 
-export const secretService = new SecretService();
+export const credentialservice = new Credentialservice();
