@@ -3,8 +3,8 @@ import { relations } from "drizzle-orm";
 import { pgTable, text } from "drizzle-orm/pg-core";
 import { baseTimestamps } from "../helpers";
 import { connections } from "./connection";
+import { credentials } from "./credentials";
 import { nodes } from "./node";
-import { secrets } from "./secrets";
 import { users } from "./user";
 
 export const workflows = pgTable("workflows", {
@@ -28,7 +28,7 @@ export const workflowRelations = relations(workflows, ({ one, many }) => ({
   connections: many(connections, {
     relationName: "workflow_connections",
   }),
-  secrets: many(secrets, {
-    relationName: "workflow_secrets",
+  credentials: many(credentials, {
+    relationName: "workflow_credentials",
   }),
 }));

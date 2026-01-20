@@ -9,6 +9,7 @@ import authRoutes from "./v1/auth.route";
 import inngestRoutes from "./v1/inngest.route";
 import paymentRoutes from "./v1/payments";
 import socialRoutes from "./v1/social.route";
+import testRoutes from "./v1/test.route";
 import userRoutes from "./v1/user.route";
 import webHooksRoutes from "./v1/webhooks";
 import workflowRoutes from "./v1/workflow.route";
@@ -58,7 +59,7 @@ async function v1RoutesV1(fastify: FastifyInstance) {
     },
     { prefix: removeVersionFromBasePath(APP_CONFIG.BASE_API_PATH) },
   );
-
+  fastify.register(testRoutes, { prefix: "/test" });
   // Catch-all for undefined routes
   fastify.setNotFoundHandler((_req: FastifyRequest, _rep: FastifyReply) => {
     throw new AppError(`Can't find ${_req.url} on this server!`, 404);

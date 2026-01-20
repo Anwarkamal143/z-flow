@@ -12,7 +12,7 @@ import { formatZodError } from "@/utils";
 import { ValidationException } from "@/utils/catch-errors";
 import { UUID } from "ulid";
 import { BaseService, ITransaction } from "./base.service";
-import { secretService } from "./secrets.service";
+import { credentialservice } from "./credentails.service";
 
 export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
   constructor() {
@@ -108,8 +108,11 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     if (!nodesResp.data) {
       return {};
     }
-    const nodeSecrets = await secretService.resolveByNodeIds(
-      nodesResp.data.map((n) => n.id),
+    const filteredIds = nodesResp.data.filter(
+      (nc) => nc.credentialId != null && nc.credentialId != "",
+    );
+    const nodeSecrets = await credentialservice.resolveByIds(
+      filteredIds.map((n) => n.credentialId) as string[],
     );
     return nodesResp.data?.reduce(
       (acc, node) => {

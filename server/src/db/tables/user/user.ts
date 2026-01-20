@@ -10,8 +10,8 @@ import { relations } from "drizzle-orm";
 import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 import { connections } from "../connection";
+import { credentials } from "../credentials";
 import { nodes } from "../node";
-import { secrets } from "../secrets";
 import { workflows } from "../workflow";
 import { accounts } from "./account";
 import { userAddresses } from "./user-addresses";
@@ -49,5 +49,5 @@ export const usersRelations = relations(users, ({ many }) => ({
   nodes: many(nodes, { relationName: "user_nodes" }),
   connections: many(connections, { relationName: "user_connections" }),
   accounts: many(accounts, { relationName: "user_accounts" }),
-  secrets: many(secrets, { relationName: "user_secrets" }),
+  credentials: many(credentials, { relationName: "user_credentials" }),
 }));

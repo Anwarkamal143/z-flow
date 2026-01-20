@@ -1,25 +1,20 @@
-import { baseTimestamps } from "@/db/helpers";
+import { baseTimestamps, credentialsTypeEnum } from "@/db/helpers";
 import { generateUlid } from "@/utils";
 import { relations } from "drizzle-orm";
 import { integer, jsonb, pgTable, text } from "drizzle-orm/pg-core";
-import { nodes, users, workflows } from ".";
+import { nodes, users } from ".";
+import { ICredentialType } from "../enumTypes";
 
-export const secrets = pgTable("secrets", {
+export const credentials = pgTable("credentials", {
   id: text("id").primaryKey().$defaultFn(generateUlid),
 
-  workflowId: text("workflowId").references(() => workflows.id, {
-    onDelete: "cascade",
-  }),
-
-  nodeId: text("nodeId").references(() => nodes.id, { onDelete: "cascade" }), // optional scope
-
   userId: text("userId").references(() => users.id, { onDelete: "cascade" }),
-
+  type: credentialsTypeEnum().notNull().$type<ICredentialType>(),
   /**
    * Optional metadata (provider, label, masked value, etc.)
    * ❌ NEVER store secrets here
    */
-  metadata: jsonb("metadata").default({}),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
 
   /* ---------- Encrypted User Secret (with DEK) ---------- */
 
@@ -42,17 +37,13 @@ export const secrets = pgTable("secrets", {
   ...baseTimestamps,
 });
 
-export const secretsRelations = relations(secrets, ({ one }) => ({
+export const credentialsRelations = relations(credentials, ({ one, many }) => ({
   user: one(users, {
-    fields: [secrets.userId],
+    fields: [credentials.userId],
     references: [users.id],
   }),
-  workflow: one(workflows, {
-    fields: [secrets.workflowId],
-    references: [workflows.id],
-  }),
-  node: one(nodes, {
-    fields: [secrets.nodeId],
-    references: [nodes.id],
+
+  nodes: many(nodes, {
+    relationName: "credentail_nodes",
   }),
 }));

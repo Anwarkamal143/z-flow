@@ -3,7 +3,7 @@ import { relations } from "drizzle-orm";
 import { jsonb, pgTable, text } from "drizzle-orm/pg-core";
 import { INodeType, NodeType } from "../enumTypes";
 import { baseTimestamps, nodeTypeEnum } from "../helpers";
-import { connections, secrets } from "../schema";
+import { connections, credentials } from "../schema";
 import { users } from "./user";
 import { workflows } from "./workflow";
 
@@ -16,9 +16,12 @@ export const nodes = pgTable("nodes", {
   workflowId: text("workflowId")
     .references(() => workflows.id, { onDelete: "cascade" })
     .notNull(),
+  credentialId: text("credentialId").references(() => credentials.id, {
+    onDelete: "set null",
+  }),
   type: nodeTypeEnum().default(NodeType.INITIAL).$type<INodeType>(), // Node type
   position: jsonb("position").notNull(), // Node position
-  data: jsonb("data").default("{}"), // Node data
+  data: jsonb("data").$type<Record<string, unknown>>().default({}), // Node data
   ...baseTimestamps,
 });
 
@@ -32,7 +35,7 @@ export const nodesRelations = relations(nodes, ({ one, many }) => ({
     references: [workflows.id],
   }),
   connections: many(connections, { relationName: "node_connections" }),
-  secrets: many(secrets, {
-    relationName: "workflow_secrets",
+  credentials: many(credentials, {
+    relationName: "node_credentials",
   }),
 }));
