@@ -2,7 +2,7 @@ import { GlobeIcon } from '@/assets/icons'
 import ButtonLoader from '@/components/button-loader'
 import Form from '@/components/form/Form'
 import FormInput from '@/components/form/Input'
-import SelectComp from '@/components/form/Input/select'
+import SelectComp from '@/components/form/select'
 import ObjectTemplateInput from '@/components/object-template-input'
 
 import {
@@ -76,7 +76,6 @@ const HttpRequestDialog = ({
   ])
 
   const handleSubmit = (values: HttpRequestFormValues) => {
-    console.log(values, 'values')
     onSubmit(values)
     rest.onOpenChange(false)
     form.reset()
@@ -104,6 +103,7 @@ const HttpRequestDialog = ({
             // key={vaules.variableName}
           />
           <SelectComp
+            // isFormComponent={true}
             placeholder={{ title: 'Select a method', icon: GlobeIcon }}
             name='method'
             options={[

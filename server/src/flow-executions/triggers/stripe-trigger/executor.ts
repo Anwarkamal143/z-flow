@@ -1,7 +1,7 @@
 import { publishEvent } from "@/app_inngest/channels/manual-trigger";
 import { NodeExecutor, NodeExecutorParams } from "@/flow-executions/types";
 type StripeTriggerData = Record<string, unknown>;
-export const StripeTriggerExecutor: NodeExecutor<StripeTriggerData> = async ({
+export const stripeTriggerExecutor: NodeExecutor<StripeTriggerData> = async ({
   nodeId,
   context,
   step,
@@ -17,6 +17,7 @@ export const StripeTriggerExecutor: NodeExecutor<StripeTriggerData> = async ({
     event: "status",
     channel: workflowId,
   };
+
   const result = await step.run("stripe-trigger", async () => {
     await publishEvent({ publish, event });
 

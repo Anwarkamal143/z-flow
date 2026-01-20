@@ -8,8 +8,10 @@ import {
 } from 'react-hook-form'
 import { BaseInput, BaseInputProps, IComponentType } from './base-input'
 
-type FormInputProps<T extends FieldValues, K> = UseControllerProps<T> &
-  BaseInputProps<K>
+type FormInputProps<
+  T extends FieldValues,
+  K extends IComponentType,
+> = BaseInputProps<K> & UseControllerProps<T>
 
 // ✅ Reusable FormInput Component
 export function FormInput<T extends FieldValues, K extends IComponentType>(

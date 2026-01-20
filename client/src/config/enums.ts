@@ -80,5 +80,8 @@ export enum NodeType {
   HTTP_REQUEST = 'http_request',
   GOOGLE_FORM_TRIGGER = 'google_form_trigger',
   STRIPE_TRIGGER = 'stripe_trigger',
+  ANTHROPIC = 'anthropic',
+  GEMINI = 'gemini',
+  OPENAI = 'openai',
 }
 export type INodeType = `${NodeType}`

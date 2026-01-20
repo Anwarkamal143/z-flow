@@ -71,6 +71,20 @@
       "when": 1768569550343,
       "tag": "0009_stiff_madrox",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1768733643821,
+      "tag": "0010_orange_firelord",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1768889380526,
+      "tag": "0011_bitter_wallflower",
+      "breakpoints": true
     }
   ]
 }

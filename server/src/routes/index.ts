@@ -5,7 +5,6 @@ import { removeVersionFromBasePath } from "@/utils";
 import AppError from "@/utils/app-error";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import aiRoutes from "./v1/ai.route";
 import authRoutes from "./v1/auth.route";
 import inngestRoutes from "./v1/inngest.route";
 import paymentRoutes from "./v1/payments";
@@ -27,7 +26,6 @@ async function v1RoutesV1(fastify: FastifyInstance) {
       instance.register(userRoutes, { prefix: "/user" });
       instance.register(socialRoutes, { prefix: "/google" });
       instance.register(inngestRoutes, { prefix: "/inngest" });
-      instance.register(aiRoutes, { prefix: "/ai" });
       instance.register(paymentRoutes, { prefix: "/payments" });
       instance.register(workflowRoutes, { prefix: "/workflows" });
       // webhooks
@@ -50,7 +48,7 @@ async function v1RoutesV1(fastify: FastifyInstance) {
         }
       });
     },
-    { prefix: APP_CONFIG.BASE_API_PATH }
+    { prefix: APP_CONFIG.BASE_API_PATH },
   );
   fastify.register(
     async (instance) => {
@@ -58,7 +56,7 @@ async function v1RoutesV1(fastify: FastifyInstance) {
       // Optional: Mount Google callback routes outside base path
       instance.register(socialRoutes, { prefix: "/google" });
     },
-    { prefix: removeVersionFromBasePath(APP_CONFIG.BASE_API_PATH) }
+    { prefix: removeVersionFromBasePath(APP_CONFIG.BASE_API_PATH) },
   );
 
   // Catch-all for undefined routes

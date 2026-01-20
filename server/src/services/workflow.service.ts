@@ -122,12 +122,12 @@ export class WorkflowService extends BaseService<
           useCache: usecahce,
           cacheKey: `workflows:${id}`,
         },
-      }
+      },
     );
   }
   public async getByFieldWithNodesAndConnections(
     fieldValue: string | undefined,
-    field: typeof this._types.coloumn
+    field: typeof this._types.coloumn,
   ) {
     if (!fieldValue || !field) {
       return {
@@ -147,7 +147,7 @@ export class WorkflowService extends BaseService<
       const nodesMap = await nodeService.populateNodes([workflow.data.id]);
       const edges = await edgeService.populateConnections(
         [workflow.data.id],
-        false
+        false,
       );
       return {
         data: {
@@ -172,11 +172,11 @@ export class WorkflowService extends BaseService<
     }
 
     const workflows = await this.findMany((fields) =>
-      eq(fields.userId, userId)
+      eq(fields.userId, userId),
     );
     if (workflows.data?.length) {
       const nodesMap = await nodeService.populateNodes(
-        workflows.data.map((w) => w.id)
+        workflows.data.map((w) => w.id),
       );
       return {
         data: workflows.data.map((workflow) => ({
@@ -198,13 +198,13 @@ export class WorkflowService extends BaseService<
         data: null,
         error: new ValidationException(
           "Invalid input",
-          formatZodError(parseResult.error)
+          formatZodError(parseResult.error),
         ),
       };
     }
     const parseData = parseResult.data;
     const workflowClient = await this.findOne((fields) =>
-      and(eq(fields.id, parseData.id), eq(fields.userId, parseData.userId))
+      and(eq(fields.id, parseData.id), eq(fields.userId, parseData.userId)),
     );
     if (workflowClient.data) {
       const nodes = await nodeService.populateNodes([workflowClient.data.id]);
@@ -232,13 +232,13 @@ export class WorkflowService extends BaseService<
         data: null,
         error: new ValidationException(
           "Invalid input",
-          formatZodError(parseResult.error)
+          formatZodError(parseResult.error),
         ),
       };
     }
     const parseData = parseResult.data;
     return await this.findOne((fields) =>
-      and(eq(fields.id, parseData.id), eq(fields.userId, parseData.userId))
+      and(eq(fields.id, parseData.id), eq(fields.userId, parseData.userId)),
     );
   }
   async softDeleteById(accountId: string) {
@@ -258,13 +258,13 @@ export class WorkflowService extends BaseService<
 
         error: new ValidationException(
           "Invalid input",
-          formatZodError(parseResult.error)
+          formatZodError(parseResult.error),
         ),
       };
     }
     const data = parseResult.data;
     return await this.delete((fields) =>
-      and(eq(fields.id, data.id), eq(fields.userId, data.userId))
+      and(eq(fields.id, data.id), eq(fields.userId, data.userId)),
     );
   }
   public async deleteUserWorkFlows(userId?: string) {
@@ -287,7 +287,7 @@ export class WorkflowService extends BaseService<
         data: null,
         error: new ValidationException(
           "Invalid input",
-          formatZodError(parseResult.error)
+          formatZodError(parseResult.error),
         ),
       };
     }
@@ -309,7 +309,7 @@ export class WorkflowService extends BaseService<
             type: NodeType.INITIAL,
             position: { x: 0, y: 0 },
           },
-          tx
+          tx,
         );
         if (node.error) {
           throw new BadRequestException("Failed to create initial node", {
@@ -329,7 +329,7 @@ export class WorkflowService extends BaseService<
   async updateWorkflowNameByIdAndUserId(
     name: string = "",
     id: string = "",
-    userId?: string
+    userId?: string,
   ) {
     const parseResult = UpdateWorkFlowNameSchema.safeParse({
       name,
@@ -343,7 +343,7 @@ export class WorkflowService extends BaseService<
 
         error: new ValidationException(
           "Invalid input",
-          formatZodError(parseResult.error)
+          formatZodError(parseResult.error),
         ),
       };
     }
@@ -354,14 +354,14 @@ export class WorkflowService extends BaseService<
     } = parseResult.data;
     const { data, ...rest } = await this.update(
       (fields) => and(eq(fields.id, workflowId), eq(fields.userId, uId)),
-      { name: workflowName }
+      { name: workflowName },
     );
     await cacheManager.remove(`workflows`);
     return { ...rest, data: data?.[0] };
   }
   async updateWorkflowByIdAndUserId(
     workflow: UpdateWorkflowWithNodesEdges,
-    userId?: string
+    userId?: string,
   ) {
     if (!userId) {
       return {
@@ -383,14 +383,14 @@ export class WorkflowService extends BaseService<
 
         error: new ValidationException(
           "Invalid input",
-          formatZodError(parseResult.error)
+          formatZodError(parseResult.error),
         ),
       };
     }
     const workflowData = parseResult.data;
     const workflowtoUpdate = await this.getWorkflowByIdAndUserId(
       workflowData.id,
-      userId
+      userId,
     );
     if (!workflowtoUpdate.data) {
       return {
@@ -404,13 +404,13 @@ export class WorkflowService extends BaseService<
       return await this.withTransaction(async (tx) => {
         const nodesResp = await nodeService.deleteByWorkflowId(
           workflowData.id,
-          tx
+          tx,
         );
         if (nodesResp.error) {
           throw nodesResp.error;
         }
         const nodesData = workflowData.nodes.filter(
-          (f) => f.type != NodeType.INITIAL
+          (f) => f.type != NodeType.INITIAL,
         );
         const nodesArray = nodesData.length
           ? nodesData
@@ -434,7 +434,7 @@ export class WorkflowService extends BaseService<
             position: node.position || { x: 0, y: 0 },
             data: node.data || {},
           })),
-          tx
+          tx,
         );
         if (createNodesResp.error) {
           throw createNodesResp.error;
@@ -452,7 +452,7 @@ export class WorkflowService extends BaseService<
               toInput: edge.targetHandle || "main",
               workflowId: workflowData.id,
             })),
-            tx
+            tx,
           );
           if (edgesResp.error) {
             throw edgesResp.error;
@@ -464,7 +464,7 @@ export class WorkflowService extends BaseService<
           {
             updated_at: toUTC(new Date(), false),
           },
-          tx
+          tx,
         );
         if (updatedWorkflow.error) {
           throw updatedWorkflow.error;
@@ -491,12 +491,12 @@ export class WorkflowService extends BaseService<
       if (!resultData.success) {
         throw new ValidationException(
           "Invalid Id",
-          formatZodError(resultData.error)
+          formatZodError(resultData.error),
         );
       }
       const workflowdata = await this.getWorkflowByIdAndUserId(
         workflowId,
-        userId
+        userId,
       );
       if (!workflowdata.data) {
         throw new BadRequestException("Workflow not found to execute");
@@ -519,14 +519,14 @@ export class WorkflowService extends BaseService<
   async executeWebhookWorkflow(
     workflowId: string,
     secret: string,
-    initialData: Record<string, any>
+    initialData: Record<string, any>,
   ) {
     try {
       const resultData = ULIDSchema("Id is not valid").safeParse(workflowId);
       if (!resultData.success) {
         throw new ValidationException(
           "Invalid Id",
-          formatZodError(resultData.error)
+          formatZodError(resultData.error),
         );
       }
       const workflowdata = await this.getById(workflowId);

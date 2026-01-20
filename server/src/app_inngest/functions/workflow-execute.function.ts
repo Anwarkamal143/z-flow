@@ -9,7 +9,7 @@ import { WORKFLOW_EVENT_NAMES } from "@/flow-executions/events/workflow";
 import { topologicalSort } from "../utils";
 
 export default inngest.createFunction(
-  { id: "execute-workflow", retries: 1 },
+  { id: "execute-workflow", retries: 0 },
   {
     event: WORKFLOW_EVENT_NAMES.WORKFLOW_EXECUTE,
   },
@@ -22,7 +22,7 @@ export default inngest.createFunction(
     const sortedNodes = await step.run("prepare-workflow", async () => {
       const workflow = await workflowService.getByFieldWithNodesAndConnections(
         workflowId,
-        (fields) => fields.id
+        (fields) => fields.id,
       );
       if (!workflow.data) {
         throw new NonRetriableError("Workflow doesn't exist");
@@ -48,5 +48,5 @@ export default inngest.createFunction(
     }
 
     return { workflowId, context };
-  }
+  },
 );

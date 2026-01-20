@@ -92,7 +92,7 @@ export type ICommonProps<T> = {
   readOnly?: Pick<InputProps, 'readOnly'>
 }
 export type IComponentType = InputProps['type'] | 'switch' | 'textarea'
-export type BaseInputProps<T> = ICommonProps<T> &
+export type BaseInputProps<T extends IComponentType> = ICommonProps<T> &
   (T extends 'switch'
     ? ISwitchProps
     : T extends 'textarea'

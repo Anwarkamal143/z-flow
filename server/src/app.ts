@@ -28,7 +28,7 @@ const CORS_OPTIONS = {
       const err = new AppError(
         `CORS error ${origin} is not allowed by CORS`,
         HTTPSTATUS.UNAUTHORIZED,
-        { errorCode: ErrorCode.CORS_ERROR } as any
+        { errorCode: ErrorCode.CORS_ERROR } as any,
       );
       logger.warn(`CORS error ${origin} is not allowed by CORS`);
       callback(err, false);

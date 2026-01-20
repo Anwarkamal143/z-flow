@@ -14,8 +14,8 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import * as React from 'react'
-import { InputFormProps } from './form/Input'
 import InputComponent from './form/Input/Input'
+import { BaseInputProps, IComponentType } from './form/Input/base-input'
 
 // Utils
 function getValueAtPath(data: any, path: string[]) {
@@ -68,21 +68,34 @@ function findTokenAtCursor(template: string, cursor: number) {
     text,
   }
 }
-type IObjectTemplateInput = {
+type InputElementMap = HTMLInputElement | HTMLTextAreaElement
+// type InputElementMap = {
+//   text: HTMLInputElement
+//   textarea: HTMLTextAreaElement
+// }
+
+type IObjectTemplateInput<T> = {
   data?: any
   value?: string
+  placeholder?: string
   onChange?: (value: string) => void
-} & Omit<InputFormProps, 'onChange'>
-export default function ObjectTemplateInput({
+} & (
+  | Omit<BaseInputProps<'text'>, 'onChange'>
+  | Omit<BaseInputProps<'textarea'>, 'onChange'>
+)
+
+const ObjectTemplateInput = <T extends IComponentType = 'text'>({
   value = '',
   onChange,
   data,
   placeholder = 'Type text and use {{ }} for object keys',
+  type = 'text',
+  ref,
   ...rest
-}: IObjectTemplateInput) {
+}: IObjectTemplateInput<T>) => {
   const [template, setTemplate] = React.useState(value)
   const [cursor, setCursor] = React.useState(0)
-  const inputRef = React.useRef<HTMLInputElement>(null)
+  const inputRef = React.useRef<InputElementMap>(null)
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState('')
 
@@ -179,7 +192,7 @@ export default function ObjectTemplateInput({
     }, 0)
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<InputElementMap>) => {
     const value = e.target.value
     setTemplate(value)
     onChange?.(value)
@@ -202,7 +215,7 @@ export default function ObjectTemplateInput({
     }
   }
 
-  const handleCursor = (e: React.SyntheticEvent<HTMLInputElement>) => {
+  const handleCursor = (e: React.SyntheticEvent<InputElementMap>) => {
     const pos = e.currentTarget.selectionStart ?? 0
     setCursor(pos)
 
@@ -214,7 +227,7 @@ export default function ObjectTemplateInput({
     }
   }
 
-  const handleInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
+  const handleInputClick = (e: React.MouseEvent<InputElementMap>) => {
     const pos = e.currentTarget.selectionStart ?? 0
 
     // Find if clicking inside a token
@@ -255,7 +268,7 @@ export default function ObjectTemplateInput({
     setTokenStart(null)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<InputElementMap>) => {
     if (e.key == 'Backspace') {
       const pos = e.currentTarget.selectionStart ?? 0
 
@@ -356,7 +369,11 @@ export default function ObjectTemplateInput({
       setSearch('')
     }
   }
-
+  const refCallback = React.useCallback((e: InputElementMap | null) => {
+    if (e) {
+      inputRef.current = e
+    }
+  }, [])
   if (!keys.length) {
     return (
       // <div className='relative w-full'>
@@ -364,7 +381,8 @@ export default function ObjectTemplateInput({
       //     {renderHighlighted()}
       //   </div>
       <InputComponent
-        ref={inputRef}
+        ref={refCallback}
+        // ref={inputRef}
         value={template}
         onChange={handleChange}
         placeholder={placeholder}
@@ -391,7 +409,8 @@ export default function ObjectTemplateInput({
             {renderHighlighted()}
           </div> */}
         <InputComponent
-          ref={inputRef}
+          // ref={inputRef}
+          ref={refCallback}
           value={template}
           onChange={handleChange}
           onSelect={handleCursor}
@@ -446,3 +465,4 @@ export default function ObjectTemplateInput({
     </Popover>
   )
 }
+export default ObjectTemplateInput

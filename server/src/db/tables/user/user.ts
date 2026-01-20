@@ -11,6 +11,7 @@ import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 import { connections } from "../connection";
 import { nodes } from "../node";
+import { secrets } from "../secrets";
 import { workflows } from "../workflow";
 import { accounts } from "./account";
 import { userAddresses } from "./user-addresses";
@@ -39,7 +40,7 @@ export const users = pgTable(
   (table) => [
     index("users_email_idx").on(table.email),
     index("users_created_at_idx").on(table.created_at),
-  ]
+  ],
 );
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -48,4 +49,5 @@ export const usersRelations = relations(users, ({ many }) => ({
   nodes: many(nodes, { relationName: "user_nodes" }),
   connections: many(connections, { relationName: "user_connections" }),
   accounts: many(accounts, { relationName: "user_accounts" }),
+  secrets: many(secrets, { relationName: "user_secrets" }),
 }));

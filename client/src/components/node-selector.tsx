@@ -1,8 +1,11 @@
 'use client'
 import {
+  AnthropicIcon,
+  GeminiIcon,
   GlobeIcon,
   GoogleFormIcon,
   MousePointerIcon,
+  OpenAiIcon,
   StripeIcon,
 } from '@/assets/icons'
 import { NodeType } from '@/config/enums'
@@ -55,6 +58,24 @@ const executionNodes: NodeTypeOptions[] = [
     description:
       'Starts the flow when an HTTP request is received. Useful for webhooks and APIs.',
     icon: GlobeIcon,
+  },
+  {
+    type: NodeType.GEMINI,
+    label: 'Gemini',
+    description: 'Uses Google Gemini to generate text',
+    icon: GeminiIcon,
+  },
+  {
+    type: NodeType.OPENAI,
+    label: 'Openai',
+    description: 'Uses Openai to generate text',
+    icon: OpenAiIcon,
+  },
+  {
+    type: NodeType.ANTHROPIC,
+    label: 'Anthropic',
+    description: 'Uses Anthropic to generate text',
+    icon: AnthropicIcon,
   },
 ]
 
