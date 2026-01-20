@@ -3,8 +3,8 @@ import { CheckIcon, ChevronDown, XCircle, XIcon } from 'lucide-react'
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
+import { Badge } from '../../ui/badge'
+import { Button } from '../../ui/button'
 import {
   Command,
   CommandEmpty,
@@ -13,9 +13,9 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from './ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
-import { Separator } from './ui/separator'
+} from '../../ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover'
+import { Separator } from '../../ui/separator'
 
 /**
  * Variants for the multi-select component to handle different styles.
@@ -102,7 +102,7 @@ export interface MultiSelectProps
   className?: string
 }
 
-export const MultiSelect = React.forwardRef<
+export const BaseMultiSelect = React.forwardRef<
   HTMLButtonElement,
   MultiSelectProps
 >(
@@ -344,4 +344,4 @@ export const MultiSelect = React.forwardRef<
   },
 )
 
-MultiSelect.displayName = 'MultiSelect'
+BaseMultiSelect.displayName = 'BaseMultiSelect'

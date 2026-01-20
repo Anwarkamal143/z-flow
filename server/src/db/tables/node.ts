@@ -3,7 +3,7 @@ import { relations } from "drizzle-orm";
 import { jsonb, pgTable, text } from "drizzle-orm/pg-core";
 import { INodeType, NodeType } from "../enumTypes";
 import { baseTimestamps, nodeTypeEnum } from "../helpers";
-import { connections } from "../schema";
+import { connections, secrets } from "../schema";
 import { users } from "./user";
 import { workflows } from "./workflow";
 
@@ -22,7 +22,7 @@ export const nodes = pgTable("nodes", {
   ...baseTimestamps,
 });
 
-export const nodeRelations = relations(nodes, ({ one, many }) => ({
+export const nodesRelations = relations(nodes, ({ one, many }) => ({
   user: one(users, {
     fields: [nodes.userId],
     references: [users.id],
@@ -32,4 +32,7 @@ export const nodeRelations = relations(nodes, ({ one, many }) => ({
     references: [workflows.id],
   }),
   connections: many(connections, { relationName: "node_connections" }),
+  secrets: many(secrets, {
+    relationName: "workflow_secrets",
+  }),
 }));

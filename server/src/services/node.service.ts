@@ -12,6 +12,7 @@ import { formatZodError } from "@/utils";
 import { ValidationException } from "@/utils/catch-errors";
 import { UUID } from "ulid";
 import { BaseService, ITransaction } from "./base.service";
+import { secretService } from "./secrets.service";
 
 export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
   constructor() {
@@ -50,7 +51,7 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     }
     return await this.delete(
       (fields) => eq(fields.workflowId, WorkflowId),
-      tsx
+      tsx,
     );
   }
   async createItem(data: InsertNode, tsx?: ITransaction) {
@@ -82,20 +83,46 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
 
   async populateNodes(workflowIds: UUID[]) {
     const nodesResp = await nodeService.findMany((table) =>
-      inArray(table.workflowId, workflowIds)
+      inArray(table.workflowId, workflowIds),
     );
     if (!nodesResp.data) {
       return {};
     }
-    return nodesResp.data?.reduce((acc, node) => {
-      if (!node || !node.workflowId) return acc;
-      if (acc[node.workflowId]) {
-        acc[node.workflowId]!.push(node);
-      } else {
-        acc[node.workflowId] = [node];
-      }
-      return acc;
-    }, {} as Record<string, INode[]>);
+    return nodesResp.data?.reduce(
+      (acc, node) => {
+        if (!node || !node.workflowId) return acc;
+        if (acc[node.workflowId]) {
+          acc[node.workflowId]!.push(node);
+        } else {
+          acc[node.workflowId] = [node];
+        }
+        return acc;
+      },
+      {} as Record<string, INode[]>,
+    );
+  }
+  async populateNodesWithSecrets(workflowIds: UUID[]) {
+    const nodesResp = await nodeService.findMany((table) =>
+      inArray(table.workflowId, workflowIds),
+    );
+    if (!nodesResp.data) {
+      return {};
+    }
+    const nodeSecrets = await secretService.resolveByNodeIds(
+      nodesResp.data.map((n) => n.id),
+    );
+    return nodesResp.data?.reduce(
+      (acc, node) => {
+        if (!node || !node.workflowId) return acc;
+        if (acc[node.workflowId]) {
+          acc[node.workflowId]!.push(node);
+        } else {
+          acc[node.workflowId] = [node];
+        }
+        return acc;
+      },
+      {} as Record<string, INode[]>,
+    );
   }
 }
 export const nodeService = new NodeService();

@@ -30,25 +30,32 @@ import {
   WorkflowIcon,
   XCircleIcon,
 } from 'lucide-react'
+import AnthropicIcon from './AnthropicIcon'
+import DiscordIcon from './DiscordIcon'
 import EmailIcon from './EmailIcon'
+import GeminiIcon from './GeminiIcon'
 import GithubIcon from './GithubIcon'
 import GoogleFormIcon from './GoogleFormIcon'
 import GoogleIcon from './GoogleIcon'
 import InfoIcon from './info-icon'
+import OpenAiIcon from './OpenAiIcon'
 import StripeIcon from './StripeIcon'
 
 export {
   AlertTriangleIcon,
+  AnthropicIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
   CopyIcon,
   CreditCardIcon,
+  DiscordIcon,
   EmailIcon,
   EyeIcon,
   EyeOffIcon,
   FlaskConicalIcon,
   FolderIcon,
   FolderOpenIcon,
+  GeminiIcon,
   GithubIcon,
   GlobeIcon,
   GoogleFormIcon,
@@ -62,6 +69,7 @@ export {
   MoonIcon,
   MoreVerticalIcon,
   MousePointerIcon,
+  OpenAiIcon,
   PackageOpenIcon,
   PlusIcon,
   SaveIcon,

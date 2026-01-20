@@ -1,7 +1,7 @@
 import { publishEvent } from "@/app_inngest/channels/manual-trigger";
 import { NodeExecutor, NodeExecutorParams } from "@/flow-executions/types";
 type GoogleFormTriggerData = Record<string, unknown>;
-export const GoogleFormTriggerExecutor: NodeExecutor<
+export const googleFormTriggerExecutor: NodeExecutor<
   GoogleFormTriggerData
 > = async ({
   nodeId,

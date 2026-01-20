@@ -35,7 +35,7 @@ const Form = <T extends FieldValues>({
         onSubmit={form.handleSubmit(onSubmit)}
         {...props}
         className={cn('border-none bg-transparent outline-none', className)}
-        ref={ref as any}
+        ref={ref}
       >
         {/* <fieldset
           //   We disable form inputs when we are submitting the form!! A tiny detail
