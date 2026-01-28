@@ -31,6 +31,8 @@ import {
   desc,
   ExtractTablesWithRelations,
   getTableColumns,
+  InferInsertModel,
+  InferSelectModel,
   SQL,
   sql,
 } from "drizzle-orm";
@@ -44,6 +46,7 @@ import {
 import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import { paginateCursor, paginateOffset } from "./pagination";
 export type DB = typeof db;
+export type DBQuery = keyof (typeof db)["query"];
 export type ITransaction = PgTransaction<
   PostgresJsQueryResultHKT,
   typeof schema,
@@ -96,10 +99,16 @@ type KeyProxy<T> = {
 type ColumnSelector<T> = (fields: KeyProxy<T>) => ColumnKey<T>;
 export class BaseService<
   TTable extends AnyPgTable,
-  TInsert extends Record<string, any>,
-  TSelect,
-  TUpdate = Partial<TInsert> // Add update type
+  TInsert extends InferInsertModel<TTable> = InferInsertModel<TTable>,
+  TSelect extends InferSelectModel<TTable> = InferSelectModel<TTable>,
+  TUpdate extends Partial<TInsert> = Partial<TInsert>,
 > {
+  // export class BaseService<
+  //   TTable extends AnyPgTable,
+  //   TInsert extends Record<string, any>,
+  //   TSelect,
+  //   TUpdate = Partial<TInsert> // Add update type
+  // > {
   public readonly columns = getTableColumns(this.table);
   // ⭐ This is the type helper
   public readonly _types!: {
@@ -107,18 +116,26 @@ export class BaseService<
       cursorColumn?: (t: TTable) => AnyColumn;
       where?: (t: TTable) => SQL<unknown> | undefined;
     };
-    OffsetPaginationConfig: OffsetPaginationConfig<TTable>;
-    CursorPaginationConfig: CursorPaginationConfig<TTable>;
-    PaginationsConfig: PaginationsConfig<TTable>;
-    coloumn:
-      | ColumnKey<TTable["$inferSelect"]>
-      | ColumnSelector<TTable["$inferSelect"]>;
+    OffsetPaginationConfig: OffsetPaginationConfig<TSelect>;
+    CursorPaginationConfig: CursorPaginationConfig<TSelect>;
+    PaginationsConfig: PaginationsConfig<TSelect>;
+    coloumn: ColumnKey<TSelect> | ColumnSelector<TSelect>;
   };
 
   public transaction = db.transaction;
   public _singular!: string;
   public _plural!: string;
 
+  constructor(public table: TTable) {
+    if (!table) {
+      throw new Error(`Provide a table`);
+    }
+    const config = getTableConfig(table);
+    const names = getSingularPlural(config.name);
+    this.singular = names.singular;
+    this.plural = names.plural;
+    this.queryName = config.name as DBQuery;
+  }
   public set singular(name: string) {
     this._singular = name;
   }
@@ -131,27 +148,17 @@ export class BaseService<
   public get plural() {
     return this._plural;
   }
-  queryName: keyof typeof db.query;
-  constructor(public table: TTable) {
-    if (!table) {
-      throw new Error(`Provide a table`);
-    }
-    const config = getTableConfig(table);
-    const names = getSingularPlural(config.name);
-    this.singular = names.singular;
-    this.plural = names.plural;
-    this.queryName = config.name as keyof typeof db.query;
-  }
-  queryTable<K extends keyof typeof db.query>(
+  queryName: DBQuery;
+  queryTable<K extends DBQuery>(
     dbb: DB,
-    key: K
+    key: K,
   ): {
     findFirst: (params: {
       where: SQL<unknown> | undefined;
-    }) => Promise<TTable["$inferSelect"]>;
+    }) => Promise<TSelect>;
     findMany: (params?: {
       where?: SQL<unknown> | undefined;
-    }) => Promise<TTable["$inferSelect"][]>;
+    }) => Promise<TSelect[]>;
   } {
     return dbb.query[key] as any; // We need to cast here because of Drizzle's complex types
   }
@@ -162,13 +169,9 @@ export class BaseService<
     keys.forEach((key) => {
       obj[key] = key;
     });
-    return obj as KeyProxy<TTable["$inferSelect"]>;
+    return obj as KeyProxy<TSelect>;
   }
-  getTableColumn(
-    field:
-      | ColumnKey<TTable["$inferSelect"]>
-      | ColumnSelector<TTable["$inferSelect"]>
-  ) {
+  getTableColumn(field: ColumnKey<TSelect> | ColumnSelector<TSelect>) {
     const col =
       typeof field == "string" ? field : field(this.getColumnObject());
     return this.columns[col];
@@ -275,7 +278,7 @@ export class BaseService<
   async update<T = TUpdate>(
     where: (table: TTable) => SQL<unknown> | undefined,
     values: T,
-    tsx?: ITransaction
+    tsx?: ITransaction,
   ) {
     try {
       const result = await (tsx ? tsx : db)
@@ -304,7 +307,7 @@ export class BaseService<
 
   async delete(
     where: (table: TTable) => SQL<unknown> | undefined,
-    tsx?: ITransaction
+    tsx?: ITransaction,
   ) {
     try {
       const result = await (tsx ? tsx : db)
@@ -338,7 +341,7 @@ export class BaseService<
     values: TInsert[],
     conflictTarget: IndexColumn | IndexColumn[],
     updateValues: Partial<TInsert>,
-    tsx?: ITransaction
+    tsx?: ITransaction,
   ) {
     try {
       const records = await (tsx ? tsx : db)
@@ -375,7 +378,7 @@ export class BaseService<
   async softDelete(
     where: (tableCols: TTable) => SQL<unknown>,
     set: Partial<TTable["$inferInsert"]>,
-    tsx?: ITransaction
+    tsx?: ITransaction,
   ) {
     try {
       const records = await (tsx ? tsx : db)
@@ -488,7 +491,7 @@ export class BaseService<
    * Handles cursor-based pagination.
    */
   async paginateCursor<TCursorValue = unknown>(
-    options: PaginationCursortOptions<TCursorValue, TTable>
+    options: PaginationCursortOptions<TCursorValue, TTable>,
   ) {
     const {
       limit,
@@ -517,8 +520,8 @@ export class BaseService<
             ? sql`${cursorCol} > ${sql.param(cursor)}`
             : sql`${cursorCol} < ${sql.param(cursor)}`
           : isAsc
-          ? sql`${cursorCol} < ${sql.param(cursor)}`
-          : sql`${cursorCol} > ${sql.param(cursor)}`
+            ? sql`${cursorCol} < ${sql.param(cursor)}`
+            : sql`${cursorCol} > ${sql.param(cursor)}`
         : undefined;
 
       const whereCondition =
@@ -567,7 +570,8 @@ export class BaseService<
     }
   }
 
-  async paginationOffsetRecords(props: OffsetPaginationConfig<TTable>) {
+  // async paginationOffsetRecords<TEntity = TSelect>(props: OffsetPaginationConfig<TTable>) {
+  async paginationOffsetRecords(props: OffsetPaginationConfig<TSelect>) {
     const parseResult = this.validateOffsetPagination(props);
     if (parseResult.error) {
       return parseResult;
@@ -575,7 +579,7 @@ export class BaseService<
     const result = await paginateOffset(db, this.table, parseResult.data);
     return result;
   }
-  async paginationCursorRecords(props: CursorPaginationConfig<TTable>) {
+  async paginationCursorRecords(props: CursorPaginationConfig<TSelect>) {
     const parseResult = this.validateCursorPagination(props);
     if (parseResult.error) {
       return parseResult;
@@ -584,16 +588,17 @@ export class BaseService<
 
     return result;
   }
+
   validateQuery(
     p: typeof this._types.PaginationsConfig,
     defaults: {
-      search?: keyof TTable["$inferSelect"];
+      search?: keyof TSelect;
       sort?: {
-        column: keyof TTable["$inferSelect"];
+        column: keyof TSelect;
         direction?: "asc" | "desc";
       };
-      filters?: (table: TTable) => FilterCondition<TTable>[];
-    } = { sort: { column: "updated_at", direction: "desc" } }
+      filters?: (table: TTable) => FilterCondition<TSelect>[];
+    } = { sort: { column: "updated_at", direction: "desc" } },
   ) {
     const { search, limit, filters, sorts, includeTotal, mode } = p;
     let toalInclude = false;
@@ -605,15 +610,17 @@ export class BaseService<
       column: "updated_at",
       direction: "desc",
     };
+    const limitnum = stringToNumber(limit);
+    const limitNum = limitnum && limitnum > 0 ? limitnum : null;
     if (mode == "offset") {
       const { page } = p;
 
       return {
         page: stringToNumber(page) || 1,
-        limit: stringToNumber(limit),
+        limit: limitNum,
         filters: this.preValidateFilterColumns(
           filters,
-          defaults?.filters?.(this.table)
+          defaults?.filters?.(this.table),
         ),
         search: this.preValidateSearchColumns(search, defaults.search),
         sorts: this.preValidateSortColumns(sorts, defaultSort),
@@ -626,11 +633,11 @@ export class BaseService<
 
     return {
       cursor: (cursor as string) || null,
-      limit: stringToNumber(limit),
-      cursorColumn: (cursorColumn || "id") as keyof TTable["$inferSelect"],
+      limit: limitNum,
+      cursorColumn: (cursorColumn || "id") as keyof TSelect,
       filters: this.preValidateFilterColumns(
         filters,
-        defaults.filters?.(this.table)
+        defaults.filters?.(this.table),
       ),
       search: this.preValidateSearchColumns(search, defaults.search),
       sorts: this.preValidateSortColumns(sorts, defaults.sort),
@@ -639,21 +646,22 @@ export class BaseService<
     } as typeof this._types.PaginationsConfig;
   }
 
-  validateCursorPagination(props: CursorPaginationConfig<TTable>) {
+  validateCursorPagination(props: CursorPaginationConfig<TSelect>) {
     if (props.includeTotal) {
       props.includeTotal =
         typeof props.includeTotal == "string"
           ? props.includeTotal == "true"
           : props.includeTotal;
     }
+    const limitnum = stringToNumber(props.limit);
+    const limit = limitnum && limitnum > 0 ? limitnum : null;
     const config = cursorPaginationConfigSchema.safeParse({
       cursor: (props.cursor as string) || null,
-      limit: stringToNumber(props.limit),
-      cursorColumn: (props.cursorColumn ||
-        "id") as keyof TTable["$inferSelect"],
+      limit,
+      cursorColumn: (props.cursorColumn || "id") as keyof TSelect,
       cursorDirection: (props.cursorDirection as string) || "forward",
       filters: this.validateFilterColumns(
-        this.parseIfExistAndString(props.filters)
+        this.parseIfExistAndString(props.filters),
       ),
       search: this.validateSearchColumns(props.search),
       sorts: this.validateSortColumns(props.sorts),
@@ -663,7 +671,7 @@ export class BaseService<
       return {
         error: new ValidationException(
           "Pagination Invalid params",
-          formatZodError(config.error)
+          formatZodError(config.error),
         ),
         data: null,
       };
@@ -673,16 +681,18 @@ export class BaseService<
       error: null,
     };
   }
-  validateOffsetPagination(params: OffsetPaginationConfig<TTable>) {
+  validateOffsetPagination(params: OffsetPaginationConfig<TSelect>) {
     if (params.includeTotal) {
       params.includeTotal =
         typeof params.includeTotal == "string"
           ? params.includeTotal == "true"
           : params.includeTotal;
     }
+    const limitnum = stringToNumber(params.limit);
+    const limit = limitnum && limitnum > 0 ? limitnum : null;
     const config = offsetPaginationConfigSchema.safeParse({
       page: stringToNumber(params.page) || 1,
-      limit: stringToNumber(params.limit),
+      limit,
       filters: this.validateFilterColumns(params.filters),
       search: this.validateSearchColumns(params.search),
       sorts: this.validateSortColumns(params.sorts),
@@ -692,7 +702,7 @@ export class BaseService<
       return {
         error: new ValidationException(
           "Pagination Invalid params",
-          formatZodError(config.error)
+          formatZodError(config.error),
         ),
         data: null,
       };
@@ -703,12 +713,12 @@ export class BaseService<
     };
   }
   validateFilterColumns(
-    filters: FilterCondition<TTable>[] | string | undefined
+    filters: FilterCondition<TSelect>[] | string | undefined,
   ) {
     const s = filters;
     let parsedResult = this.parseIfExistAndString(
-      s
-    ) as FilterCondition<TTable>[];
+      s,
+    ) as FilterCondition<TSelect>[];
     if (parsedResult == null) {
       return undefined;
     }
@@ -721,12 +731,12 @@ export class BaseService<
     const tableColumns = Object.keys(this.columns);
 
     return parsedResult?.filter((col) =>
-      tableColumns.includes(col.column as string)
+      tableColumns.includes(col.column as string),
     );
   }
-  validateSortColumns(sort: SortConfig<TTable>[] | string | undefined) {
+  validateSortColumns(sort: SortConfig<TSelect>[] | string | undefined) {
     const s = sort;
-    let parsedResult = this.parseIfExistAndString(s) as SortConfig<TTable>[];
+    let parsedResult = this.parseIfExistAndString(s) as SortConfig<TSelect>[];
     if (parsedResult == null) {
       return undefined;
     }
@@ -739,10 +749,10 @@ export class BaseService<
     const tableColumns = Object.keys(this.columns);
 
     return parsedResult?.filter((col) =>
-      tableColumns.includes(col.column as string)
+      tableColumns.includes(col.column as string),
     );
   }
-  validateSearchColumns(search: SearchConfig<TTable> | string | undefined) {
+  validateSearchColumns(search: SearchConfig<TSelect> | string | undefined) {
     const s = search;
     let parsedResult = this.parseIfExistAndString(s);
     if (parsedResult == null) {
@@ -761,20 +771,20 @@ export class BaseService<
     const result = {
       ...parsedResult,
       columns: parsedResult?.columns?.filter((col) =>
-        tableColumns.includes(col)
+        tableColumns.includes(col),
       ),
     };
 
     return result;
   }
   preValidateFilterColumns(
-    filters: FilterCondition<TTable>[] | string | undefined,
-    defaultfilters: FilterCondition<TTable>[] | undefined = []
+    filters: FilterCondition<TSelect>[] | string | undefined,
+    defaultfilters: FilterCondition<TSelect>[] | undefined = [],
   ) {
     const s = filters;
     let parsedResult = this.parseIfExistAndString(
-      s
-    ) as FilterCondition<TTable>[];
+      s,
+    ) as FilterCondition<TSelect>[];
     if (parsedResult == null) {
       if (defaultfilters.length > 0) {
         return defaultfilters;
@@ -799,18 +809,18 @@ export class BaseService<
         ? [...defaultfilters, ...parsedResult]
         : parsedResult;
     return newResultedArray?.filter((col) =>
-      tableColumns.includes(col.column as string)
+      tableColumns.includes(col.column as string),
     );
   }
   preValidateSortColumns(
-    sort: SortConfig<TTable>[] | string | undefined,
+    sort: SortConfig<TSelect>[] | string | undefined,
     defaultColumn?: {
-      column: keyof TTable["$inferSelect"];
+      column: keyof TSelect;
       direction?: "asc" | "desc";
-    }
+    },
   ) {
     const s = sort;
-    let parsedResult = this.parseIfExistAndString(s) as SortConfig<TTable>[];
+    let parsedResult = this.parseIfExistAndString(s) as SortConfig<TSelect>[];
     if (parsedResult == null) {
       if (defaultColumn?.column) {
         return [
@@ -818,7 +828,7 @@ export class BaseService<
             column: defaultColumn.column ? defaultColumn.column : undefined,
             direction: defaultColumn.direction || "desc",
           },
-        ] as SortConfig<TTable>[];
+        ] as SortConfig<TSelect>[];
       }
       return undefined;
     }
@@ -829,7 +839,7 @@ export class BaseService<
             column: defaultColumn?.column ? defaultColumn.column : undefined,
             direction: parsedResult,
           },
-        ] as SortConfig<TTable>[];
+        ] as SortConfig<TSelect>[];
       }
 
       return undefined;
@@ -840,12 +850,12 @@ export class BaseService<
     const tableColumns = Object.keys(this.columns);
 
     return parsedResult?.filter((col) =>
-      tableColumns.includes(col.column as string)
+      tableColumns.includes(col.column as string),
     );
   }
   preValidateSearchColumns(
-    search: SearchConfig<TTable> | string | undefined,
-    defaultColumn?: keyof TTable["$inferSelect"]
+    search: SearchConfig<TSelect> | string | undefined,
+    defaultColumn?: keyof TSelect,
   ) {
     const s = search;
     let parsedResult = this.parseIfExistAndString(s);
@@ -857,7 +867,7 @@ export class BaseService<
         ? ({
             columns: defaultColumn ? [defaultColumn] : [],
             term: parsedResult,
-          } as SearchConfig<TTable>)
+          } as SearchConfig<TSelect>)
         : null;
     }
     if ((parsedResult?.term || "")?.trim() == "") {
@@ -871,7 +881,7 @@ export class BaseService<
     return {
       ...parsedResult,
       columns: parsedResult?.columns?.filter((col) =>
-        tableColumns.includes(col)
+        tableColumns.includes(col),
       ),
     };
   }

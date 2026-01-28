@@ -1,5 +1,5 @@
 import z from 'zod'
-import { ULIDSchema } from './helper'
+import { dateSchema, ULIDSchema } from './helper'
 
 export const SelectEdgeSchema = z.object({
   id: ULIDSchema('Provide a valid Node Id'),
@@ -11,9 +11,9 @@ export const SelectEdgeSchema = z.object({
 
   userId: ULIDSchema(),
   workflowId: ULIDSchema(),
-  deleted_at: z.date().nullable().optional(),
-  updated_at: z.date(),
-  created_at: z.date(),
+  deleted_at: dateSchema.nullable().optional(),
+  updated_at: dateSchema,
+  created_at: dateSchema,
 })
 
-export const UpdateEdgeSchema = SelectEdgeSchema.optional()
+export const UpdateEdgeSchema = SelectEdgeSchema.partial()

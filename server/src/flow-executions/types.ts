@@ -11,6 +11,7 @@ export type NodeExecutorParams<TData = Record<string, unknown>> = {
   data: TData;
   nodeId: UUID;
   workflowId?: UUID;
+  credentialId?: UUID | null;
 
   context: WorkflowContext;
   step: StepTools;
@@ -19,5 +20,5 @@ export type NodeExecutorParams<TData = Record<string, unknown>> = {
 };
 
 export type NodeExecutor<TData = Record<string, unknown>> = (
-  params: NodeExecutorParams<TData>
+  params: NodeExecutorParams<TData>,
 ) => Promise<WorkflowContext>;

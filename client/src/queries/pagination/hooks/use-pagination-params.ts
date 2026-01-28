@@ -1,4 +1,7 @@
 import { PAGINATION } from '@/config/constants'
+import { FilterCondition } from '@/queries/v1/types/filter'
+import { SearchConfig } from '@/queries/v1/types/search'
+import { SortCondition } from '@/queries/v1/types/sort'
 import {
   createParser,
   parseAsBoolean,
@@ -7,13 +10,7 @@ import {
   useQueryState,
 } from 'nuqs'
 import z from 'zod'
-import {
-  CursorPaginationConfig,
-  FilterCondition,
-  OffsetPaginationConfig,
-  SearchConfig,
-  SortConfig,
-} from '../../v1/types'
+import { CursorPaginationConfig, OffsetPaginationConfig } from '../../v1/types'
 import { createPaginationParams } from '../schema'
 
 // Create a reusable parser for cursor values (string or number)
@@ -72,7 +69,7 @@ const usePaginationParams = <T extends Record<string, any>>(
     'page',
     parseAsFloat
       .withOptions({
-        history: 'push',
+        history: 'replace',
         clearOnDefault: true,
       })
       .withDefault(pageSchema.parse(PAGINATION.DEFAULT_PAGE))
@@ -87,7 +84,7 @@ const usePaginationParams = <T extends Record<string, any>>(
     'cursor',
     cursorParser
       .withOptions({
-        history: 'push',
+        history: 'replace',
         clearOnDefault: true,
       })
       .withDefault('')
@@ -103,7 +100,7 @@ const usePaginationParams = <T extends Record<string, any>>(
     'cursorDirection',
     cursorDirectionParser
       .withOptions({
-        history: 'push',
+        history: 'replace',
         clearOnDefault: true,
       })
       .withDefault(null as any)
@@ -116,16 +113,18 @@ const usePaginationParams = <T extends Record<string, any>>(
     'limit',
     parseAsFloat
       .withOptions({
-        history: 'push',
+        history: 'replace',
         clearOnDefault: true,
       })
-      .withDefault(limitSchema.parse(PAGINATION.DEFAULT_PAGE_SIZE) as number),
+      // .withDefault(limitSchema.parse(PAGINATION.DEFAULT_PAGE_SIZE) as number),
+      .withDefault(null as any),
   )
 
   /* ------------------------------
      FILTERS (common for both)
   ------------------------------ */
   const [filters, setFilters] = useQueryState<
+    // FilterCondition<T>[] | string | null
     FilterCondition<T>[] | string | null
   >(
     'filters',
@@ -140,7 +139,7 @@ const usePaginationParams = <T extends Record<string, any>>(
       return result.data
     })
       .withOptions({
-        history: 'push',
+        history: 'replace',
         clearOnDefault: true,
       })
       .withDefault(filterConfigSchema.parse(null) as any),
@@ -149,9 +148,9 @@ const usePaginationParams = <T extends Record<string, any>>(
   /* ------------------------------
      SORTS (common for both)
   ------------------------------ */
-  const [sorts, setSorts] = useQueryState<SortConfig<T>[] | string | null>(
+  const [sorts, setSorts] = useQueryState<SortCondition<T>[] | string | null>(
     'sorts',
-    parseAsJson<SortConfig<T>[] | string | null>((value) => {
+    parseAsJson<SortCondition<T>[] | string | null>((value) => {
       if (value === null || value === undefined) return null
 
       const result = sortConfigSchema.safeParse(value)
@@ -162,7 +161,7 @@ const usePaginationParams = <T extends Record<string, any>>(
       return result.data
     })
       .withOptions({
-        history: 'push',
+        history: 'replace',
         clearOnDefault: true,
       })
       .withDefault(sortConfigSchema.parse(null) as any),
@@ -181,10 +180,10 @@ const usePaginationParams = <T extends Record<string, any>>(
         console.warn('Invalid search in URL:', result.error.format())
         return null
       }
-      return result.data
+      return result.data as SearchConfig<T>
     })
       .withOptions({
-        history: 'push',
+        history: 'replace',
         clearOnDefault: true,
       })
       .withDefault(searchConfigSchema.parse(null) as any),
@@ -197,7 +196,7 @@ const usePaginationParams = <T extends Record<string, any>>(
     'includeTotal',
     parseAsBoolean
       .withOptions({
-        history: 'push',
+        history: 'replace',
         clearOnDefault: true,
       })
       .withDefault(includeTotalSchema.parse(false)),
@@ -209,7 +208,8 @@ const usePaginationParams = <T extends Record<string, any>>(
   const cursorParams: CursorPaginationConfig<T> = {
     cursor: cursor as string | number | null,
     cursorDirection: cursorDirection as 'forward' | 'backward',
-    limit: limit ?? PAGINATION.DEFAULT_PAGE_SIZE,
+    // limit: limit ?? PAGINATION.DEFAULT_PAGE_SIZE,
+    limit,
     filters,
     sorts,
     search,
@@ -222,7 +222,8 @@ const usePaginationParams = <T extends Record<string, any>>(
   ------------------------------ */
   const offsetParams: OffsetPaginationConfig<T> = {
     page: page || (PAGINATION.DEFAULT_PAGE as number),
-    limit: limit || (PAGINATION.DEFAULT_PAGE_SIZE as number),
+    // limit: limit || (PAGINATION.DEFAULT_PAGE_SIZE as number),
+    limit,
     filters,
     sorts,
     search,
@@ -242,7 +243,7 @@ const usePaginationParams = <T extends Record<string, any>>(
       setFilters(filterConfigSchema.parse(update.filters))
     if (update.sorts != null) setSorts(sortConfigSchema.parse(update.sorts))
     if (update.search != null) {
-      setSearch(searchConfigSchema.parse(update.search))
+      setSearch(searchConfigSchema.parse(update.search) as SearchConfig<T>)
     }
     if (update.includeTotal != null) setIncludeTotal(update.includeTotal)
   }
@@ -254,7 +255,7 @@ const usePaginationParams = <T extends Record<string, any>>(
       setFilters(filterConfigSchema.parse(update.filters))
     if (update.sorts != null) setSorts(sortConfigSchema.parse(update.sorts))
     if (update.search != null) {
-      setSearch(searchConfigSchema.parse(update.search))
+      setSearch(searchConfigSchema.parse(update.search) as SearchConfig<T>)
     }
 
     if (update.includeTotal !== undefined) setIncludeTotal(update.includeTotal)
@@ -317,7 +318,8 @@ const usePaginationParams = <T extends Record<string, any>>(
      RETURN BASED ON PAGINATION TYPE
   ------------------------------ */
   const common = {
-    limit: limit ?? PAGINATION.DEFAULT_PAGE_SIZE,
+    // limit: limit ?? PAGINATION.DEFAULT_PAGE_SIZE,
+    limit,
     includeTotal,
     search,
     sorts,

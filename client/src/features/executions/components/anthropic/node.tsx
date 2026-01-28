@@ -1,6 +1,8 @@
 'use client'
 
 import { AnthropicIcon } from '@/assets/icons'
+import { useUpdateNode } from '@/features/nodes/api/mutation-hooks'
+import { INode } from '@/types/Inode'
 import { Node, NodeProps, useReactFlow } from '@xyflow/react'
 import { memo, useState } from 'react'
 import useNodeStatus from '../../hooks/use-realtime-node'
@@ -17,7 +19,8 @@ type IAnthorpicNodeData = {
 type IAnthorpicNodeType = Node<IAnthorpicNodeData>
 const AnthropcNode = memo((props: NodeProps<IAnthorpicNodeType>) => {
   const [open, onOpenChange] = useState(false)
-  const { setNodes } = useReactFlow()
+  const { setNodes, getNode } = useReactFlow()
+  const { updateNode, isPending } = useUpdateNode()
 
   const nodeData = {
     ...props.data,
@@ -33,7 +36,7 @@ const AnthropcNode = memo((props: NodeProps<IAnthorpicNodeType>) => {
   })
 
   const handleOpenSettings = () => onOpenChange(true)
-  const handleSubmit = (values: AnthropicFormValues) => {
+  const handleSubmit = async (values: AnthropicFormValues) => {
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id == props.id) {
@@ -42,6 +45,16 @@ const AnthropcNode = memo((props: NodeProps<IAnthorpicNodeType>) => {
         return node
       }),
     )
+    const node = getNode(props.id) as INode
+    await updateNode({
+      ...(node || {}),
+      id: props.id,
+      credentialId: values.credentialId,
+      data: {
+        ...nodeData,
+        ...values,
+      },
+    })
   }
   return (
     <>

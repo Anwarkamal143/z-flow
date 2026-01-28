@@ -1,5 +1,5 @@
 import { publishEvent } from "@/app_inngest/channels/http-request";
-import { APP_CONFIG } from "@/config/app.config";
+import { credentialService } from "@/services/credentails.service";
 import { createAnthropic } from "@ai-sdk/anthropic"; // Correct import
 import { generateText } from "ai"; // From Vercel AI SDK
 import Handlebars from "handlebars";
@@ -15,6 +15,7 @@ type AnthropicExecutor = {
   systemPrompt?: string;
   userPrompt?: string;
   variableName: string;
+  credentialId?: string;
 };
 
 export const anthropicExecutor: NodeExecutor<AnthropicExecutor> = async ({
@@ -37,6 +38,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicExecutor> = async ({
     systemPrompt,
     model: modelName = "claude-3-5-haiku-latest",
     variableName,
+    credentialId,
   } = data;
 
   /* ---------------- Validation ---------------- */
@@ -50,13 +52,33 @@ export const anthropicExecutor: NodeExecutor<AnthropicExecutor> = async ({
       },
     });
 
+    if (!credentialId?.trim())
+      throw new NonRetriableError("Anthropic node: Credentials are missing");
+
     if (!variableName?.trim())
       throw new NonRetriableError("Anthropic node: Variable name is missing");
 
     if (!userPrompt?.trim())
       throw new NonRetriableError("Anthropic node: User prompt is missing");
   });
+  const credential = await step.run(
+    `anthropic-get-credentials-${nodeId}`,
+    async () => {
+      // Fetch and validate credentials here
+      // For example, you might fetch from a secure store or database
+      // This is a placeholder implementation
+      const credsResp = await credentialService.resolveById(credentialId!);
 
+      if (!credsResp.data?.value) {
+        throw new NonRetriableError("Anthropic node: Invalid credentials");
+      }
+
+      return credsResp.data?.value;
+    },
+  );
+  if (!credential) {
+    throw new NonRetriableError("Anthropic node: Invalid credentials");
+  }
   /* ---------------- Template Resolution ---------------- */
   const { resolvedUserPrompt, resolvedSystemPrompt } = await step.run(
     `Anthropic-template-${nodeId}`,
@@ -100,7 +122,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicExecutor> = async ({
   /* ---------------- AI Execution ---------------- */
   /* ---------------- AI Execution ---------------- */
   const anthropic = createAnthropic({
-    apiKey: APP_CONFIG.ANTHROPIC_API_KEY,
+    apiKey: credential,
   });
   const { steps } = await step.ai
     .wrap(`Anthropic-generate-${nodeId}`, generateText, {

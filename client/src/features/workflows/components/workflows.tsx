@@ -16,6 +16,7 @@ import useEntitySearch from '@/hooks/use-entity-search'
 import useUpgradeModal from '@/hooks/use-upgrade-modal'
 import { formatDateDistanceToNow } from '@/lib/date-time'
 import { useOffsetPaginationParams } from '@/queries/pagination/hooks/use-pagination-params'
+import { IWorkflow } from '@/types/Iworkflow'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useCreateWorkflow, useDeleteWorkflows } from '../api'
@@ -89,7 +90,7 @@ export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
             return router.push(`/workflows/${resp?.data?.id}`)
           }
           toast.error(resp.message || 'Failed to create workflow')
-          const res = await handleError(resp.errorCode)
+          await handleError(resp.errorCode)
         }}
         newButtonLabel='New workflow'
         disabled={disabled}

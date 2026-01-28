@@ -1,6 +1,6 @@
 import request, { API_POOL, IAxiosRequest } from '@/lib/request'
 import { IApiResponse, IBIfNotA } from '@/types/Iquery'
-import qs from 'query-string'
+import qs from 'qs'
 
 export type IRequestOptions = IAxiosRequest
 

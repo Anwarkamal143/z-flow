@@ -73,9 +73,8 @@ export class AuthMiddleware {
 
     if (!accessToken && !refreshToken) return;
 
-    const { data: accessData, isExpired } = await verifyAccessToken(
-      accessToken
-    );
+    const { data: accessData, isExpired } =
+      await verifyAccessToken(accessToken);
 
     if (isExpired) {
       const { data: refreshData } = await verifyRefreshToken(refreshToken);

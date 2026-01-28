@@ -7,12 +7,14 @@ import {
   InsertManyNodesSchema,
   InsertNode,
   InsertNodeSchema,
+  IUpdateUserNode,
+  UpdateUserNodeSchema,
 } from "@/schema/node";
 import { formatZodError } from "@/utils";
-import { ValidationException } from "@/utils/catch-errors";
+import { NotFoundException, ValidationException } from "@/utils/catch-errors";
 import { UUID } from "ulid";
 import { BaseService, ITransaction } from "./base.service";
-import { credentialservice } from "./credentails.service";
+import { nodeCredentialService } from "./node-credentials.service";
 
 export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
   constructor() {
@@ -67,6 +69,33 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     }
     return await this.create(result.data, tsx);
   }
+  async updateItem(data: IUpdateUserNode, tsx?: ITransaction) {
+    const result = UpdateUserNodeSchema.safeParse(data);
+    if (!result.success) {
+      const errors = formatZodError(result.error);
+
+      return {
+        error: new ValidationException("Validatoin error", errors),
+        data: null,
+        status: HTTPSTATUS.BAD_REQUEST,
+      };
+    }
+    const parseData = result.data;
+    const node = await nodeService.getById(parseData.id, parseData.userId);
+    if (node.error) {
+      throw node.error;
+    }
+    const { userId, ...updateData } = result.data;
+    const item = await this.update(
+      (t) => eq(t.id, updateData.id),
+      updateData,
+      tsx,
+    );
+    if (item.error) {
+      return item;
+    }
+    return { data: item.data[0], error: null };
+  }
   async createItems(data: InsertNode[], tsx?: ITransaction) {
     const result = InsertManyNodesSchema.safeParse(data);
     if (!result.success) {
@@ -78,9 +107,51 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
         status: HTTPSTATUS.BAD_REQUEST,
       };
     }
-    return await this.createMany(result.data, tsx);
-  }
+    const resp = await this.createMany(result.data, tsx);
+    if (resp.error) {
+      return resp;
+    }
+    const nodeCredentials = resp.data
+      .filter((n) => n.credentialId || n.data?.credentialId)
+      .map((n) => ({
+        nodeId: n.id,
+        credentialId: (n.data?.credentialId || n.credentialId!) as string,
+        userId: n.userId,
+      }));
+    await nodeCredentialService.createManyNodeCredential(nodeCredentials, tsx);
 
+    return resp;
+  }
+  async getById(id: string, userId: string) {
+    if (!id) {
+      return {
+        error: new ValidationException("id is required", [
+          { path: "id", message: "id is required" },
+        ]),
+        data: null,
+      };
+    }
+    if (!userId) {
+      return {
+        error: new ValidationException("userId is required", [
+          { path: "userId", message: "userId is required" },
+        ]),
+        data: null,
+      };
+    }
+    const res = await this.findOne((t) => eq(t.id, id));
+
+    if (!res.data)
+      return {
+        error: new NotFoundException("Node not found"),
+        data: null,
+      };
+
+    return {
+      data: res.data,
+      error: null,
+    };
+  }
   async populateNodes(workflowIds: UUID[]) {
     const nodesResp = await nodeService.findMany((table) =>
       inArray(table.workflowId, workflowIds),
@@ -108,12 +179,7 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     if (!nodesResp.data) {
       return {};
     }
-    const filteredIds = nodesResp.data.filter(
-      (nc) => nc.credentialId != null && nc.credentialId != "",
-    );
-    const nodeSecrets = await credentialservice.resolveByIds(
-      filteredIds.map((n) => n.credentialId) as string[],
-    );
+
     return nodesResp.data?.reduce(
       (acc, node) => {
         if (!node || !node.workflowId) return acc;

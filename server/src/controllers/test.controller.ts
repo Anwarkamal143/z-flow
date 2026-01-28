@@ -1,5 +1,7 @@
-import { credentialservice } from "@/services/credentails.service";
+import { CredentialType } from "@/db";
+import { credentialService } from "@/services/credentails.service";
 import { FastifyReply, FastifyRequest } from "fastify";
+import { generateSlug } from "random-word-slugs";
 
 class InngestController {
   /**
@@ -8,10 +10,11 @@ class InngestController {
   public async testPoint(_req: FastifyRequest, rep: FastifyReply) {
     try {
       const body = _req.body as Record<string, any>;
-      const data = await credentialservice.createCredentail({
+      const data = await credentialService.createCredentail({
         userId: body.userId,
-        secret: body.secret,
-        type: "anthropic",
+        value: body.secret,
+        type: CredentialType.ANTHROPIC,
+        name: body.name || generateSlug(),
       });
       console.log(data, "response");
       rep.status(200).send(data.data);
@@ -23,7 +26,7 @@ class InngestController {
   public async testPoint2(_req: FastifyRequest, rep: FastifyReply) {
     try {
       const query = _req.query as Record<string, any>;
-      const data = await credentialservice.resolveById(query.id);
+      const data = await credentialService.resolveById(query.id);
       console.log(data, "response");
       rep.status(200).send(data.data);
     } catch (error) {

@@ -6,7 +6,9 @@ import AppError from "@/utils/app-error";
 import { SuccessResponse } from "@/utils/requestResponse";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import authRoutes from "./v1/auth.route";
+import credentialRoutes from "./v1/credential.route";
 import inngestRoutes from "./v1/inngest.route";
+import nodeRoutes from "./v1/node.route";
 import paymentRoutes from "./v1/payments";
 import socialRoutes from "./v1/social.route";
 import testRoutes from "./v1/test.route";
@@ -29,6 +31,8 @@ async function v1RoutesV1(fastify: FastifyInstance) {
       instance.register(inngestRoutes, { prefix: "/inngest" });
       instance.register(paymentRoutes, { prefix: "/payments" });
       instance.register(workflowRoutes, { prefix: "/workflows" });
+      instance.register(nodeRoutes, { prefix: "/nodes" });
+      instance.register(credentialRoutes, { prefix: "/creds" });
       // webhooks
       // healthcheck
 

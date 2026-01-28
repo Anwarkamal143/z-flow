@@ -68,3 +68,6 @@ type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never
 type ExtractHookOptions<T> = T extends (...args: any) => any
   ? ExtractHookParams<T>[0]
   : never
+type NonNullableProps<T> = {
+  [K in keyof T]-?: NonNullable<T[K]>
+}

@@ -14,7 +14,7 @@ export class PolarMiddleware {
   // --------- AUTH REQUIRED ----------
   checkAndCreatePolarCustomer = async (
     request: FastifyRequest,
-    rep: FastifyReply
+    rep: FastifyReply,
   ) => {
     const user = request.user;
     if (!user?.id) {
@@ -36,7 +36,7 @@ export class PolarMiddleware {
             name: data.name,
             billingAddress: billingAddress?.data,
           },
-          user.id
+          user.id,
         );
       if (polarCustomer.error) {
         throw polarCustomer.error;
@@ -49,9 +49,8 @@ export class PolarMiddleware {
       return;
     }
     const polarCustomer = await customerService.getPolarCustomerByExternalId(
-      user.id
+      user.id,
     );
-    console.log(polarCustomer, "polar customer");
     if (polarCustomer.error) {
       throw polarCustomer.error;
     }
@@ -73,7 +72,7 @@ export class PolarMiddleware {
 
     const polarCustomer =
       await customerService.getPolarCustomerActiveSubscription(
-        data.polar_customer_id
+        data.polar_customer_id,
       );
     if (polarCustomer.error) {
       throw new ForbiddenException("Active subscription required");

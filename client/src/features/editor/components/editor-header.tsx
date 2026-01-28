@@ -45,7 +45,6 @@ export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
     if (resp.success) {
       toast.success(`Workflow "${activeWorkflow?.name}" saved`)
     }
-    console.log(resp, 'resp')
   }
   return (
     <div className='ml-auto'>
@@ -84,7 +83,7 @@ export const EditorNameInput = () => {
     }
   }, [isEditing])
   const handleSave = async () => {
-    if (name === workflowName && !isPending) {
+    if (name == workflowName && !isPending) {
       setIsEditing(false)
       return
     }
@@ -109,6 +108,7 @@ export const EditorNameInput = () => {
     return (
       <BreadcrumbItem>
         <InputComponent
+          type='text'
           className='h-7'
           ref={inputRef}
           value={name}

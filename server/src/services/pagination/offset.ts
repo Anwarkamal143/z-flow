@@ -1,16 +1,17 @@
 import { stringToNumber } from "@/utils";
 import { buildPaginationMetaForOffset } from "@/utils/api";
+import { InferSelectModel } from "drizzle-orm";
 import { AnyPgTable } from "drizzle-orm/pg-core";
 import { BasePagination } from "./base";
 import { OffsetPaginationConfig, OffsetPaginationResult } from "./types";
 
 export class OffsetPagination<T extends AnyPgTable> extends BasePagination<T> {
-  async paginate<Result = T["$inferSelect"]>(
-    config: OffsetPaginationConfig<T>
+  async paginate<Result = InferSelectModel<T>>(
+    config: OffsetPaginationConfig<InferSelectModel<T>>,
   ): Promise<OffsetPaginationResult<Result>> {
     const whereClause = this.builder.buildWhereClause(
       config.filters,
-      config.search
+      config.search,
     );
     const orderByClause = this.builder.buildOrderByClause(config.sorts);
 
@@ -28,8 +29,9 @@ export class OffsetPagination<T extends AnyPgTable> extends BasePagination<T> {
     if (orderByClause) {
       query.orderBy(orderByClause);
     }
-    const limitNum =
+    const numLimit =
       config.limit != null ? stringToNumber(config.limit) : undefined;
+    const limitNum = numLimit && numLimit > 0 ? numLimit : undefined;
     if (limitNum != null) {
       // Apply pagination
       const offset = (config.page - 1) * limitNum;
@@ -52,7 +54,7 @@ export class OffsetPagination<T extends AnyPgTable> extends BasePagination<T> {
       totalPages = Math.ceil(totalItems / limitNum);
     }
     const hasNextPage =
-      config.page < totalPages || items.length > (limitNum || 0);
+      config.page < totalPages || (limitNum != null && items.length > limitNum);
     // const hasPreviousPage = config.page > 1;
     const newItems =
       limitNum && items.length > limitNum ? items.slice(0, -1) : items;

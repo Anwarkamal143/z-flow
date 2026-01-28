@@ -3,20 +3,20 @@ import pluralize from "pluralize";
 import { ulid } from "ulid";
 import z from "zod";
 export const stringToNumber = (
-  strNumber?: string | number | null
+  strNumber?: string | number | null,
 ): number | undefined => {
   if (strNumber === null || strNumber === undefined) return undefined;
 
   // Handle number input
-  if (typeof strNumber === "number") {
+  if (typeof strNumber == "number") {
     return isNaN(strNumber) ? undefined : strNumber;
   }
 
   // Handle string input
-  if (typeof strNumber !== "string") return undefined;
+  if (typeof strNumber != "string") return undefined;
 
   const trimmed = strNumber.trim();
-  if (trimmed === "") return undefined;
+  if (trimmed == "") return undefined;
 
   // Use Number() for more predictable parsing
   // Or use parseFloat() for more permissive parsing
@@ -105,7 +105,7 @@ export function parseAndNormalizeUrl(input) {
     const url = new URL(
       trimmed.startsWith("http://") || trimmed.startsWith("https://")
         ? trimmed
-        : `https://${trimmed}`
+        : `https://${trimmed}`,
     );
 
     // Allow only http/https

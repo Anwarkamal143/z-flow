@@ -15,6 +15,11 @@ import { useEffect } from 'react'
 import z from 'zod'
 
 import SelectComp from '@/components/form/select'
+import { CredentialType } from '@/config/enums'
+import {
+  credentialFilters,
+  useSuspenseCredentialsList,
+} from '@/features/credentials/api/query-hooks'
 import { GOOGLE_GENERATIVE_AI_MODELS } from './utils'
 const ModelOptions = GOOGLE_GENERATIVE_AI_MODELS.map((m) => ({
   value: m,
@@ -27,6 +32,7 @@ const formSchema = z.object({
   ]),
   systemPropmt: z.string().optional(),
   userPrompt: z.string().min(1, { error: 'User Prompt is required' }),
+  credentialId: z.string().min(1, { error: 'Credential is required' }),
 
   variableName: z
     .string()
@@ -49,6 +55,12 @@ export const isKnownGeminiModel = (model: string): boolean =>
     model as (typeof GOOGLE_GENERATIVE_AI_MODELS)[number],
   )
 const GeminiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
+  const { data: geminiCredsOptions, isLoading } = useSuspenseCredentialsList({
+    params: {
+      filters: [credentialFilters.type.eq(CredentialType.GEMINI)],
+    },
+  })
+
   const formDefaultValues: GeminiFormValues = {
     ...defaultValues,
 
@@ -56,6 +68,7 @@ const GeminiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
     model: defaultValues.model || GOOGLE_GENERATIVE_AI_MODELS[18],
     systemPropmt: defaultValues.systemPropmt || '',
     userPrompt: defaultValues.userPrompt || '',
+    credentialId: defaultValues.credentialId || '',
   }
   const form = useZodForm({
     schema: formSchema,
@@ -79,6 +92,7 @@ const GeminiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
     defaultValues.systemPropmt,
     defaultValues.model,
     defaultValues.variableName,
+    defaultValues.credentialId,
   ])
 
   const handleSubmit = (values: GeminiFormValues) => {
@@ -86,9 +100,13 @@ const GeminiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
     rest.onOpenChange(false)
     form.reset()
   }
+  const credentialOptions = geminiCredsOptions?.items.map((cred) => ({
+    value: cred.id as string,
+    label: cred.name,
+  }))
   return (
     <Dialog {...rest}>
-      <DialogContent>
+      <DialogContent className='max-h-10/12 overflow-auto'>
         <DialogHeader>
           <DialogTitle>Gemini</DialogTitle>
           <DialogDescription>
@@ -108,11 +126,26 @@ const GeminiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
             // key={vaules.variableName}
           />
           <SelectComp
+            placeholder={'Select a Credential'}
+            name='credentialId'
+            options={credentialOptions || []}
+            label='Credential'
+            helperText='The credential to use for this request'
+            disabled={isLoading}
+          />
+          <SelectComp
             placeholder={'Select a Model'}
             name='model'
             options={ModelOptions}
             label='Model'
             helperText='The HTTP method use for this request'
+          />
+          <SelectComp
+            placeholder={'Select a Model'}
+            name='model'
+            options={ModelOptions}
+            label='Model'
+            helperText='The Model use for this request'
           />
 
           <FormInput

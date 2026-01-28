@@ -40,6 +40,7 @@ export default inngest.createFunction(
       context = await executor({
         data: node.data as Record<string, unknown>,
         nodeId: node.id,
+        credentialId: node.credentialId,
         context,
         step,
         workflowId,

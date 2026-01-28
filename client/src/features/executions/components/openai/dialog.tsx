@@ -15,6 +15,11 @@ import { useEffect } from 'react'
 import z from 'zod'
 
 import SelectComp from '@/components/form/select'
+import { CredentialType } from '@/config/enums'
+import {
+  credentialFilters,
+  useSuspenseCredentialsList,
+} from '@/features/credentials/api/query-hooks'
 import { OPENAI_CHAT_MODELS } from './utils'
 const ModelOptions = OPENAI_CHAT_MODELS.map((m) => ({
   value: m,
@@ -27,7 +32,7 @@ const formSchema = z.object({
   ]),
   systemPropmt: z.string().optional(),
   userPrompt: z.string().min(1, { error: 'User Prompt is required' }),
-
+  credentialId: z.string().min(1, { error: 'Credential is required' }),
   variableName: z
     .string()
     .min(1, { error: 'Variable name is required' })
@@ -46,6 +51,11 @@ type Props = {
 }
 
 const OpenaiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
+  const { data: openaiCredsOptions, isLoading } = useSuspenseCredentialsList({
+    params: {
+      filters: [credentialFilters.type.eq(CredentialType.OPENAI)],
+    },
+  })
   const formDefaultValues: OpenAiFormValues = {
     ...defaultValues,
 
@@ -53,6 +63,7 @@ const OpenaiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
     model: defaultValues.model || OPENAI_CHAT_MODELS[25],
     systemPropmt: defaultValues.systemPropmt || '',
     userPrompt: defaultValues.userPrompt || '',
+    credentialId: defaultValues.credentialId || '',
   }
   const form = useZodForm({
     schema: formSchema,
@@ -80,13 +91,17 @@ const OpenaiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
 
   const handleSubmit = (values: OpenAiFormValues) => {
     onSubmit(values)
+
     rest.onOpenChange(false)
     form.reset()
   }
-  const formValues = form.getValues()
+  const credentialOptions = openaiCredsOptions?.items.map((cred) => ({
+    value: cred.id as string,
+    label: cred.name,
+  }))
   return (
     <Dialog {...rest}>
-      <DialogContent>
+      <DialogContent className='max-h-10/12 overflow-auto'>
         <DialogHeader>
           <DialogTitle>OpenAI</DialogTitle>
           <DialogDescription>
@@ -104,6 +119,14 @@ const OpenaiDialog = ({ defaultValues = {}, onSubmit, ...rest }: Props) => {
             placeholder='myOpenai'
             helperText={`Use this name to refrence the result in other nodes: {{${data.variableName || 'myApiCall'}.text}}`}
             // key={vaules.variableName}
+          />
+          <SelectComp
+            placeholder={'Select a Credential'}
+            name='credentialId'
+            options={credentialOptions || []}
+            label='Credential'
+            helperText='The credential to use for this request'
+            disabled={isLoading}
           />
           <SelectComp
             placeholder={'Select a Model'}

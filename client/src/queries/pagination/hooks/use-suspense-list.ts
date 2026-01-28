@@ -139,7 +139,7 @@ export function useSuspensePagination<
         cursorConfig.setParams(update)
       }
     }
-  }, [props?.params])
+  }, [limit, filters, sorts, search, includeTotal])
 
   // Navigation functions
   const fetchNext = () => {
@@ -321,7 +321,7 @@ export function useSuspnseOffsetPagination<
         setUrlParams(update)
       }
     }
-  }, [props?.params, setUrlParams])
+  }, [page, limit, includeTotal, setUrlParams])
 
   // Navigation functions
   const fetchNextPage = (p = page) => {
@@ -486,7 +486,7 @@ export function useSuspenseCursorPagination<
         setUrlParams(update)
       }
     }
-  }, [props?.params, setUrlParams])
+  }, [limit, cursor, cursorDirection, setUrlParams])
 
   // Navigation functions
   const fetchNext = () => {

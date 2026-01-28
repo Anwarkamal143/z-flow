@@ -20,6 +20,7 @@ export const UpdateWorkflowWithNodesEdgesSchema = z.object({
       type: z.string().nullish(),
       position: PositionSchema,
       data: z.record(z.string(), z.any()).optional(),
+      credentialId: ULIDSchema('Invalid Credential Id').nullish(),
     }),
   ),
   edges: z.array(UpdateWorkflowEdgeSchema),

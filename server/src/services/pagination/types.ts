@@ -1,13 +1,14 @@
 import AppError from "@/utils/app-error";
+import { InferSelectModel } from "drizzle-orm";
 import { AnyPgTable, PgColumn } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
+export type Table = AnyPgTable;
 export type IPaginationType = "cursor" | "offset";
 // Base types
 export type Column = PgColumn;
-export type Table = AnyPgTable;
 export type SortDirection = "asc" | "desc";
-
+type ITableSelectType = InferSelectModel<Table>;
 // Filter operators
 export type FilterOperator =
   | "eq"
@@ -25,26 +26,26 @@ export type FilterOperator =
   | "between"
   | "notBetween";
 
-export interface FilterCondition<T extends Table> {
-  column: keyof T["$inferSelect"];
+export interface FilterCondition<T extends ITableSelectType> {
+  column: keyof T;
   operator: FilterOperator;
   value: any;
 }
 
-export interface SortConfig<T extends Table> {
-  column: keyof T["$inferSelect"];
+export interface SortConfig<T extends ITableSelectType> {
+  column: keyof T;
   direction: SortDirection;
   nulls?: "first" | "last";
 }
 
-export interface SearchConfig<T extends Table> {
-  columns: Array<keyof T["$inferSelect"]>;
+export interface SearchConfig<T extends ITableSelectType> {
+  columns: Array<keyof T>;
   term: string;
   mode?: "any" | "all" | "phrase";
 }
 
 // Pagination base config
-export interface BasePaginationConfig<T extends Table> {
+export interface BasePaginationConfig<T extends ITableSelectType> {
   filters?: FilterCondition<T>[];
   search?: SearchConfig<T>;
   sorts?: SortConfig<T>[];
@@ -52,25 +53,28 @@ export interface BasePaginationConfig<T extends Table> {
 }
 
 // Offset pagination config
-export interface OffsetPaginationConfig<T extends Table>
-  extends BasePaginationConfig<T> {
+export interface OffsetPaginationConfig<
+  T extends ITableSelectType,
+> extends BasePaginationConfig<T> {
   page: number;
   limit?: number | null;
 }
 
 // Cursor pagination config
-export interface CursorPaginationConfig<T extends Table>
-  extends BasePaginationConfig<T> {
+export interface CursorPaginationConfig<
+  T extends ITableSelectType,
+> extends BasePaginationConfig<T> {
   cursor?: string | null;
   limit?: number | null;
-  cursorColumn: keyof T["$inferSelect"];
+  cursorColumn: keyof T;
   cursorDirection?: "forward" | "backward";
 }
-export type PaginationsConfig<T extends Table> = BasePaginationConfig<T> &
-  (
-    | (CursorPaginationConfig<T> & { mode: "cursor" })
-    | (OffsetPaginationConfig<T> & { mode: "offset" })
-  );
+export type PaginationsConfig<T extends ITableSelectType> =
+  BasePaginationConfig<T> &
+    (
+      | (CursorPaginationConfig<T> & { mode: "cursor" })
+      | (OffsetPaginationConfig<T> & { mode: "offset" })
+    );
 export type IPaginationMeta = {
   isFirst?: boolean;
   isLast?: boolean;

@@ -9,6 +9,7 @@ import {
   IApiResponse,
   IPaginatedReturnType,
   IPaginationMeta,
+  NonNullableProps,
   ReturnModelType,
 } from '@/types/Iquery'
 import {
@@ -44,6 +45,9 @@ import {
   ReturnModel,
   SingleQueryOptions,
 } from './types'
+import { createFilter } from './types/filter'
+import { createSearch } from './types/search'
+import { createSorts } from './types/sort'
 
 /* -----------------------
    Enhanced Utility Functions
@@ -114,6 +118,7 @@ const filterSuspenseOptions = <T extends Record<string, any> | undefined>(
   const { enabled, placeholderData, ...rest } = opts
   return rest
 }
+type EnsureRecord<T> = T extends Record<string, any> ? T : Record<string, any>
 
 /* -----------------------
    CRUD Client Factory
@@ -124,19 +129,21 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   opts?: CrudFactoryOptions<TParams>,
 ) {
   const queryClient = getQueryClient()
-
+  const filters = createFilter<Partial<TEntity>>()
+  const sorts = createSorts<Partial<TEntity>>()
+  const search = createSearch<Partial<TEntity>>()
   const mergeParams = <T = Record<string, any>>(
     ...paramSets: (QueryParams<T> | undefined)[]
   ): QueryParams<T> => {
     const validParams = paramSets.filter(
-      (p): p is QueryParams<T> => p !== undefined,
+      (p): p is QueryParams<T> => p != undefined,
     )
     return validParams.reduce(
       (result, params) => deepMerge(result || {}, params || {}),
       opts?.defaultParams || {},
     ) as QueryParams<T>
   }
-  const validateFilters = <T extends Record<string, any>>({
+  const validateFilters = <T>({
     search,
     filters,
     sorts,
@@ -145,17 +152,18 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     if (search) {
       let searchKeys = searchSchema.parse(search)
       searchKeys =
-        typeof searchKeys == 'object' ? JSON.stringify(searchKeys) : searchKeys
+        // typeof searchKeys == 'object' ? JSON.stringify(searchKeys) : searchKeys
+        searchKeys
       if (searchKeys) {
         filtersObject['search'] = searchKeys
       }
     }
     if (filters) {
       let filtersKeys = filterSchema.parse(filters)
-      filtersKeys =
-        typeof filtersKeys == 'object'
-          ? JSON.stringify(filtersKeys)
-          : filtersKeys
+      filtersKeys = filtersKeys
+      // typeof filtersKeys == 'object'
+      //   ? JSON.stringify(filtersKeys)
+      //   : filtersKeys
       if (filtersKeys) {
         filtersObject['filters'] = filtersKeys
       }
@@ -163,13 +171,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     if (filters) {
       let sortKeys = sortSchema.parse(sorts)
       sortKeys =
-        typeof sortKeys == 'object' ? JSON.stringify(sortKeys) : sortKeys
+        // typeof sortKeys == 'object' ? JSON.stringify(sortKeys) : sortKeys
+        sortKeys
       if (sortKeys) {
         filtersObject['sorts'] = sortKeys
       }
     }
 
-    return Object.keys(filtersObject).length > 0 ? filtersObject : null
+    return Object.keys(filtersObject).length > 0 ? filtersObject : {}
   }
   // ---------- Enhanced Raw API Methods ----------
 
@@ -181,9 +190,10 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     params?: QueryParams<ReturnModel<TEntity, T>>
     onSuccess?: (data: IPaginatedReturnType<ReturnModel<TEntity, T>[]>) => void
   }): Promise<IPaginatedReturnType<ReturnModel<TEntity, T>[]>> => {
+    type IModel = ReturnModel<TEntity, T>
     const { isEnabled, sorts, search, filters, ...mergedParams } =
-      mergeParams<ReturnModel<TEntity, T>>(params)
-    const validateParams = validateFilters<any>({ search, filters, sorts })
+      mergeParams<IModel>(params)
+    const validateParams = validateFilters({ search, filters, sorts })
     const mergedRequestOptions = mergeRequestOptions(
       {
         params: {
@@ -194,9 +204,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       options?.requestOptions,
     )
 
-    const response = await model.list<
-      IPaginatedReturnType<ReturnModel<TEntity, T>[]>
-    >({
+    const response = await model.list<IPaginatedReturnType<IModel[]>>({
       path: options?.path,
       query: options?.query, // Now query type matches params type
       requestOptions: {
@@ -211,7 +219,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       onSuccess?.(response.data)
     }
 
-    return response.data as IPaginatedReturnType<ReturnModel<TEntity, T>[]>
+    return response.data as IPaginatedReturnType<IModel[]>
   }
 
   const getRaw = async <T = TEntity>({
@@ -229,7 +237,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     const { isEnabled, sorts, filters, search, ...mergedParams } =
       mergeParams<T>(params, rest?.requestOptions?.params)
 
-    const validateParams = validateFilters<any>({ search, filters, sorts })
+    const validateParams = validateFilters({ search, filters, sorts })
     const mergedRequestOptions = mergeRequestOptions(
       {
         params: {
@@ -378,17 +386,17 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     callOptions?: IListCallOptions<ReturnModel<TEntity, Entity>, S, Mode>,
     isSuspense: S = false as S,
   ) => {
-    const params = mergeParams(callOptions?.params) as OffsetPaginationConfig<
-      ReturnModel<TEntity, Entity>
-    >
-    const validateParams = validateFilters<any>({
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as OffsetPaginationConfig<ReturnModel<TEntity, Entity>>
+    const validateParams = validateFilters({
       search: params.search,
       filters: params.filters,
       sorts: params.sorts,
     })
     const { isEnabled = true } = callOptions || {}
     const useHook = createQueryHook(isSuspense)
-
     return useHook({
       queryKey: buildQueryKey(
         params.entity,
@@ -425,26 +433,29 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>, S>,
     isSuspense: S = false as S,
   ) => {
-    const params = mergeParams(callOptions?.params) as CursorPaginationConfig<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
+
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as CursorPaginationConfig<IModel>
     const { isEnabled = true } = callOptions || {}
 
-    const validateParams = validateFilters<any>({
+    const validateParams = validateFilters({
       search: params.search,
       filters: params.filters,
       sorts: params.sorts,
     })
     const useHook = createInfiniteQueryHook(isSuspense)
 
-    const select = (data: InfiniteListData<ReturnModel<TEntity, Entity>[]>) => {
+    const select = (data: InfiniteListData<IModel[]>) => {
       const items = data.pages.flatMap((page) => page.items || [])
       const paginationMeta =
         data.pages.length > 0
           ? data.pages[data.pages.length - 1].pagination_meta
           : getEmptyPaginationMeta({ limit: params.limit })
 
-      const result: ListReturnType<ReturnModel<TEntity, Entity>[]> = {
+      const result: ListReturnType<IModel[]> = {
         pagination_meta: paginationMeta,
         items,
         pageParams: data.pageParams,
@@ -491,26 +502,29 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   // ---------- Single Entity Hooks ----------
 
   const useGetEntity = <Entity = TEntity, S extends boolean = false>(
-    callOptions?: SingleQueryOptions<ReturnModel<TEntity, Entity>, S>,
+    callOptions: SingleQueryOptions<ReturnModel<TEntity, Entity>, S> = {},
     isSuspense: S = false as S,
   ) => {
-    const params = mergeParams(callOptions?.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as QueryParams<IModel>
     const { isEnabled = true } = callOptions || {}
 
     const { entity } = params
 
-    const validateParams = validateFilters<any>({
+    const validateParams = validateFilters({
       search: params.search,
       filters: params.filters,
       sorts: params.sorts,
     })
     const { id } = { ...params, ...callOptions }
     const useHook = createQueryHook(isSuspense)
-    const queryoptions = filterSuspenseOptions<
-      SingleQueryOptions<ReturnModel<TEntity, Entity>, S>['queryOptions']
-    >(callOptions?.queryOptions, isSuspense)
+    const queryoptions = filterSuspenseOptions<typeof callOptions.queryOptions>(
+      callOptions?.queryOptions,
+      isSuspense,
+    )
     return useHook({
       queryKey: buildQueryKey(
         entity,
@@ -526,7 +540,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         // if (id == null) throw new Error("ID is required for useGet");
         if (isSuspense && !isEnabled) return
 
-        const response = await getRaw<ReturnModel<TEntity, Entity>>({
+        const response = await getRaw<IModel>({
           id: (id as Id) || '',
           params: { ...params, ...(validateParams ? validateParams : {}) },
           ...(callOptions?.options || {}),
@@ -544,12 +558,15 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   }
 
   const useGetEntities = <Entity = TEntity, S extends boolean = false>(
-    callOptions?: MultiQueryOptions<TEntity, Entity, S>,
+    callOptions?: MultiQueryOptions<ReturnModel<TEntity, Entity>, S>,
     isSuspense: S = false as S,
   ) => {
-    const params = mergeParams(callOptions?.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
+
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as QueryParams<IModel>
     const {
       ids = [],
       queryKey = [],
@@ -557,7 +574,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       isEnabled = true,
     } = callOptions || {}
     const queryoptions = filterSuspenseOptions<
-      MultiQueryOptions<TEntity, Entity, S>['queryOptions']
+      MultiQueryOptions<IModel, S>['queryOptions']
     >(queryOptions, isSuspense)
 
     const useHook = createQueriesHook(isSuspense)
@@ -568,7 +585,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           queryKey: buildQueryKey(params.entity, 'get', id, ...queryKey),
           queryFn: async () => {
             if (id) {
-              const res = await getRaw<ReturnModel<TEntity, Entity>>({
+              const res = await getRaw<IModel>({
                 id,
                 params,
                 ...(callOptions?.options || {}),
@@ -603,9 +620,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const useCreate = <Entity = TEntity, TVars = Partial<TEntity>>(
     callOptions?: MutationCallOptions<ReturnModel<TEntity, Entity>, TVars>,
   ) => {
-    const params = mergeParams(callOptions?.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
+
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as QueryParams<IModel>
     const mutate = useMutation({
       mutationFn: (payload: TVars) =>
         createRaw({
@@ -706,12 +726,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       async (
         variables: TVars,
         options?:
-          | MutateOptions<
-              IApiResponse<ReturnModelType<TEntity, Entity>>,
-              DefaultError,
-              TVars,
-              unknown
-            >
+          | MutateOptions<IApiResponse<IModel>, DefaultError, TVars, unknown>
           | undefined,
       ) => {
         const res = await mutate.mutateAsync(variables, options)
@@ -730,9 +745,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       { id: Id; data: TVars }
     >,
   ) => {
-    const params = mergeParams(callOptions?.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
+
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as QueryParams<IModel>
     const mutate = useMutation({
       mutationFn: ({ id, data }: { id: Id; data: TVars }) =>
         updateRaw({
@@ -809,7 +827,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         },
         options?:
           | MutateOptions<
-              IApiResponse<ReturnModel<TEntity, Entity>>,
+              IApiResponse<IModel>,
               DefaultError,
               {
                 id: Id
@@ -907,11 +925,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   >(
     callOptions?: IListCallOptions<ReturnModel<TEntity, Entity>, false, Mode>,
   ) => {
-    const params = mergeParams(callOptions?.params) as OffsetPaginationConfig<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
 
-    const validateParams = validateFilters<any>({
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as OffsetPaginationConfig<IModel>
+
+    const validateParams = validateFilters({
       search: params.search,
       filters: params.filters,
       sorts: params.sorts,
@@ -953,11 +974,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const prefetchGet = <Entity = TEntity>(
     callOptions: SingleQueryOptions<ReturnModelType<TEntity, Entity>, false>,
   ) => {
-    const params = mergeParams(callOptions?.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
 
-    const validateParams = validateFilters<any>({
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as QueryParams<IModel>
+
+    const validateParams = validateFilters({
       search: params.search,
       filters: params.filters,
       sorts: params.sorts,
@@ -973,7 +997,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         validateParams?.filters,
       ),
       queryFn: async ({ signal }) => {
-        const response = await getRaw<ReturnModel<TEntity, Entity>>({
+        const response = await getRaw<IModel>({
           id: callOptions.id as Id,
           params: {
             ...params,
@@ -996,11 +1020,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const prefetchInfiniteList = <Entity = TEntity>(
     callOptions?: CursorCallOptions<ReturnModel<TEntity, Entity>, false>,
   ) => {
-    const params = mergeParams(callOptions?.params) as CursorPaginationConfig<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
 
-    const validateParams = validateFilters<any>({
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as CursorPaginationConfig<IModel>
+
+    const validateParams = validateFilters({
       search: params.search,
       filters: params.filters,
       sorts: params.sorts,
@@ -1030,19 +1057,23 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         })
       },
       initialPageParam: params.cursor,
-      getNextPageParam: (
-        lastPage: ApiHooksResp<ReturnModel<TEntity, Entity>[]>,
-      ) => lastPage.pagination_meta?.next || undefined,
+      getNextPageParam: (lastPage: ApiHooksResp<IModel[]>) =>
+        lastPage.pagination_meta?.next || undefined,
       ...(callOptions?.infiniteOptions || {}),
     })
   }
 
   const prefetchGetMany = <Entity = TEntity>(
-    callOptions: MultiQueryOptions<TEntity, Entity, false> & { ids: Id[] },
+    callOptions: MultiQueryOptions<ReturnModel<TEntity, Entity>, false> & {
+      ids: Id[]
+    },
   ) => {
-    const params = mergeParams(callOptions.params) as QueryParams<
-      ReturnModel<TEntity, Entity>
-    >
+    type IModel = ReturnModel<TEntity, Entity>
+
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as QueryParams<IModel>
     const { ids = [] } = callOptions || {}
 
     ids.forEach((id) =>
@@ -1054,7 +1085,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
           'get',
         ),
         queryFn: async ({ signal }) => {
-          const response = await getRaw<ReturnModel<TEntity, Entity>>({
+          const response = await getRaw<IModel>({
             id,
             params,
             ...(callOptions?.options || {}),
@@ -1171,11 +1202,11 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   ) => useGetEntity(opts)
 
   const useSuspenseGetMany = <Entity = TEntity>(
-    opts?: MultiQueryOptions<TEntity, Entity, true>,
+    opts?: MultiQueryOptions<ReturnModel<TEntity, Entity>, true>,
   ) => useGetEntities(opts, true)
 
   const useGetMany = <Entity = TEntity>(
-    opts?: MultiQueryOptions<TEntity, Entity>,
+    opts?: MultiQueryOptions<ReturnModel<TEntity, Entity>>,
   ) => useGetEntities(opts)
 
   // ---------- Public API ----------
@@ -1239,5 +1270,8 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     deleteOptions,
     Entity,
     TEntity,
+    filters: filters as NonNullableProps<typeof filters>,
+    sorts: sorts as NonNullableProps<typeof sorts>,
+    search: search as NonNullableProps<typeof search>,
   }
 }

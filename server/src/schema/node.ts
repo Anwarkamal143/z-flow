@@ -6,7 +6,14 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 import z from "zod";
+import { ULIDSchema } from "./helper";
 export const UpdateNodeSchema = createUpdateSchema(nodes);
+export const UpdateUserNodeSchema = createUpdateSchema(nodes)
+  .omit({ created_at: true, updated_at: true })
+  .extend({
+    id: ULIDSchema("Provide a valid Id"),
+    userId: ULIDSchema("Provide a valid UserId"),
+  });
 
 export const InsertNodeSchema = createInsertSchema(nodes);
 export const InsertManyNodesSchema = z
@@ -16,3 +23,4 @@ export const SelectNodeschema = createSelectSchema(nodes);
 export type InsertNode = InferInsertModel<typeof nodes>;
 export type INode = InferSelectModel<typeof nodes>;
 export type UpdateNode = z.infer<typeof UpdateNodeSchema>;
+export type IUpdateUserNode = z.infer<typeof UpdateUserNodeSchema>;

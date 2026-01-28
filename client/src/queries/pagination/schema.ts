@@ -1,7 +1,7 @@
 import { PAGINATION } from '@/config/constants'
 import { isNotEmpty } from '@/lib'
 import { z } from 'zod'
-import { FilterOperator, FilterOperatorEnum } from '../v1/types'
+import { FilterOperator, FilterOperatorEnum } from '../v1/types/filter'
 const isValueString = (val?: any) => {
   if (val == null) {
     return false

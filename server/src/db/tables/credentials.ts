@@ -9,6 +9,7 @@ export const credentials = pgTable("credentials", {
   id: text("id").primaryKey().$defaultFn(generateUlid),
 
   userId: text("userId").references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
   type: credentialsTypeEnum().notNull().$type<ICredentialType>(),
   /**
    * Optional metadata (provider, label, masked value, etc.)

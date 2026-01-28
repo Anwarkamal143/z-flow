@@ -18,7 +18,7 @@ export function FormInput<T extends FieldValues, K extends IComponentType>(
   props: FormInputProps<T, K>,
 ) {
   const { control } = useFormContext<T>()
-
+  console.log(props, 'props')
   return (
     <Controller
       name={props.name}

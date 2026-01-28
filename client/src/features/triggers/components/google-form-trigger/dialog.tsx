@@ -34,7 +34,7 @@ const GoogleFormTriggerSettings = (props: Props) => {
   }
   return (
     <Dialog {...props}>
-      <DialogContent>
+      <DialogContent className='max-h-10/12 overflow-auto'>
         <DialogHeader>
           <DialogTitle>Google Form Trigger Configuration</DialogTitle>
           <DialogDescription>

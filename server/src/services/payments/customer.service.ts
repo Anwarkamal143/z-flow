@@ -25,7 +25,7 @@ export class CustomerService extends PolarService {
     } catch (error) {
       return {
         error: new InternalServerException(
-          "Error retrieving Polar customer: " + (error as Error).message
+          "Error retrieving Polar customer: " + (error as Error).message,
         ),
         data: null,
       };
@@ -44,7 +44,8 @@ export class CustomerService extends PolarService {
     } catch (error) {
       return {
         error: new InternalServerException(
-          "Error retrieving Customer Subscriptions: " + (error as Error).message
+          "Error retrieving Customer Subscriptions: " +
+            (error as Error).message,
         ),
         data: null,
       };
@@ -53,12 +54,12 @@ export class CustomerService extends PolarService {
 
   public async createPolarCustomerWithExternalId(
     data: Parameters<Polar["customers"]["create"]>[0],
-    externalId: string
+    externalId: string,
   ) {
     if (!externalId) {
       return {
         error: new BadRequestException(
-          "External ID is required to create a Polar customer."
+          "External ID is required to create a Polar customer.",
         ),
         data: null,
       };
@@ -72,14 +73,14 @@ export class CustomerService extends PolarService {
     } catch (error) {
       return {
         error: new InternalServerException(
-          "Error creating Polar customer: " + (error as Error).message
+          "Error creating Polar customer: " + (error as Error).message,
         ),
         data: null,
       };
     }
   }
   public async createPolarCustomer(
-    data: Parameters<Polar["customers"]["create"]>[0]
+    data: Parameters<Polar["customers"]["create"]>[0],
   ) {
     try {
       const customer = await this.customers.create({
@@ -89,7 +90,7 @@ export class CustomerService extends PolarService {
     } catch (error) {
       return {
         error: new InternalServerException(
-          "Error creating Polar customer: " + (error as Error).message
+          "Error creating Polar customer: " + (error as Error).message,
         ),
         data: null,
       };
@@ -134,7 +135,7 @@ export class CustomerService extends PolarService {
     } catch (error) {
       return {
         error: new InternalServerException(
-          "Error getting Active Subscription: "
+          "Error getting Active Subscription: ",
         ),
         data: null,
       };
@@ -142,12 +143,12 @@ export class CustomerService extends PolarService {
   }
   public async updatePolarCustomer(
     data: Parameters<Polar["customers"]["updateExternal"]>[0],
-    externalId: string
+    externalId: string,
   ) {
     if (!externalId) {
       return {
         error: new BadRequestException(
-          "External ID is required to update a Polar customer."
+          "External ID is required to update a Polar customer.",
         ),
         data: null,
       };
@@ -161,7 +162,7 @@ export class CustomerService extends PolarService {
     } catch (error) {
       return {
         error: new InternalServerException(
-          "Error updating Polar customer: " + (error as Error).message
+          "Error updating Polar customer: " + (error as Error).message,
         ),
         data: null,
       };

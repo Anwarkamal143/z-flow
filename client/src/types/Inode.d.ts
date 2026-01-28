@@ -11,16 +11,6 @@ type INode = {
   type?: INodeType | undefined
   workflowId: string
   position: { x: number; y: number }
+  credentialId?: string | null | undefined
 }
-type IUpdateNode = {
-  updated_at?: Date | undefined
-  created_at?: Date | undefined
-  deleted_at?: Date | null | undefined
-  id?: string | undefined
-  name?: string | undefined
-  userId?: string | undefined
-  workflowId?: string | undefined
-  type?: INodeType | undefined
-  position?: Json | undefined
-  data?: Json | undefined
-}
+type IUpdateNode = Partial<INode>
