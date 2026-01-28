@@ -10,13 +10,19 @@ type Props = IButtonProps & {
 export default function ButtonLoader({
   isloading,
   className,
-  loadingText,
+  loadingText = '',
   ...rest
 }: Props) {
   return (
     <Button className={cn('flex cursor-pointer gap-1', className)} {...rest}>
-      {isloading ? <Loader2Icon className='animate-spin' /> : null}
-      {isloading && loadingText ? loadingText : rest.children}{' '}
+      {isloading ? (
+        <>
+          <Loader2Icon className='animate-spin' />
+          {loadingText}
+        </>
+      ) : (
+        rest.children
+      )}
     </Button>
   )
 }

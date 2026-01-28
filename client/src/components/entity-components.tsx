@@ -12,7 +12,7 @@ import { Ref } from 'react'
 import ButtonLoader from './button-loader'
 import InputComponent from './form/Input/Input'
 import Dataloader from './loaders'
-import { Button } from './ui/button'
+import { Button, buttonVariants } from './ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from './ui/card'
 import {
   DropdownMenu,
@@ -72,7 +72,7 @@ export const EntityHeader = ({
         </ButtonLoader>
       )}
       {!onNew && newButtonHref && (
-        <Link href={newButtonHref} prefetch>
+        <Link href={newButtonHref} prefetch className={buttonVariants()}>
           <PlusIcon className='size-4' />
           {newButtonLabel}
         </Link>
@@ -143,6 +143,7 @@ export const EntitySearch = ({
   return (
     <div className='text-muted-foreground top-1/2 left-3 ml-auto -translate-y-1/2'>
       <InputComponent
+        type='text'
         autoFocus={autoFocus}
         className='max-w-[200px]'
         rightIcon={<SearchIcon />}
@@ -154,8 +155,6 @@ export const EntitySearch = ({
       />
     </div>
   )
-
-  return null
 }
 interface EntityPaginationProps {
   page: number

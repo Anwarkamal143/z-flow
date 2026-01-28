@@ -9,11 +9,15 @@ import {
   StripeIcon,
 } from '@/assets/icons'
 import { NodeType } from '@/config/enums'
+import { useCreateNode } from '@/features/nodes/api/mutation-hooks'
 import { generateUlid } from '@/lib'
+import { cn } from '@/lib/utils'
 import { useReactFlow } from '@xyflow/react'
+import { useParams } from 'next/navigation'
 import { useCallback } from 'react'
 import { toast } from 'sonner'
 import ImageWithFallback from './image-fallback'
+import Dataloader from './loaders'
 import { Separator } from './ui/separator'
 import {
   Sheet,
@@ -87,10 +91,12 @@ type INodeSelectorProps = {
 
 const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow()
-
+  const params = useParams<{ workflowId: string }>()
+  const { handleCreate, isPending, variables } = useCreateNode()
   const handleNodeSelect = useCallback(
-    (node: NodeTypeOptions | undefined) => {
-      if (!node) return
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+    async (node: NodeTypeOptions | undefined) => {
+      if (!node || !params.workflowId || isPending) return
       // Check if trying to add a manual trigger when one already exists
       if (node.type == NodeType.MANUAL_TRIGGER) {
         const nodes = getNodes()
@@ -107,19 +113,23 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
       const x = centerX + (Math.random() - 0.5) * 200
       const y = centerY + (Math.random() - 0.5) * 200
       const flowPosition = screenToFlowPosition({ x, y })
-
+      const id = generateUlid()
       const newNode = {
-        id: generateUlid(),
+        id,
         type: node.type,
         position: flowPosition,
         data: {},
+        name: node.type,
+        workflowId: params.workflowId,
       }
+      const resp = await handleCreate(newNode)
+      const nNode = resp.data?.id ? resp.data : newNode
       setNodes((nodes) => {
         const hasInitialTrigger = nodes.some((n) => n.type == NodeType.INITIAL)
         if (hasInitialTrigger) {
-          return [newNode]
+          return [nNode]
         }
-        return [...nodes, newNode]
+        return [...nodes, nNode]
       })
       onOpenChange(false)
     },
@@ -128,7 +138,12 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-md'>
+      <SheetContent
+        side='right'
+        className='w-full overflow-y-auto sm:max-w-md dark:bg-gray-900'
+      >
+        {isPending && <Dataloader className='absolute' />}
+
         <SheetHeader>
           <SheetTitle>What triggers this workflow?</SheetTitle>
           <SheetDescription>
@@ -142,7 +157,9 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
             return (
               <div
                 key={node.type}
-                className='hover:border-l-primary flex h-auto w-full cursor-pointer justify-start rounded-none border-l-2 border-transparent px-4 py-5 hover:shadow-xs'
+                className={cn(
+                  'hover:border-l-primary flex h-auto w-full cursor-pointer justify-start rounded-none border-l-2 border-transparent px-4 py-5 hover:shadow-xs',
+                )}
                 onClick={() => handleNodeSelect(node)}
               >
                 <div className='flex w-full items-center gap-6 overflow-hidden'>
@@ -174,7 +191,9 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
             return (
               <div
                 key={node.type}
-                className='hover:border-l-primary flex h-auto w-full cursor-pointer justify-start rounded-none border-l-2 border-transparent px-4 py-5 hover:shadow-xs'
+                className={cn(
+                  'hover:border-l-primary flex h-auto w-full cursor-pointer justify-start rounded-none border-l-2 border-transparent px-4 py-5 hover:shadow-xs',
+                )}
                 onClick={() => handleNodeSelect(node)}
               >
                 <div className='flex w-full items-center gap-6 overflow-hidden'>

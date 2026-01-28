@@ -314,3 +314,14 @@ export const removeVersionFromApiURL = (url: string) => {
     return null
   }
 }
+
+// maskMiddle('abcdef123456') // abc******456
+export function maskMiddle(str: string, start = 3, end = 3, maskChar = '*') {
+  if (!str) return ''
+  if (str.length <= start + end) return str
+  return (
+    str.slice(0, start) +
+    maskChar.repeat(str.length - start - end) +
+    str.slice(-end)
+  )
+}

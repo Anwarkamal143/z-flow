@@ -1,5 +1,5 @@
 import { publishEvent } from "@/app_inngest/channels/http-request";
-import { APP_CONFIG } from "@/config/app.config";
+import { credentialService } from "@/services/credentails.service";
 import { createOpenAI } from "@ai-sdk/openai"; // Correct import
 import { generateText } from "ai"; // From Vercel AI SDK
 import Handlebars from "handlebars";
@@ -15,6 +15,7 @@ type OpenaiExecutor = {
   systemPrompt?: string;
   userPrompt?: string;
   variableName: string;
+  credentialId?: string;
 };
 
 export const openaiExecutor: NodeExecutor<OpenaiExecutor> = async ({
@@ -37,6 +38,7 @@ export const openaiExecutor: NodeExecutor<OpenaiExecutor> = async ({
     systemPrompt,
     model: modelName = "o3",
     variableName,
+    credentialId,
   } = data;
 
   /* ---------------- Validation ---------------- */
@@ -50,13 +52,33 @@ export const openaiExecutor: NodeExecutor<OpenaiExecutor> = async ({
       },
     });
 
+    if (!credentialId?.trim())
+      throw new NonRetriableError("Openai node: Credentials are missing");
+
     if (!variableName?.trim())
       throw new NonRetriableError("Openai node: Variable name is missing");
 
     if (!userPrompt?.trim())
       throw new NonRetriableError("Openai node: User prompt is missing");
   });
+  const credential = await step.run(
+    `openai-get-credentials-${nodeId}`,
+    async () => {
+      // Fetch and validate credentials here
+      // For example, you might fetch from a secure store or database
+      // This is a placeholder implementation
+      const credsResp = await credentialService.resolveById(credentialId!);
 
+      if (!credsResp.data?.value) {
+        throw new NonRetriableError("Openai node: Invalid credentials");
+      }
+
+      return credsResp.data?.value;
+    },
+  );
+  if (!credential) {
+    throw new NonRetriableError("Openai node: Invalid credentials");
+  }
   /* ---------------- Template Resolution ---------------- */
   const { resolvedUserPrompt, resolvedSystemPrompt } = await step.run(
     `Openai-template-${nodeId}`,
@@ -96,7 +118,7 @@ export const openaiExecutor: NodeExecutor<OpenaiExecutor> = async ({
   /* ---------------- AI Execution ---------------- */
   /* ---------------- AI Execution ---------------- */
   const openai = createOpenAI({
-    apiKey: APP_CONFIG.OPENAI_API_KEY,
+    apiKey: credential,
   });
   const { steps } = await step.ai
     .wrap(`Openai-generate-${nodeId}`, generateText, {

@@ -8,6 +8,7 @@ import drizzlePlugin from "./plugins/drizzle-plugin";
 import redisPlugin from "./plugins/redis";
 import socketPlugin from "./plugins/socket";
 
+import qs from "qs";
 import { HTTPSTATUS } from "./config/http.config";
 import { logger } from "./config/logger";
 import { ErrorCode } from "./enums/error-code.enum";
@@ -39,6 +40,12 @@ const CORS_OPTIONS = {
 };
 export function buildApp() {
   const fastify = Fastify({
+    querystringParser: (str) =>
+      qs.parse(str, {
+        allowDots: true,
+        arrayLimit: 100,
+        depth: 10,
+      }),
     logger: {
       level: process.env.NODE_ENV === "production" ? "info" : "debug",
       ...(!ENVIRONMENTS.isProduction

@@ -67,7 +67,7 @@ export const Loader = (props: IProps) => {
 }
 
 const loaderVariants = cva(
-  'h-full flex-col gap-2 w-full flex-1 flex justify-center items-center relative',
+  'h-full flex-col gap-2 w-full flex-1 flex justify-center items-center backdrop-blur-xs relative',
   {
     variants: {
       variant: {

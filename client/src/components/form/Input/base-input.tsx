@@ -253,6 +253,7 @@ export function BaseInput<T extends IComponentType = 'text'>({
     )
   }
   const isDisabled = rest.readOnly || rest.disabled
+  const id = rest.id || rest.name
   return (
     <Field data-invalid={!!error} className='w-full'>
       {label && (
@@ -286,7 +287,7 @@ export function BaseInput<T extends IComponentType = 'text'>({
               )}
               aria-invalid={!!error}
               aria-errormessage={error}
-              id={rest.id || rest.name}
+              id={id}
               {...(rest as ITextAreaPrpops)}
             />
           ) : isSwitch ? (
@@ -305,7 +306,7 @@ export function BaseInput<T extends IComponentType = 'text'>({
                 className,
               )}
               disabled={!!isDisabled}
-              id={rest.id || rest.name}
+              id={id}
               {...(rest as ISwitchProps)}
             />
           ) : (
@@ -323,7 +324,8 @@ export function BaseInput<T extends IComponentType = 'text'>({
                 )}
                 aria-invalid={!!error}
                 aria-errormessage={error}
-                id={rest.id || rest.name}
+                id={id}
+                type={type}
                 {...(rest as InputProps)}
               />
               {renderComponent(suffixComponent)}

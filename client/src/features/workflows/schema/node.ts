@@ -1,6 +1,6 @@
 import { NodeType } from '@/config/enums'
 import z from 'zod'
-import { ULIDSchema } from './helper'
+import { dateSchema, ULIDSchema } from './helper'
 export const PositionSchema = z.object({
   x: z.number(),
   y: z.number(),
@@ -15,6 +15,9 @@ export const SelectNodeSchema = z.object({
       NodeType.HTTP_REQUEST,
       NodeType.INITIAL,
       NodeType.MANUAL_TRIGGER,
+      NodeType.GEMINI,
+      NodeType.OPENAI,
+      NodeType.ANTHROPIC,
       'unknown',
     ])
     .nullable()
@@ -22,8 +25,9 @@ export const SelectNodeSchema = z.object({
   position: PositionSchema,
   userId: ULIDSchema(),
   workflowId: ULIDSchema(),
-  deleted_at: z.date().nullable().optional(),
-  updated_at: z.date(),
-  created_at: z.date(),
+  credentialId: ULIDSchema(),
+  deleted_at: dateSchema.nullable().optional(),
+  updated_at: dateSchema,
+  created_at: dateSchema,
 })
-export const UpdateNodeSchema = SelectNodeSchema.optional()
+export const UpdateNodeSchema = SelectNodeSchema.partial()

@@ -1,4 +1,5 @@
 import { db as Db } from "@/db";
+import { InferSelectModel } from "drizzle-orm";
 import { AnyPgTable, PgTable } from "drizzle-orm/pg-core";
 import { CursorPagination } from "./cursor";
 import { OffsetPagination } from "./offset";
@@ -27,11 +28,11 @@ export class PaginationFactory {
 // Helper functions for common pagination patterns
 export async function paginateOffset<
   T extends PgTable,
-  Result = T["$inferSelect"]
+  Result = InferSelectModel<T>,
 >(
   db: DBType,
   table: T,
-  config: OffsetPaginationConfig<T>
+  config: OffsetPaginationConfig<InferSelectModel<T>>,
 ): Promise<OffsetPaginationResult<Result>> {
   const pagination = PaginationFactory.createOffsetPagination(db, table);
   return pagination.paginate<Result>(config);
@@ -39,11 +40,11 @@ export async function paginateOffset<
 
 export async function paginateCursor<
   T extends PgTable,
-  Result = T["$inferSelect"]
+  Result = InferSelectModel<T>,
 >(
   db: DBType,
   table: T,
-  config: CursorPaginationConfig<T>
+  config: CursorPaginationConfig<InferSelectModel<T>>,
 ): Promise<CursorPaginationResult<Result>> {
   const pagination = PaginationFactory.createCursorPagination(db, table);
   return pagination.paginate<Result>(config);

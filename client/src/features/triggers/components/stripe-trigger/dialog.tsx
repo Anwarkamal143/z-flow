@@ -33,7 +33,7 @@ const StripeTriggerSettings = (props: Props) => {
   }
   return (
     <Dialog {...props}>
-      <DialogContent>
+      <DialogContent className='max-h-10/12 overflow-auto'>
         <DialogHeader>
           <DialogTitle>Stripe Trigger Configuration</DialogTitle>
           <DialogDescription>

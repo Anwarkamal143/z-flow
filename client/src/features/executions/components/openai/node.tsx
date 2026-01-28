@@ -1,6 +1,8 @@
 'use client'
 
 import { OpenAiIcon } from '@/assets/icons'
+import { useUpdateNode } from '@/features/nodes/api/mutation-hooks'
+import { INode } from '@/types/Inode'
 import { Node, NodeProps, useReactFlow } from '@xyflow/react'
 import { memo, useState } from 'react'
 import useNodeStatus from '../../hooks/use-realtime-node'
@@ -17,7 +19,8 @@ type IOpenAiNodeData = {
 type IOpenAiNodeType = Node<IOpenAiNodeData>
 const OpenAiNode = memo((props: NodeProps<IOpenAiNodeType>) => {
   const [open, onOpenChange] = useState(false)
-  const { setNodes } = useReactFlow()
+  const { updateNode, isPending } = useUpdateNode()
+  const { setNodes, getNode } = useReactFlow()
 
   const nodeData = {
     ...props.data,
@@ -33,15 +36,30 @@ const OpenAiNode = memo((props: NodeProps<IOpenAiNodeType>) => {
   })
 
   const handleOpenSettings = () => onOpenChange(true)
-  const handleSubmit = (values: OpenAiFormValues) => {
+  const handleSubmit = async (values: OpenAiFormValues) => {
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id == props.id) {
-          return { ...node, data: { ...node.data, ...values } }
+          return {
+            ...node,
+            credentialId: values.credentialId,
+            data: { ...node.data, ...values },
+          }
         }
         return node
       }),
     )
+
+    const node = getNode(props.id) as INode
+    await updateNode({
+      ...(node || {}),
+      id: props.id,
+      credentialId: values.credentialId,
+      data: {
+        ...nodeData,
+        ...values,
+      },
+    })
   }
   return (
     <>

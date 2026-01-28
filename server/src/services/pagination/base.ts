@@ -7,7 +7,10 @@ import { QueryBuilder } from "./builder";
 export abstract class BasePagination<T extends AnyPgTable> {
   protected builder: QueryBuilder<T>;
 
-  constructor(protected db: typeof database, protected table: T) {
+  constructor(
+    protected db: typeof database,
+    protected table: T,
+  ) {
     if (!table) {
       throw new InternalServerException(`Provide a table`);
     }

@@ -83,7 +83,7 @@ const HttpRequestDialog = ({
   const formValues = form.getValues()
   return (
     <Dialog {...rest}>
-      <DialogContent>
+      <DialogContent className='max-h-10/12 overflow-auto'>
         <DialogHeader>
           <DialogTitle>HTTP Request</DialogTitle>
           <DialogDescription>

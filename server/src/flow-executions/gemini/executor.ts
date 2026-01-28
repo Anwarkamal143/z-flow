@@ -1,5 +1,5 @@
 import { publishEvent } from "@/app_inngest/channels/http-request";
-import { APP_CONFIG } from "@/config/app.config";
+import { credentialService } from "@/services/credentails.service";
 import { createGoogleGenerativeAI } from "@ai-sdk/google"; // Correct import
 import { generateText } from "ai"; // From Vercel AI SDK
 import Handlebars from "handlebars";
@@ -15,6 +15,7 @@ type GeminiExecutor = {
   systemPrompt?: string;
   userPrompt?: string;
   variableName: string;
+  credentialId?: string;
 };
 
 export const geminiExecutor: NodeExecutor<GeminiExecutor> = async ({
@@ -37,6 +38,7 @@ export const geminiExecutor: NodeExecutor<GeminiExecutor> = async ({
     systemPrompt,
     model: modelName = "gemini-flash-latest",
     variableName,
+    credentialId,
   } = data;
 
   /* ---------------- Validation ---------------- */
@@ -53,10 +55,30 @@ export const geminiExecutor: NodeExecutor<GeminiExecutor> = async ({
     if (!variableName?.trim())
       throw new NonRetriableError("Gemini node: Variable name is missing");
 
+    if (!credentialId?.trim())
+      throw new NonRetriableError("Gemini node: Credentials are missing");
+
     if (!userPrompt?.trim())
       throw new NonRetriableError("Gemini node: User prompt is missing");
   });
+  const credential = await step.run(
+    `gemini-get-credentials-${nodeId}`,
+    async () => {
+      // Fetch and validate credentials here
+      // For example, you might fetch from a secure store or database
+      // This is a placeholder implementation
+      const credsResp = await credentialService.resolveById(credentialId!);
 
+      if (!credsResp.data?.value) {
+        throw new NonRetriableError("Gemini node: Invalid credentials");
+      }
+
+      return credsResp.data?.value;
+    },
+  );
+  if (!credential) {
+    throw new NonRetriableError("Gemini node: Invalid credentials");
+  }
   /* ---------------- Template Resolution ---------------- */
   const { resolvedUserPrompt, resolvedSystemPrompt } = await step.run(
     `gemini-template-${nodeId}`,
@@ -96,7 +118,7 @@ export const geminiExecutor: NodeExecutor<GeminiExecutor> = async ({
   /* ---------------- AI Execution ---------------- */
   /* ---------------- AI Execution ---------------- */
   const google = createGoogleGenerativeAI({
-    apiKey: APP_CONFIG.GOOGLE_GENERATIVE_AI_API_KEY,
+    apiKey: credential,
   });
   const { steps } = await step.ai
     .wrap(`gemini-generate-${nodeId}`, generateText, {

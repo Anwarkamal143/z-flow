@@ -21,30 +21,14 @@ import {
   UseSuspenseInfiniteQueryOptions,
   UseSuspenseQueryOptions,
 } from '@tanstack/react-query'
+import { FilterCondition } from './filter'
+import { SearchConfig } from './search'
+import { SortCondition } from './sort'
 
 /* -----------------------
    Core Types
    ----------------------- */
-const filterOperatorList = [
-  'eq',
-  'neq',
-  'gt',
-  'gte',
-  'lt',
-  'lte',
-  'like',
-  'ilike',
-  'in',
-  'notIn',
-  'isNull',
-  'isNotNull',
-  'between',
-  'notBetween',
-] as const
 
-export const FilterOperatorEnum = Object.fromEntries(
-  filterOperatorList.map((op) => [op, op]),
-) as { [K in (typeof filterOperatorList)[number]]: K }
 type ExtractHookParams<T> = T extends (...args: infer P) => any ? P : never
 
 // Extract the first parameter type from a hook function
@@ -53,7 +37,7 @@ export type ExtractHookOptions<T> = T extends (...args: any) => any
   : never
 
 export type Id = string | number | undefined
-export type SortOrder = 'asc' | 'desc'
+
 export type DefaultError = IResponseError<null>
 export type ReturnModel<TEntity, Entity> = ReturnModelType<TEntity, Entity>
 export type ApiHooksResp<T> = IApiResponseHooks<T>
@@ -67,36 +51,26 @@ export type BaseParams = {
    ----------------------- */
 
 //  new Types
-export type SortDirection = 'asc' | 'desc'
 export type IPaginationModes = 'cursor' | 'offset'
 
-// Filter operators
-export type FilterOperator =
-  (typeof FilterOperatorEnum)[keyof typeof FilterOperatorEnum]
+// export interface SortConfig<T = Record<string, any>> {
+//   column: keyof T
+//   direction: SortDirection
+//   nulls?: 'first' | 'last'
+// }
 
-export interface FilterCondition<T = Record<string, any>> {
-  column: keyof T
-  operator: FilterOperator
-  value: any
-}
-
-export interface SortConfig<T = Record<string, any>> {
-  column: keyof T
-  direction: SortDirection
-  nulls?: 'first' | 'last'
-}
-
-export interface SearchConfig<T = Record<string, any>> {
-  columns: (keyof T)[]
-  term: string
-  mode?: 'any' | 'all' | 'phrase'
-}
+// export interface SearchConfig<T = Record<string, any>> {
+//   columns: (keyof T)[]
+//   term: string
+//   mode?: 'any' | 'all' | 'phrase'
+// }
 
 // Pagination base config
 export type BasePaginationConfig<T = Record<string, any>> = BaseParams & {
   filters?: FilterCondition<T>[] | string | null
+  // filters?: ReturnType<typeof createFilter<T>>[] | string | null
   search?: SearchConfig<T> | string | null
-  sorts?: SortConfig<T>[] | string | null
+  sorts?: SortCondition<T>[] | string | null
   includeTotal?: boolean
 }
 
@@ -286,16 +260,13 @@ export type SingleQueryOptions<
 } & CommonQueryOptions<T, S, ErrorT>
 
 export type MultiQueryOptions<
-  TEntity,
-  Entity,
+  T,
   S extends boolean = false,
   ErrorT = DefaultError,
-> = CallOptions<ReturnModel<TEntity, Entity>> & {
+> = CallOptions<T> & {
   ids?: Id[]
-  onSuccess?: (
-    data: (ApiHooksResp<ReturnModel<TEntity, Entity>> | undefined)[],
-  ) => void
-} & CommonQueryOptions<ReturnModel<TEntity, Entity>, S, ErrorT>
+  onSuccess?: (data: (ApiHooksResp<T> | undefined)[]) => void
+} & CommonQueryOptions<T, S, ErrorT>
 
 /* -----------------------
    Factory Options

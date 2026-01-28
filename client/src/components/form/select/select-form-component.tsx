@@ -10,13 +10,13 @@ const SelectFormComp = (props: IFormSelectProps) => {
     <Controller
       name={props.name}
       control={control}
-      defaultValue={props.defaultValue}
+      // defaultValue={props.defaultValue}
       render={({ field, fieldState }) => {
         return (
           <BaseSelect
+            {...props}
             {...field}
             error={fieldState.error?.message}
-            {...props}
             onValueChange={field.onChange}
           />
         )

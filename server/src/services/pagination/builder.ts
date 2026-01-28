@@ -1,5 +1,6 @@
 import { logger } from "@/config/logger";
 import {
+  InferSelectModel,
   SQL,
   and,
   asc,
@@ -27,8 +28,8 @@ export class QueryBuilder<T extends PgTable> {
   constructor(private table: T) {}
 
   buildWhereClause(
-    filters?: FilterCondition<T>[],
-    search?: SearchConfig<T>
+    filters?: FilterCondition<InferSelectModel<T>>[],
+    search?: SearchConfig<InferSelectModel<T>>,
   ): SQL | undefined {
     const conditions: SQL[] = [];
     try {
@@ -53,18 +54,18 @@ export class QueryBuilder<T extends PgTable> {
             if (!column) return null;
 
             const searchTerm =
-              search.mode === "phrase"
+              search.mode == "phrase"
                 ? `%${search.term}%`
                 : search.term.split(" ").map((term) => `%${term}%`);
 
-            if (search.mode === "phrase") {
+            if (search.mode == "phrase") {
               return ilike(column, searchTerm as string);
             } else {
               const termConditions = Array.isArray(searchTerm)
                 ? searchTerm.map((term) => ilike(column, term))
                 : [ilike(column, searchTerm)];
               const result =
-                search.mode === "all"
+                search.mode == "all"
                   ? and(...termConditions)
                   : or(...termConditions);
               return result != null ? result : null;
@@ -87,7 +88,7 @@ export class QueryBuilder<T extends PgTable> {
 
   private buildFilterCondition(
     column: PgColumn,
-    filter: FilterCondition<T>
+    filter: FilterCondition<InferSelectModel<T>>,
   ): SQL | undefined {
     const { operator, value } = filter;
 
@@ -129,7 +130,9 @@ export class QueryBuilder<T extends PgTable> {
     }
   }
 
-  buildOrderByClause(sorts?: SortConfig<T>[]): SQL | undefined {
+  buildOrderByClause(
+    sorts?: SortConfig<InferSelectModel<T>>[],
+  ): SQL | undefined {
     if (!sorts?.length) return undefined;
     try {
       return sql.join(
@@ -142,13 +145,13 @@ export class QueryBuilder<T extends PgTable> {
 
           if (sort.nulls) {
             return sql`${column} ${sql.raw(
-              sort.nulls === "first" ? "NULLS FIRST" : "NULLS LAST"
+              sort.nulls === "first" ? "NULLS FIRST" : "NULLS LAST",
             )}`;
           }
 
           return direction;
         }),
-        sql`, `
+        sql`, `,
       );
     } catch (error: any) {
       logger.error(`Error in building Order clause: ` + error.message);

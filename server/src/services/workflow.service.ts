@@ -426,6 +426,7 @@ export class WorkflowService extends BaseService<
         let edgesResp;
         const createNodesResp = await nodeService.createItems(
           nodesArray.map((node) => ({
+            credentialId: node.data.credentialId || null,
             ...node,
             name: node.type || "unknown",
             workflowId: workflowData.id,
@@ -441,7 +442,6 @@ export class WorkflowService extends BaseService<
         }
 
         if (workflow.edges?.length) {
-          console.log(workflow.edges);
           edgesResp = await edgeService.createItems(
             workflowData.edges.map((edge) => ({
               ...edge,

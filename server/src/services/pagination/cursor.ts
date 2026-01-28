@@ -1,20 +1,20 @@
 import { stringToNumber } from "@/utils";
 import { buildPaginationMetaCursor } from "@/utils/api";
 import { BadRequestException } from "@/utils/catch-errors";
-import { asc, desc, gt, lt } from "drizzle-orm";
+import { asc, desc, gt, InferSelectModel, lt } from "drizzle-orm";
 import { AnyPgTable, PgColumn } from "drizzle-orm/pg-core";
 import { BasePagination } from "./base";
 import { CursorPaginationConfig, CursorPaginationResult } from "./types";
 
 export class CursorPagination<T extends AnyPgTable> extends BasePagination<T> {
-  async paginate<Result = T["$inferSelect"]>(
-    config: CursorPaginationConfig<T>
+  async paginate<Result = InferSelectModel<T>>(
+    config: CursorPaginationConfig<InferSelectModel<T>>,
   ): Promise<CursorPaginationResult<Result>> {
     // Validate cursor column exists
     if (!this.builder.validateColumns([config.cursorColumn as string])) {
       return {
         error: new BadRequestException(
-          `Invalid cursor column: ${config.cursorColumn.toString()}`
+          `Invalid cursor column: ${config.cursorColumn.toString()}`,
         ),
         data: null,
       };
@@ -23,7 +23,7 @@ export class CursorPagination<T extends AnyPgTable> extends BasePagination<T> {
     const cursorColumn = this.table[config.cursorColumn as string] as PgColumn;
     const whereClause = this.builder.buildWhereClause(
       config.filters,
-      config.search
+      config.search,
     );
     const orderByClause = this.builder.buildOrderByClause(config.sorts);
 
@@ -39,13 +39,13 @@ export class CursorPagination<T extends AnyPgTable> extends BasePagination<T> {
     if (config.cursor) {
       const cursorValue = this.decodeCursor(config.cursor);
       const cursorOperator =
-        config.cursorDirection === "backward"
-          ? config.sorts?.[0]?.direction === "desc"
+        config.cursorDirection == "backward"
+          ? config.sorts?.[0]?.direction == "desc"
             ? gt
             : lt
-          : config.sorts?.[0]?.direction === "desc"
-          ? lt
-          : gt;
+          : config.sorts?.[0]?.direction == "desc"
+            ? lt
+            : gt;
 
       query.where(cursorOperator(cursorColumn, cursorValue));
     }
@@ -56,16 +56,18 @@ export class CursorPagination<T extends AnyPgTable> extends BasePagination<T> {
     } else {
       // Default ordering by cursor column
       query.orderBy(
-        config.cursorDirection === "backward"
+        config.cursorDirection == "backward"
           ? desc(cursorColumn)
-          : asc(cursorColumn)
+          : asc(cursorColumn),
       );
     }
 
     // Apply limit (plus one to check if there are more items)
     // const limitWithExtra = config.limit + 1;
 
-    const limitNum = config.limit != null ? stringToNumber(config.limit) : null;
+    const numLimit =
+      config.limit != null ? stringToNumber(config.limit) : undefined;
+    const limitNum = numLimit && numLimit > 0 ? numLimit : undefined;
     if (limitNum != null) {
       // Apply pagination
       query.limit(limitNum + 1);

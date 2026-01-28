@@ -20,7 +20,7 @@ import { generateSlug } from "random-word-slugs";
 class WorkflowController {
   public async create(
     req: FastifyRequest<{ Body: InsertWorkflows }>,
-    rep: FastifyReply
+    rep: FastifyReply,
   ) {
     const userId = req.user!.id;
     const workflow = req.body;
@@ -33,7 +33,7 @@ class WorkflowController {
     if (parseResult.error) {
       throw new ValidationException(
         "Invalid or missing data",
-        formatZodError(parseResult.error)
+        formatZodError(parseResult.error),
       );
     }
 
@@ -55,7 +55,7 @@ class WorkflowController {
    */
   public async updateName(
     req: FastifyRequest<{ Body: { name: string }; Params: { id: string } }>,
-    rep: FastifyReply
+    rep: FastifyReply,
   ) {
     if (!(req.body.name || "").trim()) {
       throw new BadRequestException("Name is required");
@@ -65,7 +65,7 @@ class WorkflowController {
       await workflowService.updateWorkflowNameByIdAndUserId(
         req.body.name,
         req.params.id,
-        userId
+        userId,
       );
     if (updatedWorkFlow.error) {
       throw updatedWorkFlow.error;
@@ -78,12 +78,12 @@ class WorkflowController {
   }
   public async updateWorkflow(
     req: FastifyRequest<{ Body: UpdateWorkflowWithNodesEdges }>,
-    rep: FastifyReply
+    rep: FastifyReply,
   ) {
     const userId = req.user?.id;
     const updatedWorkFlow = await workflowService.updateWorkflowByIdAndUserId(
       req.body,
-      userId
+      userId,
     );
     if (updatedWorkFlow.error) {
       throw updatedWorkFlow.error;
@@ -96,7 +96,7 @@ class WorkflowController {
   }
   public async getById(
     req: FastifyRequest<{ Params: { id: string } }>,
-    _rep: FastifyReply
+    _rep: FastifyReply,
   ) {
     const workflowId = req.params.id;
     const userId = req.user?.id;
@@ -115,7 +115,7 @@ class WorkflowController {
   }
   public async deleteById(
     req: FastifyRequest<{ Params: { id: string } }>,
-    _rep: FastifyReply
+    _rep: FastifyReply,
   ) {
     const workflowId = req.params.id;
     const userId = req.user?.id;
@@ -148,10 +148,10 @@ class WorkflowController {
     req: FastifyRequest<{
       Querystring: WorkflowPaginationConfig;
     }>,
-    _rep: FastifyReply
+    _rep: FastifyReply,
   ) {
     const userId = req.user!.id;
-    const validaionResult = workflowService.validateQuery(req.query as any, {
+    const validaionResult = workflowService.validateQuery(req.query, {
       search: "name",
       filters() {
         return [{ column: "userId", operator: "eq", value: userId }];
@@ -170,12 +170,12 @@ class WorkflowController {
   }
   public async executeWorkflow(
     req: FastifyRequest<{ Body: { id: string } }>,
-    rep: FastifyReply
+    rep: FastifyReply,
   ) {
     try {
       const resp = await workflowService.executeWorkflow(
         req.body.id,
-        req.user?.id
+        req.user?.id,
       );
       if (resp.error) {
         throw resp.error;
