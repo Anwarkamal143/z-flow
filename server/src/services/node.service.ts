@@ -14,7 +14,6 @@ import { formatZodError } from "@/utils";
 import { NotFoundException, ValidationException } from "@/utils/catch-errors";
 import { UUID } from "ulid";
 import { BaseService, ITransaction } from "./base.service";
-import { nodeCredentialService } from "./node-credentials.service";
 
 export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
   constructor() {
@@ -83,8 +82,12 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     const parseData = result.data;
     const node = await nodeService.getById(parseData.id, parseData.userId);
     if (node.error) {
-      throw node.error;
+      return node;
     }
+    if (!node.data) {
+      return { data: null, error: new NotFoundException("Node not found") };
+    }
+
     const { userId, ...updateData } = result.data;
     const item = await this.update(
       (t) => eq(t.id, updateData.id),
@@ -111,14 +114,6 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     if (resp.error) {
       return resp;
     }
-    const nodeCredentials = resp.data
-      .filter((n) => n.credentialId || n.data?.credentialId)
-      .map((n) => ({
-        nodeId: n.id,
-        credentialId: (n.data?.credentialId || n.credentialId!) as string,
-        userId: n.userId,
-      }));
-    await nodeCredentialService.createManyNodeCredential(nodeCredentials, tsx);
 
     return resp;
   }

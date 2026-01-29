@@ -12,7 +12,7 @@ export type NodeExecutorParams<TData = Record<string, unknown>> = {
   nodeId: UUID;
   workflowId?: UUID;
   credentialId?: UUID | null;
-
+  userId?: UUID;
   context: WorkflowContext;
   step: StepTools;
   // publish: Realtime.PublishFn;

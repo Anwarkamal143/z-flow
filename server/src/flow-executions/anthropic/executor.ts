@@ -24,6 +24,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicExecutor> = async ({
   workflowId,
   context,
   step,
+  userId,
   publish,
 }: NodeExecutorParams<AnthropicExecutor>) => {
   const baseEvent = {
@@ -52,6 +53,9 @@ export const anthropicExecutor: NodeExecutor<AnthropicExecutor> = async ({
       },
     });
 
+    if (!userId?.trim())
+      throw new NonRetriableError("Anthropic node: UserId is missing");
+
     if (!credentialId?.trim())
       throw new NonRetriableError("Anthropic node: Credentials are missing");
 
@@ -67,7 +71,10 @@ export const anthropicExecutor: NodeExecutor<AnthropicExecutor> = async ({
       // Fetch and validate credentials here
       // For example, you might fetch from a secure store or database
       // This is a placeholder implementation
-      const credsResp = await credentialService.resolveById(credentialId!);
+      const credsResp = await credentialService.resolveByIdUserId(
+        credentialId!,
+        userId!,
+      );
 
       if (!credsResp.data?.value) {
         throw new NonRetriableError("Anthropic node: Invalid credentials");
@@ -81,7 +88,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicExecutor> = async ({
   }
   /* ---------------- Template Resolution ---------------- */
   const { resolvedUserPrompt, resolvedSystemPrompt } = await step.run(
-    `Anthropic-template-${nodeId}`,
+    `anthropic-template-${nodeId}`,
     async () => {
       try {
         const resolvedUserPrompt = Handlebars.compile(userPrompt)(context);

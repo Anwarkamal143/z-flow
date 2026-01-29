@@ -15,6 +15,7 @@ import { HTTPSTATUS } from "@/config/http.config";
 import {
   BadRequestException,
   InternalServerException,
+  NotFoundException,
   ValidationException,
 } from "@/utils/catch-errors";
 
@@ -321,6 +322,37 @@ export class BaseService<
       //     status: HTTPSTATUS.BAD_REQUEST,
       //   };
       // }
+      return {
+        data: result,
+        status: HTTPSTATUS.OK,
+      };
+    } catch (error) {
+      return {
+        data: null,
+        error: new InternalServerException(),
+      };
+    }
+  }
+  async exists(
+    where: (table: TTable) => SQL<unknown> | undefined,
+    tsx?: ITransaction,
+  ) {
+    try {
+      const result = await (tsx ? tsx : db)
+        .select()
+        .from(this.table as PgTable)
+        .where(where(this.table));
+
+      // if (result.length == 0) {
+      //   return {
+      //     error: new BadRequestException(`${this.singular} not deleted`),
+      //     data: null,
+      //     status: HTTPSTATUS.BAD_REQUEST,
+      //   };
+      // }
+      if (!result.length) {
+        return { data: null, error: new NotFoundException("No data found") };
+      }
       return {
         data: result,
         status: HTTPSTATUS.OK,

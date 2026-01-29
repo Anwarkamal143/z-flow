@@ -165,6 +165,41 @@ export class Credentialservice extends BaseService<typeof credentials> {
       error: null,
     };
   }
+  async resolveByIdUserId(id: string, userId: string) {
+    if (!id) {
+      return {
+        error: new ValidationException("id is required", [
+          { path: "id", message: "id is required" },
+        ]),
+        data: null,
+      };
+    }
+    const res = await this.findOne((t) =>
+      and(eq(t.id, id), eq(t.userId, userId)),
+    );
+
+    if (!res.data)
+      return {
+        error: new NotFoundException("credential not found"),
+        data: null,
+      };
+    const resp = await this.decryptSecretData([res.data]);
+    if (resp.error) {
+      return { error: resp.error, data: null };
+    }
+    const data = resp.data?.[0];
+    if (!data) {
+      return {
+        data: null,
+        error: new BadRequestException("not a valid credential"),
+      };
+    }
+
+    return {
+      data,
+      error: null,
+    };
+  }
   async getById(id: string, userId: string) {
     if (!id) {
       return {

@@ -24,6 +24,7 @@ export const geminiExecutor: NodeExecutor<GeminiExecutor> = async ({
   workflowId,
   context,
   step,
+  userId,
   publish,
 }: NodeExecutorParams<GeminiExecutor>) => {
   const baseEvent = {
@@ -52,6 +53,9 @@ export const geminiExecutor: NodeExecutor<GeminiExecutor> = async ({
       },
     });
 
+    if (!userId?.trim())
+      throw new NonRetriableError("Gemini node: UserId is missing");
+
     if (!variableName?.trim())
       throw new NonRetriableError("Gemini node: Variable name is missing");
 
@@ -67,7 +71,10 @@ export const geminiExecutor: NodeExecutor<GeminiExecutor> = async ({
       // Fetch and validate credentials here
       // For example, you might fetch from a secure store or database
       // This is a placeholder implementation
-      const credsResp = await credentialService.resolveById(credentialId!);
+      const credsResp = await credentialService.resolveByIdUserId(
+        credentialId!,
+        userId!,
+      );
 
       if (!credsResp.data?.value) {
         throw new NonRetriableError("Gemini node: Invalid credentials");
