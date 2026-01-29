@@ -24,6 +24,7 @@ export const openaiExecutor: NodeExecutor<OpenaiExecutor> = async ({
   workflowId,
   context,
   step,
+  userId,
   publish,
 }: NodeExecutorParams<OpenaiExecutor>) => {
   const baseEvent = {
@@ -52,6 +53,9 @@ export const openaiExecutor: NodeExecutor<OpenaiExecutor> = async ({
       },
     });
 
+    if (!userId?.trim())
+      throw new NonRetriableError("Openai node: UserId is missing");
+
     if (!credentialId?.trim())
       throw new NonRetriableError("Openai node: Credentials are missing");
 
@@ -67,7 +71,10 @@ export const openaiExecutor: NodeExecutor<OpenaiExecutor> = async ({
       // Fetch and validate credentials here
       // For example, you might fetch from a secure store or database
       // This is a placeholder implementation
-      const credsResp = await credentialService.resolveById(credentialId!);
+      const credsResp = await credentialService.resolveByIdUserId(
+        credentialId!,
+        userId!,
+      );
 
       if (!credsResp.data?.value) {
         throw new NonRetriableError("Openai node: Invalid credentials");

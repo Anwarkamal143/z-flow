@@ -19,17 +19,42 @@ export default inngest.createFunction(
       throw new NonRetriableError("Workflow Id is missing");
     }
 
-    const sortedNodes = await step.run("prepare-workflow", async () => {
-      const workflow = await workflowService.getByFieldWithNodesAndConnections(
-        workflowId,
-        (fields) => fields.id,
-      );
-      if (!workflow.data) {
-        throw new NonRetriableError("Workflow doesn't exist");
-      }
-      // console.log(workflow.data.nodes, "workflow nodes");
-      return topologicalSort(workflow.data.nodes, workflow.data.edges);
-    });
+    const { sortedNodes, workflow } = await step.run(
+      "prepare-workflow",
+      async () => {
+        const workflow =
+          await workflowService.getByFieldWithNodesAndConnections(
+            workflowId,
+            (fields) => fields.id,
+          );
+        if (!workflow.data) {
+          throw new NonRetriableError("Workflow doesn't exist");
+        }
+        if (!workflow.data?.userId) {
+          throw new NonRetriableError("User not found for workflow");
+        }
+        console.log(workflow, "workflow");
+        // console.log(workflow.data.nodes, "workflow nodes");
+        return {
+          sortedNodes: topologicalSort(
+            workflow.data.nodes,
+            workflow.data.edges,
+          ),
+          workflow: workflow.data,
+        };
+      },
+    );
+    // const userId = await step.run("find-user-id", async () => {
+    //   const workflow = await workflowService.getByFieldWithNodesAndConnections(
+    //     workflowId,
+    //     (fields) => fields.id,
+    //   );
+    //   if (!workflow.data) {
+    //     throw new NonRetriableError("Workflow doesn't exist");
+    //   }
+    //   // console.log(workflow.data.nodes, "workflow nodes");
+    //   return topologicalSort(workflow.data.nodes, workflow.data.edges);
+    // });
 
     // Initialize the context with any initial data from trigger
 
@@ -44,6 +69,8 @@ export default inngest.createFunction(
         context,
         step,
         workflowId,
+        userId: workflow.userId,
+
         publish: redisClient.publish,
       });
     }
