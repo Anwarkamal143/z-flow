@@ -3,6 +3,7 @@ import Form from '@/components/form/Form'
 import FormInput from '@/components/form/Input'
 
 import {
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -10,7 +11,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import useZodForm from '@/hooks/useZodForm'
-import { Dialog } from '@radix-ui/react-dialog'
 import { useEffect } from 'react'
 import z from 'zod'
 

@@ -2,9 +2,11 @@ import { NodeType } from "@/db";
 import { NodeExecutor } from "@/flow-executions/types";
 import { NotFoundException } from "@/utils/catch-errors";
 import { anthropicExecutor } from "./anthropic/executor";
+import { discordExecutor } from "./discord/executor";
 import { geminiExecutor } from "./gemini/executor";
 import { httpRequestExecutor } from "./http-request/executor";
 import { openaiExecutor } from "./openai/executor";
+import { slackExecutor } from "./slack/executor";
 import { googleFormTriggerExecutor } from "./triggers/google-form-trigger/executor";
 import { manualTriggerExecutor } from "./triggers/manual-trigger/executor";
 import { stripeTriggerExecutor } from "./triggers/stripe-trigger/executor";
@@ -18,6 +20,8 @@ export const executorRegistry = {
   [NodeType.GEMINI]: geminiExecutor,
   [NodeType.OPENAI]: openaiExecutor,
   [NodeType.ANTHROPIC]: anthropicExecutor,
+  [NodeType.DISCORD]: discordExecutor,
+  [NodeType.SLACK]: slackExecutor,
 } as Record<NodeType, NodeExecutor>;
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

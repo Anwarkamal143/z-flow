@@ -73,7 +73,7 @@ export const WorkflowSearch = () => {
 }
 
 export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
-  const { handleCreate, isPending } = useCreateWorkflow()
+  const { handlePost, isPending } = useCreateWorkflow()
   const { handleError, ConfirmModal } = useUpgradeModal()
   const router = useRouter()
 
@@ -84,7 +84,7 @@ export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
         title='Workflows'
         description='Create and manage your workflows'
         onNew={async () => {
-          const resp = await handleCreate({})
+          const resp = await handlePost()
           if (resp?.data?.id) {
             toast.success('Workflow created')
             return router.push(`/workflows/${resp?.data?.id}`)
@@ -138,12 +138,12 @@ export const WorksflowError = () => {
   return <ErrorView message='Error while loading workflows.' />
 }
 export const WorksflowEmpty = () => {
-  const { handleCreate } = useCreateWorkflow()
+  const { handlePost } = useCreateWorkflow()
   const router = useRouter()
   const { handleError, ConfirmModal } = useUpgradeModal()
 
   const onNew = async () => {
-    const resp = await handleCreate({})
+    const resp = await handlePost()
     if (resp?.data?.id) {
       toast.success('Workflow created')
       return router.push(`/workflows/${resp?.data?.id}`)
@@ -172,7 +172,7 @@ export const WorkflowItem = ({ data }: { data: IWorkflow }) => {
       title={name}
       onRemove={() => {
         handleDelete({
-          id,
+          payload: { id },
           options: {
             onSuccess(data, variables, onMutateResult, context) {
               toast.success(`Workflow ${data.data?.name} removed`)

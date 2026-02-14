@@ -14,6 +14,7 @@ import {
 import {
   InfiniteData,
   MutationFunctionContext,
+  QueryFilters,
   QueryKey,
   UseInfiniteQueryOptions,
   UseMutationOptions,
@@ -66,13 +67,19 @@ export type IPaginationModes = 'cursor' | 'offset'
 // }
 
 // Pagination base config
-export type BasePaginationConfig<T = Record<string, any>> = BaseParams & {
+type DynamicFilterFields<T = Record<string, any>> = {
+  [K in keyof T]?: any
+}
+
+// [keyof T]
+export type BasePaginationConfig<T = Record<string, any>> = (BaseParams & {
   filters?: FilterCondition<T>[] | string | null
   // filters?: ReturnType<typeof createFilter<T>>[] | string | null
   search?: SearchConfig<T> | string | null
   sorts?: SortCondition<T>[] | string | null
   includeTotal?: boolean
-}
+}) &
+  DynamicFilterFields<T>
 
 // Offset pagination config
 export type OffsetPaginationConfig<T = Record<string, any>> =
@@ -207,7 +214,28 @@ export type IListCallOptions<
 /* -----------------------
    Enhanced Mutation Types
    ----------------------- */
-
+export type IOptimisticSnapshot = {
+  key: QueryKey
+  previousData: unknown
+}
+export type IOptimisticContext = MutationFunctionContext & {
+  snapshots: IOptimisticSnapshot[]
+}
+export type IOptimisticUpdateConfig<TVars> = {
+  queryKey:
+    | QueryKey
+    | ((vars?: TVars, ctx?: MutationFunctionContext) => QueryKey)
+  updateFn: (oldData: any, newData: TVars) => any
+  prefixEntity?: boolean
+  predicate?: boolean | QueryFilters<QueryKey[]>['predicate']
+  exact?: boolean
+}[]
+export type IQuriesConfig<TData = any, TVars = any> = {
+  queryKey: QueryKey | ((data?: TData, params?: TVars) => QueryKey)
+  exact?: boolean
+  prefixEntity?: boolean
+  predicate?: boolean | QueryFilters<QueryKey[]>['predicate']
+}[]
 export type MutationCallOptions<
   TData = any,
   TVars = any,
@@ -215,22 +243,13 @@ export type MutationCallOptions<
 > = {
   params?: QueryParams<TData>
   options?: RequestOptions<TData> // Use generic RequestOptions
+  // mutationOptions?: UseMutationOptions<IApiResponse<TData>, ErrorT, TVars>
   mutationOptions?: UseMutationOptions<IApiResponse<TData>, ErrorT, TVars>
+
   onSuccess?: (data: TData) => void
-  invalidateQueries?: {
-    queryKey: QueryKey | ((data?: TData, params?: TVars) => QueryKey)
-    exact?: boolean
-  }[]
-  refetchQueries?: {
-    queryKey: QueryKey | ((data?: TData, params?: TVars) => QueryKey)
-    exact?: boolean
-  }[]
-  optimisticUpdate?: {
-    queryKey:
-      | QueryKey
-      | ((vars?: TVars, ctx?: MutationFunctionContext) => QueryKey)
-    updateFn: (oldData: any, newData: TVars) => any
-  }
+  invalidateQueries?: IQuriesConfig<TData, TVars>
+  refetchQueries?: IQuriesConfig<TData, TVars>
+  optimisticUpdate?: IOptimisticUpdateConfig<TVars>
 }
 
 type CommonQueryOptions<T, S extends boolean = false, ErrorT = DefaultError> = {

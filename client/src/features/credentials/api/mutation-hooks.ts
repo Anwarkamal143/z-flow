@@ -4,7 +4,7 @@ import { credentialClient } from '@/models/v1'
 import { CredentialUpdateSchema, ICredentialUpdate } from '../schema/credential'
 
 export function useCreateCredential() {
-  return credentialClient.useCreate({
+  return credentialClient.usePost({
     invalidateQueries: [
       {
         queryKey: ['list'],
@@ -29,19 +29,21 @@ export function useUpdateCredential() {
     null,
     ICredentialUpdate
   >({
-    optimisticUpdate: {
-      queryKey(vars) {
-        return [vars?.id, 'get']
-      },
-      updateFn(oldData, newData) {
-        if (!newData.data) {
+    optimisticUpdate: [
+      {
+        queryKey(vars) {
+          return [vars?.id, 'get']
+        },
+        updateFn(oldData, newData) {
+          if (!newData.data) {
+            return oldData
+          }
+          const data = { ...(oldData.data || {}), ...(newData.data || {}) }
+          oldData.data = data
           return oldData
-        }
-        const data = { ...(oldData.data || {}), ...(newData.data || {}) }
-        oldData.data = data
-        return oldData
+        },
       },
-    },
+    ],
     invalidateQueries: [
       {
         queryKey: ['list'],

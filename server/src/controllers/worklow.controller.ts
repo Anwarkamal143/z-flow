@@ -19,11 +19,13 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { generateSlug } from "random-word-slugs";
 class WorkflowController {
   public async create(
-    req: FastifyRequest<{ Body: InsertWorkflows }>,
+    req: FastifyRequest<{
+      Body: InsertWorkflows;
+    }>,
     rep: FastifyReply,
   ) {
     const userId = req.user!.id;
-    const workflow = req.body;
+    const workflow = req.body || {};
     if (!workflow.name) {
       workflow.name = generateSlug();
     }

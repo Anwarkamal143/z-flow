@@ -13,7 +13,7 @@ class WebhooksController {
       Body: Record<string, any>;
       Querystring: { workflowId: string; secret: string };
     }>,
-    rep: FastifyReply
+    rep: FastifyReply,
   ) {
     try {
       const workflowId = req.query.workflowId;
@@ -33,7 +33,7 @@ class WebhooksController {
       };
       if (!workflowId) {
         throw new BadRequestException(
-          "Missing required query parameter: workflowId"
+          "Missing required query parameter: workflowId",
         );
       }
       const resp = await workflowService.executeWebhookWorkflow(
@@ -41,7 +41,7 @@ class WebhooksController {
         secret,
         {
           googleForm: formData,
-        }
+        },
       );
       if (resp.error) {
         throw resp.error;
@@ -57,7 +57,7 @@ class WebhooksController {
       }
       console.error("Google form webhook error:", error);
       throw new InternalServerException(
-        "Failed to process Google Form submission"
+        "Failed to process Google Form submission",
       );
     }
   }
@@ -66,7 +66,7 @@ class WebhooksController {
       Body: Record<string, any>;
       Querystring: { workflowId: string; secret: string };
     }>,
-    rep: FastifyReply
+    rep: FastifyReply,
   ) {
     try {
       const body = req.body;
@@ -89,7 +89,7 @@ class WebhooksController {
         secret,
         {
           stripe: formData,
-        }
+        },
       );
       if (resp.error) {
         throw resp.error;
@@ -99,11 +99,9 @@ class WebhooksController {
         message: "Worklow is executing",
       });
     } catch (error: any) {
-      console.log(error.messae, "errorMessage");
       if (error instanceof AppError) {
         throw error;
       }
-      console.error("Stripe webhook error:", error);
       throw new InternalServerException("Failed to process Stripe event");
     }
   }

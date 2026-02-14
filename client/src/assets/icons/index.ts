@@ -39,6 +39,7 @@ import GoogleFormIcon from './GoogleFormIcon'
 import GoogleIcon from './GoogleIcon'
 import InfoIcon from './info-icon'
 import OpenAiIcon from './OpenAiIcon'
+import SlackIcon from './SlackIcon'
 import StripeIcon from './StripeIcon'
 
 export {
@@ -75,6 +76,7 @@ export {
   SaveIcon,
   SearchIcon,
   SettingsIcon,
+  SlackIcon,
   SmileIcon,
   StarIcon,
   StripeIcon,

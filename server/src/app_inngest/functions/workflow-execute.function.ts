@@ -33,8 +33,6 @@ export default inngest.createFunction(
         if (!workflow.data?.userId) {
           throw new NonRetriableError("User not found for workflow");
         }
-        console.log(workflow, "workflow");
-        // console.log(workflow.data.nodes, "workflow nodes");
         return {
           sortedNodes: topologicalSort(
             workflow.data.nodes,

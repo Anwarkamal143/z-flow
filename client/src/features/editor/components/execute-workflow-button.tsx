@@ -7,11 +7,11 @@ type IExecutionWorkflowButton = {
 }
 
 const ExecuteWorkflowButton = ({ workflowId }: IExecutionWorkflowButton) => {
-  const { handleCreate, isPending } = useExecuteWorkflow()
+  const { handlePost, isPending } = useExecuteWorkflow()
 
   const handleExecuteWorkflow = async () => {
-    const resp = await handleCreate({
-      id: workflowId,
+    const resp = await handlePost({
+      payload: { id: workflowId },
     })
     console.log(resp, 'execution response')
   }

@@ -57,7 +57,7 @@ const formSchema = z.object({
 })
 const CredentialForm = ({ initialData }: ICredentialFormProps) => {
   const router = useRouter()
-  const { handleCreate, isPending: isCreating } = useCreateCredential()
+  const { handlePost, isPending: isCreating } = useCreateCredential()
   const { updateCredential, isPending: isUpdating } = useUpdateCredential()
   const { handleError, ConfirmModal } = useUpgradeModal()
   //   useGetSuspenseCredential()
@@ -89,7 +89,7 @@ const CredentialForm = ({ initialData }: ICredentialFormProps) => {
         errorCode = resp.errorCode
         errorMessage = resp.message || 'Failed to update credential'
       } else {
-        const resp = await handleCreate(data as ICredentialInsert)
+        const resp = await handlePost({ payload: data as ICredentialInsert })
         if (resp.success) {
           toast.success('Credential created successfully')
           return router.push('/credentials')

@@ -7,7 +7,7 @@ const useSignOut = () => {
     isPending: isLoading,
     mutateAsync,
     error,
-  } = authClient.useCreate({
+  } = authClient.usePost({
     options: {
       path: AUTH_PATHS.signOut,
     },

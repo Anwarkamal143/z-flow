@@ -2,6 +2,7 @@ import { CopyIcon } from '@/assets/icons'
 import ButtonLoader from '@/components/button-loader'
 import InputComponent from '@/components/form/Input/Input'
 import {
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -11,7 +12,6 @@ import {
 import { API_BASE_URL } from '@/config'
 import { removeVersionFromApiURL } from '@/lib'
 import { useActiveWorkflow } from '@/store/useEditorStore'
-import { Dialog } from '@radix-ui/react-dialog'
 import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 type Props = IDialogProps & { secret?: string }

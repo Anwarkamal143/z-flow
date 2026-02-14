@@ -6,10 +6,10 @@ import { getNodeListQueryOptions, getNodeQueryOptions } from './query-options'
 export const nodeFilters = nodeClient.filters
 export const nodeSorts = nodeClient.sorts
 export const nodeSearch = nodeClient.search
-export const useGetSuspenseNode = (
+export const useGetNode = (
   opts: SingleQueryOptions<NodeClientEntity, true> = {},
 ) =>
-  nodeClient.useSuspenseGet({
+  nodeClient.useGet({
     ...opts,
     queryKey: getNodeQueryOptions({ ...opts }).queryKey,
   })

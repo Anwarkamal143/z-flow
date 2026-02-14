@@ -75,6 +75,8 @@ export const nodeTypeEnum = pgEnum("node_type", [
   NodeType.ANTHROPIC,
   NodeType.GEMINI,
   NodeType.OPENAI,
+  NodeType.DISCORD,
+  NodeType.SLACK,
 ]);
 export const credentialsTypeEnum = pgEnum("credential_type", [
   CredentialType.ANTHROPIC,

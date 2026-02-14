@@ -1,11 +1,13 @@
 'use client'
 import {
   AnthropicIcon,
+  DiscordIcon,
   GeminiIcon,
   GlobeIcon,
   GoogleFormIcon,
   MousePointerIcon,
   OpenAiIcon,
+  SlackIcon,
   StripeIcon,
 } from '@/assets/icons'
 import { NodeType } from '@/config/enums'
@@ -81,6 +83,18 @@ const executionNodes: NodeTypeOptions[] = [
     description: 'Uses Anthropic to generate text',
     icon: AnthropicIcon,
   },
+  {
+    type: NodeType.DISCORD,
+    label: 'Discord',
+    description: 'Send a message to Discord',
+    icon: DiscordIcon,
+  },
+  {
+    type: NodeType.SLACK,
+    label: 'Slack',
+    description: 'Send a message to Slack',
+    icon: SlackIcon,
+  },
 ]
 
 type INodeSelectorProps = {
@@ -92,7 +106,8 @@ type INodeSelectorProps = {
 const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
   const { setNodes, getNodes, screenToFlowPosition } = useReactFlow()
   const params = useParams<{ workflowId: string }>()
-  const { handleCreate, isPending, variables } = useCreateNode()
+  const { handlePost, isPending, variables } = useCreateNode()
+
   const handleNodeSelect = useCallback(
     // eslint-disable-next-line react-hooks/preserve-manual-memoization
     async (node: NodeTypeOptions | undefined) => {
@@ -122,7 +137,7 @@ const NodeSelector = ({ open, onOpenChange, children }: INodeSelectorProps) => {
         name: node.type,
         workflowId: params.workflowId,
       }
-      const resp = await handleCreate(newNode)
+      const resp = await handlePost({ payload: newNode })
       const nNode = resp.data?.id ? resp.data : newNode
       setNodes((nodes) => {
         const hasInitialTrigger = nodes.some((n) => n.type == NodeType.INITIAL)

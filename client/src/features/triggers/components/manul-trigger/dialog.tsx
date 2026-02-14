@@ -1,11 +1,11 @@
 import {
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   IDialogProps,
 } from '@/components/ui/dialog'
-import { Dialog } from '@radix-ui/react-dialog'
 type Props = IDialogProps
 
 const ManualTriggerSettings = (props: Props) => {
