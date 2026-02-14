@@ -325,3 +325,34 @@ export function maskMiddle(str: string, start = 3, end = 3, maskChar = '*') {
     str.slice(-end)
   )
 }
+
+export function deepClone(obj?: Record<string, any>, hash = new WeakMap()) {
+  // Handle primitives and null
+  if (obj === null || typeof obj != 'object') return obj
+
+  // Handle circular references
+  if (hash.has(obj)) return hash.get(obj)
+
+  // Handle Date
+  if (obj instanceof Date) return new Date(obj)
+
+  // Handle Array
+  if (Array.isArray(obj)) {
+    const arrCopy: Record<string, any>[] = []
+    hash.set(obj, arrCopy)
+    obj.forEach((item, index) => {
+      arrCopy[index] = deepClone(item, hash)
+    })
+    return arrCopy
+  }
+
+  // Handle Object
+  const objCopy: Record<string, any> = {}
+  hash.set(obj, objCopy)
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      objCopy[key] = deepClone(obj[key], hash)
+    }
+  }
+  return objCopy
+}

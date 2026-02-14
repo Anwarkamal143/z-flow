@@ -2,6 +2,7 @@
 
 import { AnthropicIcon } from '@/assets/icons'
 import { useUpdateNode } from '@/features/nodes/api/mutation-hooks'
+import { useFlowContext } from '@/hooks/useFlowContext'
 import { INode } from '@/types/Inode'
 import { Node, NodeProps, useReactFlow } from '@xyflow/react'
 import { memo, useState } from 'react'
@@ -20,7 +21,8 @@ type IAnthorpicNodeType = Node<IAnthorpicNodeData>
 const AnthropcNode = memo((props: NodeProps<IAnthorpicNodeType>) => {
   const [open, onOpenChange] = useState(false)
   const { setNodes, getNode } = useReactFlow()
-  const { updateNode, isPending } = useUpdateNode()
+  const { workflowId } = useFlowContext()
+  const { updateNode, isPending } = useUpdateNode(workflowId)
 
   const nodeData = {
     ...props.data,

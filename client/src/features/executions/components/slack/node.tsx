@@ -1,6 +1,6 @@
 'use client'
 
-import { GeminiIcon } from '@/assets/icons'
+import { SlackIcon } from '@/assets/icons'
 import { useUpdateNode } from '@/features/nodes/api/mutation-hooks'
 import { useFlowContext } from '@/hooks/useFlowContext'
 import { INode } from '@/types/Inode'
@@ -8,29 +8,23 @@ import { Node, NodeProps, useReactFlow } from '@xyflow/react'
 import { memo, useState } from 'react'
 import useNodeStatus from '../../hooks/use-realtime-node'
 import BaseExecutionNode from '../base-execution-node'
-import GeminiDialog, { GeminiFormValues } from './dialog'
-import { GOOGLE_GENERATIVE_AI_MODELS, GoogleGenerativeAIModelId } from './utils'
+import SlackDialog, { SlackFormValues } from './dialog'
 
-type IGeminiNodeData = {
-  model?: GoogleGenerativeAIModelId
-  systemPrompt?: string
-  userPrompt?: string
-  variableName?: string
+type ISlackNodeData = {
+  webhookUrl?: string
+  content?: string
 }
-type IGeminiNodeType = Node<IGeminiNodeData>
-const GeminiNode = memo((props: NodeProps<IGeminiNodeType>) => {
+type ISlackNodeType = Node<ISlackNodeData>
+const SlackNode = memo((props: NodeProps<ISlackNodeType>) => {
   const [open, onOpenChange] = useState(false)
   const { setNodes, getNode } = useReactFlow()
   const { workflowId } = useFlowContext()
   const { updateNode, isPending } = useUpdateNode(workflowId)
 
-  const nodeData = {
-    ...props.data,
-    model: props.data?.model || GOOGLE_GENERATIVE_AI_MODELS[18],
-  }
+  const nodeData = props.data
 
-  const description = nodeData.model
-    ? `${nodeData.model}: ${nodeData.userPrompt?.slice(0, 50)}...`
+  const description = nodeData?.content
+    ? `Send: ${nodeData.content?.slice(0, 50)}...`
     : 'Not configured'
   const status = useNodeStatus({
     nodeId: props.id,
@@ -38,7 +32,7 @@ const GeminiNode = memo((props: NodeProps<IGeminiNodeType>) => {
   })
 
   const handleOpenSettings = () => onOpenChange(true)
-  const handleSubmit = async (values: GeminiFormValues) => {
+  const handleSubmit = async (values: SlackFormValues) => {
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id == props.id) {
@@ -51,7 +45,6 @@ const GeminiNode = memo((props: NodeProps<IGeminiNodeType>) => {
     await updateNode({
       ...(node || {}),
       id: props.id,
-      credentialId: values.credentialId,
       data: {
         ...nodeData,
         ...values,
@@ -60,7 +53,7 @@ const GeminiNode = memo((props: NodeProps<IGeminiNodeType>) => {
   }
   return (
     <>
-      <GeminiDialog
+      <SlackDialog
         open={open}
         onOpenChange={onOpenChange}
         onSubmit={handleSubmit}
@@ -68,10 +61,10 @@ const GeminiNode = memo((props: NodeProps<IGeminiNodeType>) => {
       />
       <BaseExecutionNode
         {...props}
-        icon={GeminiIcon}
+        icon={SlackIcon}
         description={description}
         id={props.id}
-        name='Gemini'
+        name='Slack'
         onDoubleClick={handleOpenSettings}
         onSettings={handleOpenSettings}
         status={status}
@@ -80,5 +73,5 @@ const GeminiNode = memo((props: NodeProps<IGeminiNodeType>) => {
   )
 })
 
-GeminiNode.displayName = 'GeminiNode'
-export default GeminiNode
+SlackNode.displayName = 'SlackNode'
+export default SlackNode

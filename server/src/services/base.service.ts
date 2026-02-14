@@ -354,7 +354,7 @@ export class BaseService<
         return { data: null, error: new NotFoundException("No data found") };
       }
       return {
-        data: result,
+        data: result as TSelect[],
         status: HTTPSTATUS.OK,
       };
     } catch (error) {

@@ -16,7 +16,7 @@ export const UpdateWorkflowWithNodesEdgesSchema = z.object({
   nodes: z.array(
     UpdateNodeSchema.extend({
       id: ULIDSchema("Invalid Node Id"),
-    })
+    }),
   ),
   edges: z.array(UpdateWorkflowEdgeSchema),
 });

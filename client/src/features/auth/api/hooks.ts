@@ -11,7 +11,7 @@ const AUTH_QUERY_PATHS = {
 
 export function useSignIn() {
   const { mutateAsync, isError, isPending, isSuccess, error } =
-    authClient.useCreate<{ accessToken: string; refreshToken: string }>({
+    authClient.usePost<{ accessToken: string; refreshToken: string }>({
       options: {
         path: 'login',
       },
@@ -19,7 +19,7 @@ export function useSignIn() {
 
   const handleSignIn = withErrorHandler(async (data: SignInSchemaType) => {
     const res = await mutateAsync({
-      ...data,
+      payload: { ...data },
     })
 
     return res
@@ -31,7 +31,7 @@ type ITokens = { accessToken: string; refreshToken: string }
 export function useRegisterUser() {
   const { setTokens } = useStoreAuthActions()
   const { mutateAsync, isError, isPending, isSuccess, error } =
-    authClient.useCreate<ITokens>({
+    authClient.usePost<ITokens>({
       options: {
         path: AUTH_QUERY_PATHS.register,
       },
@@ -39,7 +39,7 @@ export function useRegisterUser() {
 
   const handleRegister = async (data: SignUpSchemaType) => {
     const res = await mutateAsync({
-      ...data,
+      payload: { ...data },
     })
     if (res.data) {
       const { accessToken, refreshToken } = res.data

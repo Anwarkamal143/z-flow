@@ -8,6 +8,7 @@ import ManualTriggerSettings from './dialog'
 const ManualTriggerNode = memo((props: NodeProps) => {
   const [open, onOpenChagne] = useState(false)
   const status = useNodeStatus({ nodeId: props.id, event: 'status' })
+
   const handleOpenSettings = () => onOpenChagne(true)
   const nodeStatus = status
   return (

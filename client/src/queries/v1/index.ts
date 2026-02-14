@@ -14,6 +14,8 @@ import {
 } from '@/types/Iquery'
 import {
   MutateOptions,
+  MutationFunctionContext,
+  QueryClient,
   QueryKey,
   useInfiniteQuery,
   useMutation,
@@ -35,7 +37,11 @@ import {
   Id,
   IListCallOptions,
   InfiniteListData,
+  IOptimisticContext,
+  IOptimisticSnapshot,
+  IOptimisticUpdateConfig,
   IPaginationModes,
+  IQuriesConfig,
   ListReturnType,
   MultiQueryOptions,
   MutationCallOptions,
@@ -76,14 +82,14 @@ const deepMerge = <T extends Record<string, any>>(
 
   for (const key in overrides) {
     const val = overrides[key]
-    if (val === undefined) continue
+    if (val == undefined) continue
 
-    if (typeof val !== 'object' || val === null || Array.isArray(val)) {
+    if (typeof val != 'object' || val == null || Array.isArray(val)) {
       ;(result as any)[key] = val
     } else {
       const baseVal = base[key]
       ;(result as any)[key] =
-        typeof baseVal === 'object' && baseVal !== null
+        typeof baseVal == 'object' && baseVal != null
           ? deepMerge(baseVal as any, val)
           : val
     }
@@ -118,11 +124,106 @@ const filterSuspenseOptions = <T extends Record<string, any> | undefined>(
   const { enabled, placeholderData, ...rest } = opts
   return rest
 }
-type EnsureRecord<T> = T extends Record<string, any> ? T : Record<string, any>
 
 /* -----------------------
    CRUD Client Factory
    ----------------------- */
+function includesSubArray<T>(source: T[], target: T[]) {
+  if (target.length == 0) return true
+
+  return source.some((_, i) =>
+    target.every((value, j) => source[i + j] == value),
+  )
+}
+
+export async function applyOptimisticUpdates<TVars>(
+  queryClient: QueryClient,
+  params: { entity?: string },
+  updates: IOptimisticUpdateConfig<TVars>,
+  variables: TVars,
+  ctx: MutationFunctionContext,
+): Promise<IOptimisticContext> {
+  const snapshots: IOptimisticSnapshot[] = []
+
+  for (const {
+    queryKey,
+    updateFn,
+    prefixEntity = true,
+    predicate = false,
+    exact,
+  } of updates) {
+    const qKey =
+      typeof queryKey == 'function' ? queryKey(variables, ctx) : queryKey
+
+    const baseKey = prefixEntity
+      ? [params.entity, ...(qKey || [])]
+      : [...(qKey || [])]
+
+    const resolvedPredicate = predicate
+      ? typeof predicate == 'function'
+        ? predicate
+        : (query: { queryKey: QueryKey }) =>
+            includesSubArray(query.queryKey as unknown[], baseKey)
+      : undefined
+
+    await queryClient.cancelQueries({
+      exact,
+      ...(resolvedPredicate
+        ? { predicate: resolvedPredicate }
+        : { queryKey: baseKey }),
+    })
+
+    // 🔥 handle predicate = multiple queries
+    const affected = resolvedPredicate
+      ? queryClient.getQueriesData({ predicate: resolvedPredicate })
+      : [[baseKey, queryClient.getQueryData(baseKey)]]
+
+    for (const [key, data] of affected) {
+      snapshots.push({ key: key as QueryKey, previousData: data })
+      queryClient.setQueryData(key as QueryKey, (old: unknown) =>
+        updateFn(old, variables),
+      )
+    }
+  }
+
+  return { ...ctx, snapshots }
+}
+type QueryAction = 'invalidate' | 'refetch'
+
+function runQueryActions<TData, TVars>(
+  action: QueryAction,
+  queryClient: QueryClient,
+  params: { entity?: string },
+  configs: IQuriesConfig<TData, TVars> | undefined,
+  data: any,
+  variables: TVars,
+) {
+  if (!configs) return
+
+  configs.forEach(
+    ({ queryKey, exact, prefixEntity = true, predicate = false }) => {
+      const key =
+        typeof queryKey == 'function' ? queryKey(data, variables) : queryKey
+
+      const finalKey = prefixEntity
+        ? buildQueryKey(params.entity, ...(key || []))
+        : buildQueryKey(...(key || []))
+
+      queryClient[`${action}Queries`]({
+        exact,
+        ...(predicate
+          ? {
+              predicate:
+                typeof predicate == 'function'
+                  ? predicate
+                  : (query) =>
+                      includesSubArray(query.queryKey as unknown[], finalKey),
+            }
+          : { queryKey: finalKey }),
+      })
+    },
+  )
+}
 
 export function createCrudClient<TEntity, TParams = Record<string, any>>(
   model: Model<TEntity>,
@@ -142,6 +243,17 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       (result, params) => deepMerge(result || {}, params || {}),
       opts?.defaultParams || {},
     ) as QueryParams<T>
+  }
+  const mergeOptions = <T = Record<string, any>>(
+    ...paramSets: (RequestOptions<T> | undefined)[]
+  ): RequestOptions<T> => {
+    const validParams = paramSets.filter(
+      (p): p is RequestOptions<T> => p != undefined,
+    )
+    return validParams.reduce(
+      (result, params) => deepMerge(result || {}, params || {}),
+      opts?.defaultParams || {},
+    ) as RequestOptions<T>
   }
   const validateFilters = <T>({
     search,
@@ -617,8 +729,14 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
 
   // ---------- Enhanced Mutation Hooks with Cache Management ----------
 
-  const useCreate = <Entity = TEntity, TVars = Partial<TEntity>>(
-    callOptions?: MutationCallOptions<ReturnModel<TEntity, Entity>, TVars>,
+  const usePost = <Entity = TEntity, TVars = Partial<TEntity>>(
+    callOptions?: MutationCallOptions<
+      ReturnModel<TEntity, Entity>,
+      {
+        payload?: TVars
+        options?: RequestOptions<ReturnModel<TEntity, Entity>>
+      }
+    >,
   ) => {
     type IModel = ReturnModel<TEntity, Entity>
 
@@ -627,47 +745,39 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       callOptions?.options?.query || {},
     ) as QueryParams<IModel>
     const mutate = useMutation({
-      mutationFn: (payload: TVars) =>
-        createRaw({
+      mutationFn: ({ payload, options }) => {
+        const newOptions = mergeOptions(options, callOptions?.options)
+        return createRaw({
           payload,
           params: callOptions?.params,
-          options: callOptions?.options,
+          options: newOptions,
           onSuccess: callOptions?.onSuccess,
-        }),
+        })
+      },
       onSuccess: (data, variables, mutationResult, context) => {
         if (data.data) {
           callOptions?.onSuccess?.(data.data)
         }
 
-        if (callOptions?.invalidateQueries) {
-          callOptions.invalidateQueries.forEach(({ queryKey, exact }) => {
-            let key
-            if (typeof queryKey == 'function') {
-              key = queryKey(data.data, variables)
-            } else {
-              key = queryKey
-            }
-            queryClient.invalidateQueries({
-              queryKey: buildQueryKey(params.entity, ...(key || [])),
-              exact,
-            })
-          })
-        }
+        // Invalidate queries
+        runQueryActions(
+          'invalidate',
+          queryClient,
+          params,
+          callOptions?.invalidateQueries,
+          data.data,
+          variables,
+        )
 
-        if (callOptions?.refetchQueries) {
-          callOptions.refetchQueries.forEach(({ queryKey, exact }) => {
-            let key
-            if (typeof queryKey == 'function') {
-              key = queryKey(data.data, variables)
-            } else {
-              key = queryKey
-            }
-            queryClient.refetchQueries({
-              queryKey: [params.entity, ...(key || [])],
-              exact,
-            })
-          })
-        }
+        // Refetch queries
+        runQueryActions(
+          'refetch',
+          queryClient,
+          params,
+          callOptions?.refetchQueries,
+          data.data,
+          variables,
+        )
 
         callOptions?.mutationOptions?.onSuccess?.(
           data,
@@ -677,41 +787,30 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         )
       },
       onMutate: async (variables, ctx) => {
-        if (callOptions?.optimisticUpdate) {
-          const { queryKey, updateFn } = callOptions.optimisticUpdate
-          let qKey
-          if (typeof queryKey == 'function') {
-            qKey = queryKey(variables, ctx)
-          } else {
-            qKey = queryKey
-          }
-          const key = [params.entity, ...(qKey || [])]
-          await queryClient.cancelQueries({ queryKey: key })
+        const optimisticCtx = callOptions?.optimisticUpdate
+          ? await applyOptimisticUpdates(
+              queryClient,
+              params,
+              callOptions.optimisticUpdate,
+              variables,
+              ctx,
+            )
+          : undefined
 
-          const previousData = queryClient.getQueryData(key)
-          queryClient.setQueryData(key, (old: any) => updateFn(old, variables))
+        const userCtx = callOptions?.mutationOptions?.onMutate?.(variables, ctx)
 
-          return { previousData }
-        }
-
-        return callOptions?.mutationOptions?.onMutate?.(variables, ctx)
+        return { ...(userCtx || {}), ...optimisticCtx }
       },
       onError: (error, variables, mutationResult, context) => {
-        if (context && (context as any).previousData) {
-          const { queryKey } = callOptions?.optimisticUpdate || {
-            queryKey: [],
-          }
-          let key
-          if (typeof queryKey == 'function') {
-            key = queryKey(variables, context)
-          } else {
-            key = queryKey
-          }
-          if (key.length) {
-            const qKey = [params.entity, ...(key || [])]
-            queryClient.setQueryData(qKey, (context as any).previousData)
-          }
+        const ctx = context as MutationFunctionContext & {
+          snapshots?: {
+            key: unknown[]
+            previousData: unknown
+          }[]
         }
+        ctx?.snapshots?.forEach(({ key, previousData }) => {
+          queryClient.setQueryData(key, previousData)
+        })
 
         callOptions?.mutationOptions?.onError?.(
           error,
@@ -722,27 +821,43 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       },
       ...callOptions?.mutationOptions,
     })
-    const handleCreate = withErrorHandler(
+    const handlePost = withErrorHandler(
       async (
-        variables: TVars,
-        options?:
-          | MutateOptions<IApiResponse<IModel>, DefaultError, TVars, unknown>
+        variables?: {
+          payload?: TVars
+          options?: RequestOptions<ReturnModel<TEntity, Entity>>
+        },
+        options?: // | MutateOptions<IApiResponse<IModel>, DefaultError, TVars, unknown>
+          | MutateOptions<
+              IApiResponse<IModel>,
+              DefaultError,
+              {
+                payload?: TVars
+                options?: RequestOptions<ReturnModel<TEntity, Entity>>
+              },
+              unknown
+            >
           | undefined,
       ) => {
-        const res = await mutate.mutateAsync(variables, options)
+        const vars = variables || {}
+        const res = await mutate.mutateAsync(vars, options)
 
         return res
       },
     )
 
-    return { ...mutate, handleCreate }
+    return { ...mutate, handlePost }
   }
 
   const useUpdate = <Entity = TEntity, TVars = Partial<TEntity>>(
     callOptions?: MutationCallOptions<
       // { id: Id; data: TEntity & IPartialIfExist<Entity> },
       ReturnModel<TEntity, Entity>,
-      { id: Id; data: TVars }
+      {
+        id: Id
+        data: TVars
+        options?: RequestOptions<ReturnModel<TEntity, Entity>>
+      }
     >,
   ) => {
     type IModel = ReturnModel<TEntity, Entity>
@@ -752,12 +867,12 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
       callOptions?.options?.query || {},
     ) as QueryParams<IModel>
     const mutate = useMutation({
-      mutationFn: ({ id, data }: { id: Id; data: TVars }) =>
+      mutationFn: ({ id, data, options }) =>
         updateRaw({
           id,
           payload: data,
           params: callOptions?.params,
-          options: callOptions?.options,
+          options: mergeOptions(options || callOptions?.options),
           onSuccess: callOptions?.onSuccess,
         }),
       onSuccess: (data, variables, mutationResult, context) => {
@@ -773,21 +888,25 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
             return old
           })
         }
+        // Invalidate queries
+        runQueryActions(
+          'invalidate',
+          queryClient,
+          params,
+          callOptions?.invalidateQueries,
+          data.data,
+          variables,
+        )
 
-        if (callOptions?.invalidateQueries) {
-          callOptions.invalidateQueries.forEach(({ queryKey, exact }) => {
-            let key
-            if (typeof queryKey == 'function') {
-              key = queryKey(data.data, variables)
-            } else {
-              key = queryKey
-            }
-            queryClient.invalidateQueries({
-              queryKey: [params.entity, ...(key || [])],
-              exact,
-            })
-          })
-        }
+        // Refetch queries
+        runQueryActions(
+          'refetch',
+          queryClient,
+          params,
+          callOptions?.refetchQueries,
+          data.data,
+          variables,
+        )
 
         callOptions?.mutationOptions?.onSuccess?.(
           data,
@@ -797,24 +916,36 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         )
       },
       onMutate: async (variables, ctx) => {
-        if (callOptions?.optimisticUpdate) {
-          const { queryKey, updateFn } = callOptions.optimisticUpdate
-          let qKey
-          if (typeof queryKey == 'function') {
-            qKey = queryKey(variables, ctx)
-          } else {
-            qKey = queryKey
-          }
-          const key = [params.entity, ...(qKey || [])]
-          await queryClient.cancelQueries({ queryKey: key })
+        const optimisticCtx = callOptions?.optimisticUpdate
+          ? await applyOptimisticUpdates(
+              queryClient,
+              params,
+              callOptions.optimisticUpdate,
+              variables,
+              ctx,
+            )
+          : undefined
 
-          const previousData = queryClient.getQueryData(key)
-          queryClient.setQueryData(key, (old: any) => updateFn(old, variables))
+        const userCtx = callOptions?.mutationOptions?.onMutate?.(variables, ctx)
 
-          return { previousData }
+        return { ...(userCtx || {}), ...optimisticCtx }
+      },
+      onError: (error, variables, mutationResult, context) => {
+        const ctx = context as MutationFunctionContext & {
+          snapshots?: {
+            key: unknown[]
+            previousData: unknown
+          }[]
         }
-
-        return callOptions?.mutationOptions?.onMutate?.(variables, ctx)
+        ctx?.snapshots?.forEach(({ key, previousData }) => {
+          queryClient.setQueryData(key, previousData)
+        })
+        callOptions?.mutationOptions?.onError?.(
+          error,
+          variables,
+          mutationResult,
+          context,
+        )
       },
       ...callOptions?.mutationOptions,
     })
@@ -824,6 +955,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
         variables: {
           id: Id
           data: TVars
+          options?: RequestOptions<IModel>
         },
         options?:
           | MutateOptions<
@@ -844,34 +976,95 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     return { ...mutate, handleUpdate }
   }
 
-  const useDelete = <Entity = TEntity>(
-    callOptions?: MutationCallOptions<Entity, Id>,
+  const useDelete = <Entity = Partial<TEntity>>(
+    callOptions?: MutationCallOptions<
+      Entity,
+      { payload?: Entity & { id?: Id }; options?: RequestOptions<Entity> }
+    >,
   ) => {
+    const params = mergeParams(
+      callOptions?.params || {},
+      callOptions?.options?.query || {},
+    ) as QueryParams<Entity>
     const mutate = useMutation({
-      mutationFn: (id: Id) =>
+      mutationFn: ({ payload, options }) =>
         deleteRaw({
-          id,
+          id: payload?.id,
           params: callOptions?.params,
-          options: callOptions?.options,
+          options: mergeOptions(options, callOptions?.options),
           onSuccess: callOptions?.onSuccess,
         }),
-      onSuccess: (data, id, mutationResult, context) => {
+
+      onSuccess: (data, variables, mutationResult, context) => {
         if (data.data) {
           callOptions?.onSuccess?.(data.data)
         }
+        if (variables?.payload?.id) {
+          const entityKey = buildQueryKey(
+            params?.entity,
+            variables.payload.id,
+            'get',
+          )
+          queryClient.removeQueries({
+            queryKey: entityKey,
+            exact: false,
+          })
+        }
+        // Invalidate queries
+        runQueryActions(
+          'invalidate',
+          queryClient,
+          params,
+          callOptions?.invalidateQueries,
+          data.data,
+          variables,
+        )
 
-        const entityKey = buildQueryKey(opts?.defaultParams?.entity, id)
-        queryClient.removeQueries({ queryKey: entityKey, exact: true })
-
-        const listKey = buildQueryKey(opts?.defaultParams?.entity, 'list')
-        queryClient.invalidateQueries({
-          queryKey: listKey,
-          refetchType: 'active',
-        })
+        // Refetch queries
+        runQueryActions(
+          'refetch',
+          queryClient,
+          params,
+          callOptions?.refetchQueries,
+          data.data,
+          variables,
+        )
 
         callOptions?.mutationOptions?.onSuccess?.(
           data,
-          id,
+          variables,
+          mutationResult,
+          context,
+        )
+      },
+      onMutate: async (variables, ctx) => {
+        const optimisticCtx = callOptions?.optimisticUpdate
+          ? await applyOptimisticUpdates(
+              queryClient,
+              params,
+              callOptions.optimisticUpdate,
+              variables,
+              ctx,
+            )
+          : undefined
+
+        const userCtx = callOptions?.mutationOptions?.onMutate?.(variables, ctx)
+
+        return { ...(userCtx || {}), ...optimisticCtx }
+      },
+      onError: (error, variables, mutationResult, context) => {
+        const ctx = context as MutationFunctionContext & {
+          snapshots?: {
+            key: unknown[]
+            previousData: unknown
+          }[]
+        }
+        ctx?.snapshots?.forEach(({ key, previousData }) => {
+          queryClient.setQueryData(key, previousData)
+        })
+        callOptions?.mutationOptions?.onError?.(
+          error,
+          variables,
           mutationResult,
           context,
         )
@@ -880,10 +1073,19 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     })
     const handleDelete = withErrorHandler(
       async (data?: {
-        id?: Id
-        options?: MutateOptions<ApiHooksResp<Entity>, DefaultError, Id, unknown>
+        payload?: Entity & { id?: Id }
+        reqOptions?: RequestOptions<Entity>
+        options?: MutateOptions<
+          ApiHooksResp<Entity>,
+          DefaultError,
+          { id?: Id; options?: RequestOptions<Entity> },
+          unknown
+        >
       }) => {
-        const res = await mutate.mutateAsync(data?.id, data?.options)
+        const res = await mutate.mutateAsync(
+          { payload: data?.payload, options: data?.reqOptions },
+          data?.options,
+        )
 
         return res
       },
@@ -1214,8 +1416,8 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
   const listParamsOptions = {} as OffsetPaginationConfig<TEntity>
   const listOptions: IListCallOptions<TEntity> = {}
   const listInfiniteOptions: ExtractHookOptions<typeof useInfiniteList> = {}
-  const createOptions: ExtractHookOptions<
-    typeof useCreate<TEntity, Partial<TEntity>>
+  const postOptions: ExtractHookOptions<
+    typeof usePost<TEntity, Partial<TEntity>>
   > = {}
   const deleteOptions: ExtractHookOptions<typeof useDelete<TEntity>> = {}
   const Entity: Partial<TEntity> = {}
@@ -1230,7 +1432,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     deleteRaw,
 
     // Enhanced Mutation hooks with cache management
-    useCreate,
+    usePost,
     useUpdate,
     useDelete,
 
@@ -1266,7 +1468,7 @@ export function createCrudClient<TEntity, TParams = Record<string, any>>(
     listOptions,
     listInfiniteParamsOptions,
     listInfiniteOptions,
-    createOptions,
+    postOptions,
     deleteOptions,
     Entity,
     TEntity,

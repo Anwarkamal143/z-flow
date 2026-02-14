@@ -2,6 +2,7 @@
 
 import { OpenAiIcon } from '@/assets/icons'
 import { useUpdateNode } from '@/features/nodes/api/mutation-hooks'
+import { useFlowContext } from '@/hooks/useFlowContext'
 import { INode } from '@/types/Inode'
 import { Node, NodeProps, useReactFlow } from '@xyflow/react'
 import { memo, useState } from 'react'
@@ -19,9 +20,9 @@ type IOpenAiNodeData = {
 type IOpenAiNodeType = Node<IOpenAiNodeData>
 const OpenAiNode = memo((props: NodeProps<IOpenAiNodeType>) => {
   const [open, onOpenChange] = useState(false)
-  const { updateNode, isPending } = useUpdateNode()
+  const { workflowId } = useFlowContext()
+  const { updateNode, isPending } = useUpdateNode(workflowId)
   const { setNodes, getNode } = useReactFlow()
-
   const nodeData = {
     ...props.data,
     model: props.data?.model || OPENAI_CHAT_MODELS[25],

@@ -9,4 +9,10 @@ export default async function nodeRoutes(fastify: FastifyInstance) {
 
   fastify.post("/", nodeController.create);
   fastify.put("/:id", nodeController.updateNode);
+  fastify.get("/:id", nodeController.getById);
+  fastify.delete("/:id", nodeController.deleteById);
+  fastify.delete(
+    "/workflow/:workflowId",
+    nodeController.deleteByNodeIdsWorkflowId,
+  );
 }

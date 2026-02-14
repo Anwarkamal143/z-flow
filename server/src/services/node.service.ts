@@ -1,4 +1,4 @@
-import { eq, inArray } from "@/db";
+import { and, eq, inArray } from "@/db";
 
 import { HTTPSTATUS } from "@/config/http.config";
 import { nodes } from "@/db/tables";
@@ -52,6 +52,33 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     }
     return await this.delete(
       (fields) => eq(fields.workflowId, WorkflowId),
+      tsx,
+    );
+  }
+  public async deleteByNodeIdsWorkflowId(
+    WorkflowId: string,
+    nodeIds: string[],
+    tsx?: ITransaction,
+  ) {
+    if (!WorkflowId) {
+      return {
+        data: null,
+        error: new ValidationException("Invalid input", [
+          { path: "workflowId", message: "WorkflowId is required" },
+        ]),
+      };
+    }
+    if (!nodeIds || !nodeIds.length) {
+      return {
+        data: null,
+        error: new ValidationException("Invalid input", [
+          { path: "Node Ids", message: "Node Ids are required" },
+        ]),
+      };
+    }
+    return await this.delete(
+      (fields) =>
+        and(eq(fields.workflowId, WorkflowId), inArray(fields.id, nodeIds)),
       tsx,
     );
   }
@@ -139,6 +166,38 @@ export class NodeService extends BaseService<typeof nodes, InsertNode, INode> {
     if (!res.data)
       return {
         error: new NotFoundException("Node not found"),
+        data: null,
+      };
+
+    return {
+      data: res.data,
+      error: null,
+    };
+  }
+  async deleteById(id: string, userId: string) {
+    if (!id) {
+      return {
+        error: new ValidationException("id is required", [
+          { path: "id", message: "id is required" },
+        ]),
+        data: null,
+      };
+    }
+    if (!userId) {
+      return {
+        error: new ValidationException("userId is required", [
+          { path: "userId", message: "userId is required" },
+        ]),
+        data: null,
+      };
+    }
+    const res = await this.delete((t) =>
+      and(eq(t.id, id), eq(t.userId, userId)),
+    );
+
+    if (!res.data || !res.data?.length)
+      return {
+        error: new NotFoundException("Node deleted"),
         data: null,
       };
 

@@ -3,6 +3,7 @@ import { workflows } from "@/db/tables";
 import { ErrorCode } from "@/enums/error-code.enum";
 import { WORKFLOW_EVENT_NAMES } from "@/flow-executions/events/workflow";
 import { ULIDSchema } from "@/schema/helper";
+import { INode } from "@/schema/node";
 import { IUpdateUser } from "@/schema/user";
 import {
   InsertWorkflows,
@@ -301,22 +302,23 @@ export class WorkflowService extends BaseService<
           });
         }
         const workflow = res.data;
-        const node = await nodeService.createItem(
-          {
-            workflowId: workflow.id,
-            userId: workflow.userId,
-            name: NodeType.INITIAL,
-            type: NodeType.INITIAL,
-            position: { x: 0, y: 0 },
-          },
-          tx,
-        );
-        if (node.error) {
-          throw new BadRequestException("Failed to create initial node", {
-            errorCode: ErrorCode.DATABASE_ERROR,
-          });
-        }
-        return { data: { ...workflow, initialNode: node.data }, error: null };
+        // const node = await nodeService.createItem(
+        //   {
+        //     workflowId: workflow.id,
+        //     userId: workflow.userId,
+        //     name: NodeType.INITIAL,
+        //     type: NodeType.INITIAL,
+        //     position: { x: 0, y: 0 },
+        //   },
+        //   tx,
+        // );
+        // if (node.error) {
+        //   throw new BadRequestException("Failed to create initial node", {
+        //     errorCode: ErrorCode.DATABASE_ERROR,
+        //   });
+        // }
+        // return { data: { ...workflow, initialNode: node.data }, error: null };
+        return { data: { ...workflow }, error: null };
       });
     } catch (error) {
       return {
@@ -415,30 +417,36 @@ export class WorkflowService extends BaseService<
         const nodesArray = nodesData.length
           ? nodesData
           : [
-              {
-                workflowId: workflow.id,
-                userId: userId,
-                name: NodeType.INITIAL,
-                type: NodeType.INITIAL,
-                position: { x: 0, y: 0 },
-              },
+              // {
+              //   workflowId: workflow.id,
+              //   userId: userId,
+              //   name: NodeType.INITIAL,
+              //   type: NodeType.INITIAL,
+              //   position: { x: 0, y: 0 },
+              // },
             ];
         let edgesResp;
-        const createNodesResp = await nodeService.createItems(
-          nodesArray.map((node) => ({
-            credentialId: node.data.credentialId || null,
-            ...node,
-            name: node.type || "unknown",
-            workflowId: workflowData.id,
-            userId,
-            type: node.type as NodeType,
-            position: node.position || { x: 0, y: 0 },
-            data: node.data || {},
-          })),
-          tx,
-        );
-        if (createNodesResp.error) {
-          throw createNodesResp.error;
+        let createNodesResp;
+        if (nodesArray.length) {
+          createNodesResp = await nodeService.createItems(
+            nodesArray.map(
+              (node) =>
+                ({
+                  credentialId: node.data?.credentialId || null,
+                  ...node,
+                  name: node.type || "unknown",
+                  workflowId: workflowData.id,
+                  userId,
+                  type: node.type as NodeType,
+                  position: node.position || { x: 0, y: 0 },
+                  data: node.data || {},
+                }) as INode,
+            ),
+            tx,
+          );
+          if (createNodesResp.error) {
+            throw createNodesResp.error;
+          }
         }
 
         if (workflow.edges?.length) {

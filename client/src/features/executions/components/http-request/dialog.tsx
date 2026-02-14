@@ -6,6 +6,7 @@ import SelectComp from '@/components/form/select'
 import ObjectTemplateInput from '@/components/object-template-input'
 
 import {
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -13,7 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import useZodForm from '@/hooks/useZodForm'
-import { Dialog } from '@radix-ui/react-dialog'
+
 import { useEffect } from 'react'
 import z from 'zod'
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']

@@ -4,7 +4,9 @@ import { NodeType } from '@/config/enums'
 import { nodeComponents } from '@/config/node-components'
 import AddNodeButton from '@/features/editor/components/add-node-button'
 import ExecuteWorkflowButton from '@/features/editor/components/execute-workflow-button'
+import { generateUUID } from '@/lib'
 import { useStoreWorkflowActions } from '@/store/useEditorStore'
+import { INode } from '@/types/Inode'
 import {
   addEdge,
   applyEdgeChanges,
@@ -49,7 +51,6 @@ export default function FlowContainer({
   const { theme } = useTheme()
   const timeOutRef = useRef<NodeJS.Timeout>(null)
   const editor = useRef<ReactFlowInstance<Node, Edge> | null>(null)
-
   const handleAutoSave = () => {
     timeOutRef.current && clearTimeout(timeOutRef.current)
     if (onAutoSave) {
@@ -100,10 +101,23 @@ export default function FlowContainer({
   const hasManualTrigger = useMemo(() => {
     return nodes.some((node) => node.type == NodeType.MANUAL_TRIGGER)
   }, [nodes])
+
+  const INITIAL_NODE = useMemo(() => {
+    const centerX = window.innerWidth / 2
+    const centerY = window.innerHeight / 2
+    const INITIALNODE = {
+      id: generateUUID(),
+      workflowId: workflowId,
+      name: NodeType.INITIAL,
+      type: NodeType.INITIAL,
+      position: { x: centerX, y: centerY },
+    } as INode
+    return [INITIALNODE]
+  }, [nodes.length, workflowId])
   return (
     <div className='h-full w-full'>
       <ReactFlow
-        nodes={nodes}
+        nodes={nodes.length > 0 ? nodes : INITIAL_NODE}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

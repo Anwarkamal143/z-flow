@@ -2,6 +2,7 @@ import { CopyIcon } from '@/assets/icons'
 import ButtonLoader from '@/components/button-loader'
 import InputComponent from '@/components/form/Input/Input'
 import {
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -11,18 +12,14 @@ import {
 import { API_BASE_URL } from '@/config'
 import { removeVersionFromApiURL } from '@/lib'
 import { useActiveWorkflow } from '@/store/useEditorStore'
-import { Dialog } from '@radix-ui/react-dialog'
-import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { generateGoogleFormScript } from './utils'
 type Props = IDialogProps
 const GoogleFormTriggerSettings = (props: Props) => {
-  const params = useParams()
-  const workflowId = params.workflowId as string
   const workflow = useActiveWorkflow()
   // Construct the webhook URL
   const baseUrl = API_BASE_URL
-  const webhookUrl = `${removeVersionFromApiURL(baseUrl)}/webhooks/google-form?workflowId=${workflowId}&secret=${workflow?.secret}`
+  const webhookUrl = `${removeVersionFromApiURL(baseUrl)}/webhooks/google-form?workflowId=${workflow?.id}&secret=${workflow?.secret}`
 
   const copyToCipboard = async () => {
     try {

@@ -7,7 +7,7 @@ import {
 } from '../schema/workflow'
 
 export function useCreateWorkflow() {
-  return workflowClient.useCreate({
+  return workflowClient.usePost({
     invalidateQueries: [
       {
         queryKey: ['list'],
@@ -95,7 +95,7 @@ export function useDeleteWorkflows() {
 }
 
 export function useExecuteWorkflow() {
-  return workflowClient.useCreate({
+  return workflowClient.usePost({
     options: {
       path: 'execute',
     },
